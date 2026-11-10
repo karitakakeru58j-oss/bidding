@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.5.2';
+  const ENGINE_VERSION = '0.5.3';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -559,6 +559,7 @@
   R('1m 1M', '1N', h => h.balanced && h.hcp < 15, (b) => ({ hcp: [11.5, 14.99], bal: true, [b.M]: [2, 3] }), 'バランスハンドの最低点なので1NT（4枚スートがあってもバランスハンドは1NT）');
   R('1m 1M', '2N', h => h.balanced && between(h.hcp, 18, 19), (b) => ({ hcp: [18, 19], bal: true, [b.M]: [2, 3] }), 'バランスハンド18〜19点なので2NT');
   R('1D 1M', '2H', (h, c) => c.b.M === 'S' && h.len.H >= 4 && h.hcp >= 16, { H: [4, 4], D: [5, 13], hcp: [16, 21] }, 'ハート4枚・16点以上なのでリバース（2♥）', 1);
+  R('1C 1S', '2H', h => h.len.H >= 4 && h.hcp >= 16, { H: [4, 13], C: [5, 13], hcp: [16, 21] }, 'ハート4枚・16点以上なのでリバース（2♥）', 1);
   R('1C 1M', '2D', h => h.len.D >= 4 && h.hcp >= 16, { D: [4, 13], C: [5, 13], hcp: [16, 21] }, 'ダイヤ4枚・16点以上なのでリバース（2♦）', 1);
   R('1m 1M', '3m', (h, c) => h.len[c.b.m] >= 6 && between(h.hcp, 15, 17), (b) => ({ [b.m]: [6, 13], hcp: [15, 17] }), 'マイナー6枚以上・15〜17点なので3マイナー');
   R('1D 1M', '2C', h => h.len.C >= 4, { C: [4, 13], hcp: [11.5, 17.99] }, 'クラブ4枚以上のアンバランスハンドなので2♣（3つ目のスート）');
@@ -1060,19 +1061,30 @@
       if (st.rk.placed) return P('キーカードを聞いた側がコントラクトを決めたのでパス');
       if (st.rk.asker === pa && !st.rk.resp) {
         const k = keycards(h, T), q = h.hand[T].includes('Q');
+        // ボイドがあるとき：キーカードが偶数（2・4枚）→ 5NT、奇数（1・3枚）→ 6のレベルでボイドのスート
+        //   （ボイドのスートが切り札より上なら6の切り札）
+        const voidS = SUITS.find(s => s !== T && h.len[s] === 0);
+        if (voidS && (k === 2 || k === 4))
+          return { call: '5N', why: `RKCB（1430）への答え：キーカードが${k}枚（偶数）で、ボイドがあるので5NT` };
+        if (voidS && (k === 1 || k === 3)) {
+          const v6 = rankOf('6' + voidS) < rankOf('6' + T) ? '6' + voidS : '6' + T;
+          return { call: v6, why: `RKCB（1430）への答え：キーカードが${k}枚（奇数）で、${JA_SUIT[voidS]}がボイドなので${callText(v6)}` };
+        }
         const call = (k === 1 || k === 4) ? '5C' : (k === 0 || k === 3) ? '5D' : k === 2 ? (q ? '5S' : '5H') : '5C';
         return { call, why: `RKCB（1430）への答え：キーカード（4枚のAと${JA_SUIT[T]}のK）が${k}枚${k === 2 ? (q ? '・切り札のQあり' : '・切り札のQなし') : ''}なので${callText(call)}` };
       }
       if (st.rk.asker === me && st.rk.resp) {
         const resp = st.rk.resp, myK = keycards(h, T);
-        const opts = { '5C': [1, 4], '5D': [0, 3], '5H': [2], '5S': [2] }[resp] || [1];
+        const voidResp = resp === '5N' || resp[0] === '6';
+        const opts = { '5C': [1, 4], '5D': [0, 3], '5H': [2], '5S': [2], '5N': [2, 4] }[resp] || (resp[0] === '6' ? [1, 3] : [1]);
         let pK = opts[0];
         if (opts.length > 1 && myK + opts[0] < 3 && myK + opts[1] <= 5) pK = opts[1];
         const missing = 5 - myK - pK;
         const qKnown = resp === '5S' || h.hand[T].includes('Q') || h.len[T] + c.partner[T][0] >= 10;
         const total = strengthFor(h, T, c) + c.partner.hcp[0];
         const five = '5' + T, six = '6' + T, seven = '7' + T;
-        const note = `自分${myK}枚＋パートナー${pK}枚＝キーカード${myK + pK}枚`;
+        const note = `自分${myK}枚＋パートナー${pK}枚＝キーカード${myK + pK}枚${voidResp ? '（パートナーはボイドあり）' : ''}`;
+        if (lb === six && missing > 0) return P(`${note}。パートナーの答えが${callText(six)}なのでパス`);
         if (missing >= 2) {
           if (legal(five, seq)) return { call: five, why: `${note}で2枚以上足りないので${callText(five)}で止める` };
           if (lb === five) return P(`${note}で2枚以上足りないのでパス`);
@@ -1257,7 +1269,12 @@
     }
     // あなたの回答例
     const key = seqKeyOf(seq, passedBeforeMe);
-    const near = nearestExample(h, key, examples, seq);
+    let near = nearestExample(h, key, examples, seq);
+    // 例のビッドが示す枚数（5枚メジャーなど）をこの手が満たさないときは使わない
+    if (near && near.ex.call !== res.call) {
+      const sh = interpret(seq, near.ex.call, { self: ctx.self, partner: ctx.partner }).shows || {};
+      if (SUITS.some(s => Array.isArray(sh[s]) && (h.len[s] < sh[s][0] || h.len[s] > sh[s][1]))) near = null;
+    }
     if (near && near.d <= NEAR && near.ex.call !== res.call) {
       return {
         call: near.ex.call,

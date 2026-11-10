@@ -103,6 +103,9 @@ const cases = [
   ['J82.A.QT65.AKJ72', [], 'N', '1C'],                        // 1番手で5枚スートが良い → 1NTにしない
   ['J82.A.AQT6.KJ872', [], 'N', '1N'],                        // 5枚スートの内容が悪い（AKQが1枚以下・AKQJTが3枚以下）
   ['J82.2.AQT6.AKJ72', ['P','P'], 'N', '1C'],                 // シングルトンがA・K・Q以外 → 1NTにしない
+  ['Q873..AQ765.KT95', ['1S','P','2N','P','3S','P','4C','P','4N','P'], 'N', '6H'],   // キーカード奇数・♥ボイド
+  ['T.KJT7.A53.AKJ63', [], 'N', '1C'],
+  ['T.KJT7.A53.AKJ63', ['1C','P','1S','P'], 'N', '2H'],      // リバース
   // --- 2/1の後のメジャーのサポート ---
   ['K32.KQ2.AQ432.32', ['1S','P','2D','P','2H','P'], 'N', '3S'],   // 3枚・やる気あり → 3♠
   ['Q32.QJ2.KQJ32.Q2', ['1S','P','2D','P','2H','P'], 'N', '4S'],   // 3枚・やる気0 → 4♠
@@ -144,4 +147,10 @@ try {
   for (const a of recs) { const r = E.chooseCall(E.pbnToDeal(a.deal)[a.seat || 'S'], a.auction, a.dealer); if (r.call === a.userCall) same++; }
   console.log(`回答記録との一致（例を使わないルールだけ）: ${same} / ${recs.length}`);
 } catch (e) { /* 記録がなければ省略 */ }
+// 回答例の取り違えの確認：♥5枚の例があっても4枚で1♥と言わない
+{
+  const ex = [{ seqKey: '(open)', hcp: 16, len: { S: 1, H: 5, D: 2, C: 5 }, call: '1H', id: 'x' }];
+  const r = E.chooseCall(H('T.KJT7.A53.AKJ63'), [], 'N', ex);
+  if (r.call !== '1C') { ng++; console.log('NG 回答例の取り違え', r.call); } else console.log('回答例の枚数チェック: OK');
+}
 process.exit(ng ? 1 : 0);
