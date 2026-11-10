@@ -165,7 +165,7 @@
     $('auction-body').innerHTML = auctionRows(quiz.auction, quiz.dealer, true);
     const ev = E.evaluate(quiz.hands.S);
     $('hand').innerHTML = handHtml(quiz.hands.S);
-    $('hand-meta').textContent = `${ev.hcp}点（HCP）・ ${E.SUITS.map(s => ev.len[s]).join('-')}`;
+    $('hand-meta').textContent = `${ev.rawHcp}点（HCP）・補正込み${Math.round(ev.adj * 10) / 10}点 ・ ${E.SUITS.map(s => ev.len[s]).join('-')}`;
     renderBox();
   }
   function renderBox() {
@@ -239,7 +239,7 @@
     const p = $('partner');
     if (p.hidden) {
       const ev = E.evaluate(quiz.hands.N);
-      p.innerHTML = `<div class="label">北（パートナー）の手 ・ ${ev.hcp}点</div><div class="hand">${handHtml(quiz.hands.N)}</div>`;
+      p.innerHTML = `<div class="label">北（パートナー）の手 ・ ${ev.rawHcp}点（補正込み${Math.round(ev.adj * 10) / 10}点）</div><div class="hand">${handHtml(quiz.hands.N)}</div>`;
       p.hidden = false; $('show-partner').textContent = 'パートナーの手を隠す';
     } else { p.hidden = true; $('show-partner').textContent = 'パートナーの手を見る'; }
   });
