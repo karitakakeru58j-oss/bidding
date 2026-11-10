@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.5.1';
+  const ENGINE_VERSION = '0.5.2';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -99,11 +99,11 @@
     h.hcp = h.adj;              // ルールの点数はすべて補正込みで判断する
     // ダミーポイント：スート s にフィットを示すとき、サイドのショートに点を足す（K・Q・Jのシングルトンは足さない）
     //   pLen = パートナーがそのスートに持っていると分かっている最低枚数
-    // 5-5・6-4のように2スートで10枚以上ある手は、そのどちらかがフィットしたら+2.5（11枚なら+3.5…）
+    // 5-5・6-4のように2スートで10枚以上ある手は、そのどちらかがフィットしたら+1.5（11枚なら+2.5…）
     const twoSuiter = s => {
       const top2 = SUITS.slice().sort((a, b) => len[b] - len[a]).slice(0, 2);
       const sum = len[top2[0]] + len[top2[1]];
-      return top2.includes(s) && len[s] >= 4 && sum >= 10 ? 2.5 + (sum - 10) : 0;
+      return top2.includes(s) && len[s] >= 4 && sum >= 10 ? 1.5 + (sum - 10) : 0;
     };
     h.dpBonus = (s, pLen) => {
       const mine = len[s];
@@ -429,10 +429,10 @@
   R('1M', '2C', (h, c) => pts(h, c) >= 13 && h.len.C >= 3, { C: [3, 13], hcp: [13, 37] }, '13点以上なので2/1の2♣（ゲームフォーシング。クラブは3枚のこともある）', 'GF');
   R('1M', '2D', (h, c) => pts(h, c) >= 13 && h.len.D >= 3, { D: [3, 13], hcp: [13, 37] }, '13点以上なので2/1の2♦（ゲームフォーシング）', 'GF');
   R('1M', '2M', (h, c) => h.len[c.b.M] === 3 && between(supDp(h, c), 6, 10), (b) => ({ [b.M]: [3, 3], hcp: [4, 10] }), 'サポート3枚で6〜10点（ダミーポイント）なので2メジャー');
-  R('1M', '1N', (h, c) => h.len[c.b.M] === 3 && (between(supDp(h, c), 11, 12) || between(supDp(h, c), 3, 5)) || ((h.adj >= 6 || (h.adj > 4 && SUITS.some(s => h.hand[s].includes('A')))) && h.adj < 13),
+  R('1M', '1N', (h, c) => h.len[c.b.M] === 3 && (between(supDp(h, c), 11, 12) || between(supDp(h, c), 4, 5) || (between(supDp(h, c), 3, 3) && h.hand[c.b.M].includes('K'))) || ((h.adj >= 6 || (h.adj > 4 && SUITS.some(s => h.hand[s].includes('A')))) && h.adj < 13),
     (b) => ({ hcp: [3, 12], ...(b.M === 'H' ? { S: [0, 3] } : {}) }), (h, c) => h.len[c.b.M] === 3 && supDp(h, c) >= 11
       ? 'サポート3枚で11〜12点（ダミーポイント）なので、まずセミフォーシング1NT（次に3メジャーにジャンプ）'
-      : h.len[c.b.M] === 3 && supDp(h, c) <= 5 ? 'サポート3枚で3〜5点（ダミーポイント）なのでセミフォーシング1NT'
+      : h.len[c.b.M] === 3 && supDp(h, c) < 6 ? (supDp(h, c) < 4 ? '切り札のKを持つサポート3枚で3点（ダミーポイント）なのでセミフォーシング1NT' : 'サポート3枚で4〜5点（ダミーポイント）なのでセミフォーシング1NT')
       : '6〜12点でほかに適当なビッドがないのでセミフォーシング1NT');
   R('1M', 'P', () => true, { hcp: [0, 5] }, '弱いのでパス');
 
