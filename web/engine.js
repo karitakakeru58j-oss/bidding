@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.5.0';
+  const ENGINE_VERSION = '0.5.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -80,15 +80,14 @@
       twoLongest: sorted[0] + sorted[1],
     };
     // 強さの補正（端数）：3枚以上のスートの10=1/3、5枚以上のスートのA・K=1/2、Q・J=1/3（1スート最大1点）
-    //   2枚以下のスートで、より強い札（A・K）がないQ・Jは半分に数える（QT・JTのように10があれば減らさない）
+    //   2枚以下のスートで、より強い札（A・K）がないQ・Jは0.5点減らす（Qx=1.5、Jx=0.5、QJ=2。QT・JTは減らさない）
     let bonus = 0;
     for (const s of SUITS) {
       const x = hand[s];
       const shortBare = x.length <= 2 && !/[AKT]/.test(x);
       let long = 0;
       for (const c of x) {
-        if (shortBare && c === 'Q') bonus -= 1;
-        if (shortBare && c === 'J') bonus -= 1 / 2;
+        if (shortBare && (c === 'Q' || c === 'J')) bonus -= 1 / 2; // Qx=1.5点、Jx=0.5点、QJ=2点
         if (c === 'T' && x.length >= 3) bonus += 1 / 3;
         if (x.length >= 5) long += (c === 'A' || c === 'K') ? 1 / 2 : (c === 'Q' || c === 'J') ? 1 / 3 : 0;
       }
@@ -98,8 +97,14 @@
     h.rawHcp = hcp;             // 補正なしのHCP（表示・回答例の比較用）
     h.adj = hcp + bonus;        // 補正込みの点数（「強め／弱め」を含めた強さ）
     h.hcp = h.adj;              // ルールの点数はすべて補正込みで判断する
-    // ダミーポイント：スート s にフィットを示すとき、サイドのショートに点を足す
+    // ダミーポイント：スート s にフィットを示すとき、サイドのショートに点を足す（K・Q・Jのシングルトンは足さない）
     //   pLen = パートナーがそのスートに持っていると分かっている最低枚数
+    // 5-5・6-4のように2スートで10枚以上ある手は、そのどちらかがフィットしたら+2.5（11枚なら+3.5…）
+    const twoSuiter = s => {
+      const top2 = SUITS.slice().sort((a, b) => len[b] - len[a]).slice(0, 2);
+      const sum = len[top2[0]] + len[top2[1]];
+      return top2.includes(s) && len[s] >= 4 && sum >= 10 ? 2.5 + (sum - 10) : 0;
+    };
     h.dpBonus = (s, pLen) => {
       const mine = len[s];
       let t1 = null; // [シングルトン, ボイド]
@@ -109,8 +114,9 @@
       else if (pLen === 4 && mine === 4) t1 = [3, 5];
       else if (pLen === 4 && mine >= 5) t1 = [4, 5];
       if (!t1) return 0;
-      let b = 0;
-      for (const o of SUITS) if (o !== s) { if (len[o] === 1) b += t1[0]; else if (len[o] === 0) b += t1[1]; }
+      let b = twoSuiter(s);
+      if (pLen >= 5 && mine >= 5) b += mine - 4;     // 5枚以上のサポートは1枚ごとに+1
+      for (const o of SUITS) if (o !== s) { if (len[o] === 1 && !/[KQJ]/.test(hand[o])) b += t1[0]; else if (len[o] === 0) b += t1[1]; }
       return b;
     };
     h.dp = (s, pLen) => h.adj + h.dpBonus(s, pLen); // ダミーポイント（補正込み）
@@ -120,7 +126,7 @@
       const f = len[s] + pAvg;
       const t1 = f >= 9 ? [4, 5] : f >= 8.5 ? [2.5, 4] : f >= 8 ? [1, 3] : null;
       let b = 0;
-      if (t1) for (const o of SUITS) if (o !== s) { if (len[o] === 1) b += t1[0]; else if (len[o] === 0) b += t1[1]; }
+      if (t1) for (const o of SUITS) if (o !== s) { if (len[o] === 1 && !/[KQJ]/.test(hand[o])) b += t1[0]; else if (len[o] === 0) b += t1[1]; }
       return h.adj + b;
     };
     return h;
@@ -229,7 +235,21 @@
   R('', 'P', (h, c) => c.pos === 3 && h.adj < 22 && !opens(h, c), { hcp: [0, 12.49] }, '4番手で3人がパスしている。ゲームの可能性は低く、スペードが短いのでオープンぎりぎりの強さではパス（4番手は12.5点以上か、点数＋スペードの枚数が15以上でオープン）');
   R('', '2C', h => h.hcp >= 22, { hcp: [22, 37] }, '22点以上なのでストロング2♣オープン', 1);
   R('', '2N', h => h.balanced && between(h.hcp, 20, 21), { hcp: [20, 21], ...BAL_SHOWS }, 'バランスハンド20〜21点なので2NTオープン');
-  R('', '1N', h => h.balanced && between(h.hcp, 15, 17), { hcp: [15, 17], ...BAL_SHOWS }, 'バランスハンド15〜17点なので1NTオープン');
+  // 1NTの形：バランスハンド、またはシングルトンがA・K・Qの4441・5431。
+  //   5431は、5枚スートの内容が悪い（AKQが1枚以下かつAKQJ10が3枚以下）か、パートナーがパスしているときだけ
+  const ntShape = (h, c) => {
+    if (h.balanced) return true;
+    const single = SUITS.find(s => h.len[s] === 1);
+    if (!single || !/[AKQ]/.test(h.hand[single])) return false;
+    if (h.pattern === '4441') return true;
+    if (h.pattern !== '5431') return false;
+    const five = SUITS.find(s => h.len[s] === 5);
+    return (h.top3(five) <= 1 && h.top5(five) <= 3) || (c && c.pos >= 2);
+  };
+  R('', '1N', (h, c) => ntShape(h, c) && between(h.hcp, 15, 17), { hcp: [15, 17], ...BAL_SHOWS, S: [1, 5], H: [1, 5], D: [1, 5], C: [1, 5] },
+    h => h.balanced ? 'バランスハンド15〜17点なので1NTオープン'
+      : h.pattern === '4441' ? '15〜17点で、シングルトンがA・K・Qなので1NTオープン'
+      : '15〜17点の5431。シングルトンがA・K・Qで、5枚スートの内容が悪いかパートナーがパスしている（そのスートのスラムを逃す心配が小さい）ので1NTオープン');
   for (const s of ['S', 'H', 'D']) {
     R('', '2' + s, (h, c) => h.len[s] === 6 && between(h.hcp, 5, 10) && !opens(h, c) && goodWeak(h, s) && !(early(c) && sideAce(h, s)) &&
       (s === 'D' || h.len[s === 'S' ? 'H' : 'S'] < 4),
