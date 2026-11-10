@@ -1,0 +1,264 @@
+<title>ビッド練習帳</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Roboto+Slab:wght@500;700&display=swap">
+<style>
+/* レイアウト: スマホ1列。上にタブ、問題カード（オークション→手札→ビッドボックス→理由）の順に縦に積む */
+:root {
+  --bg: #eef2ef;
+  --surface: #ffffff;
+  --surface-2: #e3e9e5;
+  --fg: #17211c;
+  --muted: #5b6a62;
+  --line: #cdd7d1;
+  --accent: #1f6b4a;        /* カードテーブルの緑 */
+  --accent-fg: #ffffff;
+  --red: #c0262d;           /* ♥♦ */
+  --black: #17211c;         /* ♠♣ */
+  --pass: #2e8b57;          /* ビッドボックスのパスカード */
+  --good: #1f7a4a;
+  --warn: #a45a00;
+  --bad: #b3261e;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --font-card: "Roboto Slab", Georgia, "Hiragino Mincho ProN", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101613; --surface: #18211c; --surface-2: #212c26; --fg: #e5ece8; --muted: #9aaba2;
+    --line: #2f3c35; --accent: #4fb784; --accent-fg: #08120d; --red: #ff6b6b; --black: #e5ece8;
+    --pass: #4fb784; --good: #5fcf92; --warn: #f0a94a; --bad: #ff7b72; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101613; --surface: #18211c; --surface-2: #212c26; --fg: #e5ece8; --muted: #9aaba2;
+  --line: #2f3c35; --accent: #4fb784; --accent-fg: #08120d; --red: #ff6b6b; --black: #e5ece8;
+  --pass: #4fb784; --good: #5fcf92; --warn: #f0a94a; --bad: #ff7b72; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.wrap > * { min-width: 0; max-width: 100%; }
+.btn.primary .r, .btn.primary .b { color: inherit; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 560px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  padding-block: 12px 8px; display: flex; flex-direction: column; gap: 8px;
+}
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.brand h1 { font-size: 20px; margin: 0; font-weight: 700; letter-spacing: .02em; }
+.brand .sys { font-size: 12px; color: var(--muted); }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
+.tabs button {
+  border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; padding: 8px 4px; border-radius: 7px; cursor: pointer;
+}
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--fg); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.muted { color: var(--muted); font-size: 13px; }
+.label { font-size: 12px; color: var(--muted); letter-spacing: .06em; }
+select, textarea, input[type="text"] {
+  font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; max-width: 100%;
+}
+textarea { width: 100%; min-height: 64px; resize: vertical; }
+.btn {
+  font: inherit; font-weight: 700; border-radius: 10px; padding: 11px 16px; cursor: pointer; border: 1px solid var(--line);
+  background: var(--surface); color: var(--fg);
+}
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.small { padding: 6px 10px; font-size: 13px; font-weight: 500; }
+.btn.block { width: 100%; }
+
+/* オークション表 */
+.auction { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.auction th { font-size: 12px; color: var(--muted); font-weight: 500; padding: 4px; border-bottom: 1px solid var(--line); }
+.auction th.you { color: var(--accent); font-weight: 700; }
+.auction td { text-align: center; padding: 5px 2px; font-family: var(--font-card); font-size: 17px; }
+.auction td.q { color: var(--accent); font-weight: 700; }
+.auction td.dash { color: var(--muted); }
+.r { color: var(--red); } .b { color: var(--black); }
+
+/* 手札 */
+.hand { display: grid; gap: 2px; }
+.suitrow { display: grid; grid-template-columns: 30px 1fr; align-items: baseline; font-family: var(--font-card); font-size: 24px; line-height: 1.35; }
+.suitrow .sym { font-size: 24px; }
+.suitrow .cards { letter-spacing: .08em; word-break: break-all; }
+.suitrow .void { color: var(--muted); font-size: 18px; }
+.handmeta { font-size: 13px; color: var(--muted); }
+
+/* ビッドボックス */
+.bbox { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.bid {
+  font-family: var(--font-card); font-size: 16px; padding: 8px 0; border-radius: 7px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--fg); cursor: pointer; min-width: 0;
+}
+.bid:disabled { opacity: .22; cursor: default; }
+.bid[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.bid[aria-pressed="true"] .r, .bid[aria-pressed="true"] .b { color: inherit; }
+.bid.pass { grid-column: 1 / -1; background: var(--pass); color: #fff; border-color: var(--pass); font-family: var(--font-body); font-weight: 700; }
+.bid.pass[aria-pressed="true"] { outline: 3px solid var(--fg); outline-offset: 1px; }
+
+/* 結果 */
+.result { border-left: 4px solid var(--line); padding-left: 12px; display: flex; flex-direction: column; gap: 8px; }
+.result.same { border-left-color: var(--good); }
+.result.diff { border-left-color: var(--warn); }
+.pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.pill.same { color: var(--good); } .pill.diff { color: var(--warn); } .pill.ex { color: var(--accent); }
+.bigcall { font-family: var(--font-card); font-size: 22px; font-weight: 700; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.compare > div { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+
+/* 記録 */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--surface-2); border-radius: 8px; padding: 8px; text-align: center; }
+.stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.rec { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rec:first-child { border-top: 0; padding-top: 0; }
+.rec .seq { font-family: var(--font-card); font-size: 14px; word-break: break-word; }
+.rec details summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(--surface-2); padding: 10px; border-radius: 8px; max-height: 340px; margin: 0; }
+.help ol { padding-left: 1.3em; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.help h2 { font-size: 16px; margin: 0; }
+.notice { font-size: 13px; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); }
+.notice.warn { color: var(--warn); }
+@media (prefers-reduced-motion: no-preference) { .bid, .btn { transition: background-color .12s, transform .08s; } .bid:active, .btn:active { transform: scale(.97); } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>ビッド練習帳</h1>
+      <span class="sys">2/1 GF・5枚メジャー・1NT 15–17</span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="tab-quiz" aria-selected="true" data-view="quiz">問題</button>
+      <button role="tab" id="tab-records" aria-selected="false" data-view="records">記録</button>
+      <button role="tab" id="tab-export" aria-selected="false" data-view="export">書き出し</button>
+      <button role="tab" id="tab-help" aria-selected="false" data-view="help">使い方</button>
+    </nav>
+  </header>
+
+  <div id="store-note" class="notice" hidden></div>
+
+  <!-- 問題 -->
+  <section id="view-quiz" class="wrap" style="gap:14px">
+    <div class="card">
+      <div class="row spread">
+        <label class="label" for="filter">出題する場面</label>
+        <select id="filter">
+          <option value="all">すべて</option>
+          <option value="open">オープニング</option>
+          <option value="nt">1NT・2NTオープンの後</option>
+          <option value="major">1♥・1♠オープンの後</option>
+          <option value="minor">1♣・1♦オープンの後</option>
+          <option value="2c">2♣オープンの後</option>
+          <option value="weak">ウィーク2オープンの後</option>
+        </select>
+      </div>
+      <div class="row spread">
+        <span id="board-info" class="muted">問題を作っています…</span>
+        <span class="muted">あなた＝南</span>
+      </div>
+      <table class="auction" aria-label="ここまでのオークション">
+        <thead><tr><th>西</th><th>北（相方）</th><th>東</th><th class="you">南（自分）</th></tr></thead>
+        <tbody id="auction-body"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="row spread"><span class="label">あなたの手札</span><span id="hand-meta" class="handmeta"></span></div>
+      <div id="hand" class="hand"></div>
+    </div>
+
+    <div class="card" id="answer-card">
+      <span class="label">次のビッドは？</span>
+      <div id="bbox" class="bbox" role="group" aria-label="ビッドボックス"></div>
+      <label class="label" for="reason">理由（任意・短くてOK）</label>
+      <textarea id="reason" placeholder="例：12点でスペード5枚、オープニングの強さがある"></textarea>
+      <label class="row muted"><input type="checkbox" id="doubt"> ここまでのAIのビッドに違和感がある</label>
+      <button id="submit" class="btn primary block" disabled>ビッドを選んでください</button>
+    </div>
+
+    <div class="card" id="result-card" hidden>
+      <div id="result"></div>
+      <div class="row">
+        <button id="next" class="btn primary">次の問題</button>
+        <button id="show-partner" class="btn small">パートナーの手を見る</button>
+      </div>
+      <div id="partner" hidden></div>
+    </div>
+  </section>
+
+  <!-- 記録 -->
+  <section id="view-records" class="wrap" hidden>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><b id="st-count">0</b><span>回答した数</span></div>
+        <div class="stat"><b id="st-agree">–</b><span>AIの一致率</span></div>
+        <div class="stat"><b id="st-rule">–</b><span>ルールだけの一致率</span></div>
+      </div>
+      <p class="muted" style="margin:0">一致率は「その問題を除いた残りの回答」でAIに答えさせて計算しています。数字が上がっていけばAIがあなたの考えに近づいている、という目安です。</p>
+      <label class="row muted"><input type="checkbox" id="only-diff" checked> AIと答えが違うものだけ表示</label>
+    </div>
+    <div class="card" id="records"></div>
+  </section>
+
+  <!-- 書き出し -->
+  <section id="view-export" class="wrap" hidden>
+    <div class="card">
+      <p style="margin:0">回答の記録をPBN形式（ブリッジの標準的な記録形式）で表示します。ここで操作しなくても、記録はこのページに自動で保存されています。</p>
+      <div class="row">
+        <button id="copy-pbn" class="btn small">全部コピー</button>
+        <button id="dl-pbn" class="btn small" hidden>ファイルとして保存</button>
+        <span id="copy-msg" class="muted"></span>
+      </div>
+      <pre id="pbn" class="pbn mono" tabindex="0"></pre>
+    </div>
+  </section>
+
+  <!-- 使い方 -->
+  <section id="view-help" class="wrap help" hidden>
+    <div class="card">
+      <h2>問題に答える</h2>
+      <ol>
+        <li>「問題」タブを開くと、手札と、ここまでのオークションが表示されます。あなたは南、パートナーは北です。東西は今はいつもパスします。</li>
+        <li>下のビッドボックスから、次に出すビッドを1つ押します。</li>
+        <li>理由を書きたいときは「理由」の欄に書きます。書かなくても大丈夫です。</li>
+        <li>「この答えで決定」を押すと、AIの答えと理由が表示されます。</li>
+        <li>「次の問題」を押して続けます。</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>AIと答えが違ったとき</h2>
+      <ol>
+        <li>何もしなくても、あなたの答えが記録され、AIは次から「同じ流れで、点数と形がほぼ同じ手」ではあなたの答えに合わせます。</li>
+        <li>AIの答えの方が良かったと思ったら、「AIの答えに変える」を押します。</li>
+        <li>あとから直したいときは「記録」タブで、その問題の「直す」を押します。</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>AIをもっと賢くする（ときどき）</h2>
+      <ol>
+        <li>回答が20〜30問たまったら、Claudeに「ビッド練習帳の回答を取り込んで、ルールを改善して」と頼んでください。</li>
+        <li>Claudeが記録を読み、あなたの答えと理由をもとにルール表を書き直します。</li>
+        <li>書き直したあと、このページの「記録」タブで一致率が上がっているか確認できます。</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>今のAIの約束事</h2>
+      <p class="muted" style="margin:0">5枚メジャー／長いマイナー（3-3は♣、4-4以上は♦）／1NT 15–17／2NT 20–21／ストロング2♣（2♦ウェイティング・2♥スーパーネガティブ0–3点・2♣-2♦-2♥はコキッシュ）／ウィーク2♦♥♠（6枚・5–10点、2NTはオウガスト）／1NTの後：ステイマン・ジャコビー・テキサス／1M-1NTセミフォーシング、1M-3Mは4枚以上のリミットレイズ、2/1はゲームフォーシング／1mの後：インバーテッド・レイズ（GF）、4441・5440のダブルジャンプシフト。ルールにない流れでは「合計点とフィット」で判断します（【汎用判断】と表示）。</p>
+    </div>
+  </section>
+</div>
+
+<script src="engine.js"></script>
+<script src="app.js"></script>
