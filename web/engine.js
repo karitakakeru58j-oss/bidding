@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.2.0';
+  const ENGINE_VERSION = '0.3.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -79,10 +79,18 @@
       shortSuits: () => SUITS.filter(s => len[s] <= 1),
       twoLongest: sorted[0] + sorted[1],
     };
-    // コントロール（A=2, K=1）。境目の点数で「強め／弱め」を決めるのに使う
-    h.controls = [...SUITS.map(s => hand[s]).join('')].reduce((t, c) => t + (c === 'A' ? 2 : c === 'K' ? 1 : 0), 0);
-    // 「強め」= コントロール×3 が点数以上（例：6点ならAか、Kが2枚。12点ならコントロール4以上）
-    h.isStrong = pts => h.controls * 3 >= pts;
+    // 強さの補正（端数）：A=1/3、3枚以上のスートの10=1/3、5枚以上のスートのA・K=1/2、Q・J=1/3
+    let bonus = 0;
+    for (const s of SUITS) {
+      const x = hand[s];
+      for (const c of x) {
+        if (c === 'A') bonus += 1 / 3;
+        if (c === 'T' && x.length >= 3) bonus += 1 / 3;
+        if (x.length >= 5) bonus += (c === 'A' || c === 'K') ? 1 / 2 : (c === 'Q' || c === 'J') ? 1 / 3 : 0;
+      }
+    }
+    h.bonus = bonus;
+    h.adj = hcp + bonus;        // 補正込みの点数（「強め／弱め」を含めた強さ）
     // ダミーポイント：スート s にフィットを示すとき、サイドのショートに点を足す
     //   pLen = パートナーがそのスートに持っていると分かっている最低枚数
     h.dpBonus = (s, pLen) => {
@@ -97,17 +105,7 @@
       for (const o of SUITS) if (o !== s) { if (len[o] === 1) b += t1[0]; else if (len[o] === 0) b += t1[1]; }
       return b;
     };
-    h.dp = (s, pLen) => hcp + h.dpBonus(s, pLen);
-    // 境目つきの範囲判定: lo/hi に 'strong'/'weak' の印を付けられる
-    //   inR(v, [6,'s'], 8) = 強めの6〜8,  inR(v, 11, [12,'w']) = 11〜弱めの12
-    h.inR = (v, lo, hi) => {
-      const [l, lq] = Array.isArray(lo) ? lo : [lo, null];
-      const [u, uq] = Array.isArray(hi) ? hi : [hi, null];
-      if (v < l || v > u) return false;
-      if (v === l && lq === 's' && !h.isStrong(v)) return false;
-      if (v === u && uq === 'w' && h.isStrong(v)) return false;
-      return true;
-    };
+    h.dp = (s, pLen) => h.adj + h.dpBonus(s, pLen); // ダミーポイント（補正込み）
     return h;
   }
 
@@ -180,8 +178,9 @@
   function R(seq, call, test, shows, why, force) {
     RULES.push({ id: 'r' + (++ruleSeq), seq, call, test, shows: shows || null, why, force: force || 0 });
   }
-  const between = (x, a, b) => x >= a && x <= b;
-  const opens = h => h.hcp >= 12 || (h.hcp >= 10 && h.hcp + h.twoLongest >= 20);
+  // a以上・(b+1)未満。補正で端数が付いても「6〜8点」に8.67点が入るようにする
+  const between = (x, a, b) => x >= a && x < b + 1;
+  const opens = h => h.adj >= 11.5; // 補正込みで11.5点以上ならオープン
   const goodWeak = (h, s) => h.top5(s) >= 2 && h.top3(s) >= 1;
 
   // ===== オープニング =====
@@ -189,12 +188,12 @@
   R('', '2N', h => h.balanced && between(h.hcp, 20, 21), { hcp: [20, 21], ...BAL_SHOWS }, 'バランスハンド20〜21点なので2NTオープン');
   R('', '1N', h => h.balanced && between(h.hcp, 15, 17), { hcp: [15, 17], ...BAL_SHOWS }, 'バランスハンド15〜17点なので1NTオープン');
   for (const s of ['S', 'H', 'D']) {
-    R('', '2' + s, h => h.len[s] === 6 && between(h.hcp, 5, 10) && goodWeak(h, s) &&
+    R('', '2' + s, h => h.len[s] === 6 && between(h.hcp, 5, 10) && !opens(h) && goodWeak(h, s) &&
       (s === 'D' || h.len[s === 'S' ? 'H' : 'S'] < 4),
       { hcp: [5, 10], [s]: [6, 6] }, `${JA_SUIT[s]}6枚・5〜10点なのでウィーク2${SYM[s]}`);
   }
   for (const s of ['S', 'H', 'D', 'C']) {
-    R('', '3' + s, h => h.len[s] >= 7 && between(h.hcp, 5, 10) && h.longest() === s,
+    R('', '3' + s, h => h.len[s] >= 7 && between(h.hcp, 5, 10) && !opens(h) && h.longest() === s,
       { hcp: [5, 10], [s]: [7, 13] }, `${JA_SUIT[s]}7枚以上・5〜10点なので3レベルのプリエンプト`);
   }
   R('', '1S', h => opens(h) && h.len.S >= 5 && h.len.S >= h.len.H, { hcp: [11, 21], S: [5, 13] }, 'スペード5枚以上でオープニングの強さがあるので1♠（5枚メジャー）');
@@ -202,7 +201,7 @@
   R('', '1D', h => opens(h) && (h.len.D > h.len.C || (h.len.D === h.len.C && h.len.D >= 4)),
     { hcp: [11, 21], D: [3, 13], S: [0, 4], H: [0, 4] }, '5枚メジャーがなく、ダイヤが長い（4-4以上の同じ長さもダイヤ）ので1♦');
   R('', '1C', h => opens(h), { hcp: [11, 21], C: [2, 13], S: [0, 4], H: [0, 4] }, '5枚メジャーがなく、クラブが長い（3-3はクラブ）ので1♣');
-  R('', 'P', () => true, { hcp: [0, 11] }, 'オープンする強さがないのでパス');
+  R('', 'P', () => true, { hcp: [0, 11] }, 'オープンする強さ（補正込み11.5点）がないのでパス');
 
   // ===== NTオープン後の仕組み（1NT, 2NT, 2♣-2♦-2NT など共通） =====
   function ntSystem(prefix, lo, hi, L, name) {
@@ -344,29 +343,30 @@
     R(o, L.gf, h => h.len[M] >= 4 && dpOf(h) >= 16, { [M]: [4, 13], hcp: [13, 37] },
       `${name}4枚以上のサポートで16点以上（ダミーポイント）なので${callText(L.gf)}（ゲームフォーシングのレイズ）`, 'GF');
     for (const [short, call] of Object.entries(L.spl)) {
-      R(o, call, h => h.len[M] >= 4 && h.inR(dpOf(h), [12, 's'], 15) && splSuit(h, M) === short, { [M]: [4, 13], [short]: [0, 1], hcp: [7, 15] },
+      R(o, call, h => h.len[M] >= 4 && (v => v >= 12.5 && v < 16)(dpOf(h)) && splSuit(h, M) === short, { [M]: [4, 13], [short]: [0, 1], hcp: [7, 15] },
         `${name}4枚以上のサポートで強めの12〜15点（ダミーポイント）、${JA_SUIT[short]}が1枚以下なのでスプリンター（${callText(call)}）`, 'GF');
     }
-    R(o, L.s1215, h => h.len[M] >= 4 && h.inR(dpOf(h), [12, 's'], 15), { [M]: [4, 13], hcp: [12, 15] },
+    R(o, L.s1215, h => h.len[M] >= 4 && (v => v >= 12.5 && v < 16)(dpOf(h)), { [M]: [4, 13], hcp: [12, 15] },
       `${name}4枚以上のサポートで強めの12〜15点（ダミーポイント）、ショートなしなので${callText(L.s1215)}`, 'GF');
-    R(o, L.r1112, h => h.len[M] >= 4 && h.inR(dpOf(h), 11, [12, 'w']), { [M]: [4, 13], hcp: [8, 12] },
+    R(o, L.r1112, h => h.len[M] >= 4 && (v => v >= 11 && v < 12.5)(dpOf(h)), { [M]: [4, 13], hcp: [8, 12] },
       `${name}4枚以上のサポートで11〜弱めの12点（ダミーポイント）なので${callText(L.r1112)}`, 1);
-    R(o, L.r910, h => h.len[M] >= 4 && h.inR(dpOf(h), 9, 10), { [M]: [4, 13], hcp: [6, 10] },
+    R(o, L.r910, h => h.len[M] >= 4 && (v => v >= 9 && v < 11)(dpOf(h)), { [M]: [4, 13], hcp: [6, 10] },
       `${name}4枚以上のサポートで9〜10点（ダミーポイント）なので${callText(L.r910)}`, 1);
-    R(o, L.s68, h => h.len[M] >= 4 && h.inR(dpOf(h), [6, 's'], 8), { [M]: [4, 13], hcp: [3, 8] },
+    R(o, L.s68, h => h.len[M] >= 4 && (v => v >= 6.5 && v < 9)(dpOf(h)), { [M]: [4, 13], hcp: [3, 8] },
       `${name}4枚以上のサポートで強めの6〜8点（ダミーポイント）なので${callText(L.s68)}`, 1);
-    R(o, L.weak, h => h.len[M] >= 4 && h.inR(dpOf(h), 3, [6, 'w']), { [M]: [4, 13], hcp: [0, 6] },
+    R(o, L.weak, h => h.len[M] >= 4 && (v => v >= 3 && v < 6.5)(dpOf(h)), { [M]: [4, 13], hcp: [0, 6] },
       `${name}4枚以上のサポートで3〜弱めの6点（ダミーポイント）なので${callText(L.weak)}（弱いレイズ）`);
   }
-  R('1H', '1S', h => h.len.S >= 4 && h.hcp >= 6 && h.len.H < 4, { S: [4, 13], hcp: [6, 37] }, 'スペード4枚以上・6点以上なので1♠（1巡フォーシング）', 1);
+  R('1H', '1S', h => h.len.S >= 4 && ((h.len.H < 3 && h.adj > 4) || (h.len.H === 3 && h.dp('H', 5) >= 11)), { S: [4, 13], hcp: [4, 37] },
+    h => h.len.H === 3 ? 'スペード4枚以上。ハート3枚のサポートもあるが11点以上なのでまず1♠' : 'スペード4枚以上・4点を超えるので1♠（1巡フォーシング）', 1);
   // --- 3枚サポート: 1NT=3〜5 / 2M=6〜10 / 1NT→3M=11〜12 / 2/1=13以上 ---
-  const pts = (h, c) => h.len[c.b.M] === 3 ? supDp(h, c) : h.hcp; // 2/1の強さ
+  const pts = (h, c) => h.len[c.b.M] === 3 ? supDp(h, c) : h.adj; // 2/1の強さ
   R('1S', '2H', (h, c) => pts(h, c) >= 13 && h.len.H >= 5 && h.len.H >= h.len.D && h.len.H >= h.len.C, { H: [5, 13], hcp: [10, 37] }, 'ハート5枚以上・13点以上なので2/1の2♥（ゲームフォーシング）', 'GF');
   R('1M', '2D', (h, c) => pts(h, c) >= 13 && h.len.D >= 4 && h.len.D > h.len.C, { D: [4, 13], hcp: [10, 37] }, '13点以上でダイヤが長いので2/1の2♦（ゲームフォーシング）', 'GF');
   R('1M', '2C', (h, c) => pts(h, c) >= 13 && h.len.C >= 3, { C: [3, 13], hcp: [10, 37] }, '13点以上なので2/1の2♣（ゲームフォーシング。クラブは3枚のこともある）', 'GF');
   R('1M', '2D', (h, c) => pts(h, c) >= 13 && h.len.D >= 3, { D: [3, 13], hcp: [10, 37] }, '13点以上なので2/1の2♦（ゲームフォーシング）', 'GF');
   R('1M', '2M', (h, c) => h.len[c.b.M] === 3 && between(supDp(h, c), 6, 10), (b) => ({ [b.M]: [3, 3], hcp: [4, 10] }), 'サポート3枚で6〜10点（ダミーポイント）なので2メジャー');
-  R('1M', '1N', (h, c) => h.len[c.b.M] === 3 && (between(supDp(h, c), 11, 12) || between(supDp(h, c), 3, 5)) || between(h.hcp, 6, 12),
+  R('1M', '1N', (h, c) => h.len[c.b.M] === 3 && (between(supDp(h, c), 11, 12) || between(supDp(h, c), 3, 5)) || (h.adj >= 6 && h.adj < 13),
     (b) => ({ hcp: [3, 12], ...(b.M === 'H' ? { S: [0, 3] } : {}) }), (h, c) => h.len[c.b.M] === 3 && supDp(h, c) >= 11
       ? 'サポート3枚で11〜12点（ダミーポイント）なので、まずセミフォーシング1NT（次に3メジャーにジャンプ）'
       : h.len[c.b.M] === 3 && supDp(h, c) <= 5 ? 'サポート3枚で3〜5点（ダミーポイント）なのでセミフォーシング1NT'
@@ -471,21 +471,21 @@
       `${JA_SUIT[m]}4枚以上のサポートがあり、${JA_SUIT[short]}がシングルトン以下の4441/5440形なのでダブルジャンプシフト（ショートを示す）`, 'GF');
   }
   const bidMajorFirst = h => h.len.H >= 4 || h.len.S >= 4;
-  R('1C', '1D', h => h.hcp >= 6 && h.len.D >= 4 && (!bidMajorFirst(h) || (h.len.D >= 5 && h.hcp >= 11 && h.len.D > h.len.H && h.len.D > h.len.S)),
+  R('1C', '1D', h => h.adj >= 6 && h.len.D >= 4 && (!bidMajorFirst(h) || (h.len.D >= 5 && h.hcp >= 11 && h.len.D > h.len.H && h.len.D > h.len.S)),
     { D: [4, 13], hcp: [6, 37] }, 'ダイヤ4枚以上（4枚メジャーがないか、ダイヤがずっと長く強い）なので1♦', 1);
-  R('1m', '1S', h => h.hcp >= 6 && h.len.S >= 4 && (h.len.S > h.len.H || (h.len.S === h.len.H && h.len.S >= 5)), { S: [4, 13], hcp: [6, 37] }, 'スペード4枚以上（ハートより長い）なので1♠', 1);
-  R('1m', '1H', h => h.hcp >= 6 && h.len.H >= 4, { H: [4, 13], hcp: [6, 37] }, 'ハート4枚以上なので1♥（4-4のメジャーはハートから）', 1);
-  R('1m', '1S', h => h.hcp >= 6 && h.len.S >= 4, { S: [4, 13], hcp: [6, 37] }, 'スペード4枚以上なので1♠', 1);
+  R('1m', '1S', h => h.adj > 4 && h.len.S >= 4 && (h.len.S > h.len.H || (h.len.S === h.len.H && h.len.S >= 5)), { S: [4, 13], hcp: [6, 37] }, 'スペード4枚以上（ハートより長い）なので1♠', 1);
+  R('1m', '1H', h => h.adj > 4 && h.len.H >= 4, { H: [4, 13], hcp: [6, 37] }, 'ハート4枚以上なので1♥（4-4のメジャーはハートから）', 1);
+  R('1m', '1S', h => h.adj > 4 && h.len.S >= 4, { S: [4, 13], hcp: [6, 37] }, 'スペード4枚以上なので1♠', 1);
   R('1D', '2C', h => h.hcp >= 12 && h.len.C >= 5, { C: [5, 13], hcp: [12, 37], S: [0, 3], H: [0, 3] }, 'クラブ5枚以上・12点以上なので2♣（2/1ゲームフォーシング）', 'GF');
-  R('1m', '2m', (h, c) => h.hcp >= 13 && h.len[c.b.m] >= (c.b.m === 'C' ? 5 : 4), (b) => ({ [b.m]: [b.m === 'C' ? 5 : 4, 13], hcp: [13, 37], S: [0, 3], H: [0, 3] }),
-    '4枚メジャーがなくマイナーのサポートがあり12点以上なのでインバーテッド・マイナーレイズ（ゲームフォーシング）', 'GF');
-  R('1m', '2H', (h, c) => h.len[c.b.m] >= 4 && h.inR(h.hcp, [10, 's'], 12), (b) => ({ [b.m]: [4, 13], hcp: [10, 12], S: [0, 3], H: [0, 3] }), 'マイナー4枚以上のサポートで強めの10〜12点なので2♥（GFではないレイズ）', 1);
-  R('1m', '2S', (h, c) => h.len[c.b.m] >= 5 && h.inR(h.hcp, 7, [10, 'w']), (b) => ({ [b.m]: [5, 13], hcp: [7, 10], S: [0, 3], H: [0, 3] }), 'マイナー5枚以上のサポートで7〜9点（弱めの10点まで）なので2♠（GFではないレイズ）', 1);
-  R('1m', '3m', (h, c) => h.len[c.b.m] >= 5 && between(h.hcp, 3, 6), (b) => ({ [b.m]: [5, 13], hcp: [3, 6], S: [0, 3], H: [0, 3] }), 'マイナー5枚以上のサポートでとても弱いので3マイナー（プリエンプティブ・レイズ）');
+  R('1m', '2m', (h, c) => h.adj >= 13 && h.len[c.b.m] >= (c.b.m === 'C' ? 5 : 4), (b) => ({ [b.m]: [b.m === 'C' ? 5 : 4, 13], hcp: [13, 37], S: [0, 3], H: [0, 3] }),
+    '4枚メジャーがなくマイナーのサポートがあり13点以上なのでインバーテッド・マイナーレイズ（ゲームフォーシング）', 'GF');
+  R('1m', '2H', (h, c) => h.len[c.b.m] >= 4 && h.adj >= 10.5 && h.adj < 13, (b) => ({ [b.m]: [4, 13], hcp: [10, 12], S: [0, 3], H: [0, 3] }), 'マイナー4枚以上のサポートで強めの10〜12点なので2♥（GFではないレイズ）', 1);
+  R('1m', '2S', (h, c) => h.len[c.b.m] >= 5 && h.adj >= 7 && h.adj < 10.5, (b) => ({ [b.m]: [5, 13], hcp: [7, 10], S: [0, 3], H: [0, 3] }), 'マイナー5枚以上のサポートで7〜9点（弱めの10点まで）なので2♠（GFではないレイズ）', 1);
+  R('1m', '3m', (h, c) => h.len[c.b.m] >= 5 && h.adj >= 3 && h.adj < 7, (b) => ({ [b.m]: [5, 13], hcp: [3, 6], S: [0, 3], H: [0, 3] }), 'マイナー5枚以上のサポートでとても弱いので3マイナー（プリエンプティブ・レイズ）');
   R('1m', '3N', h => h.balanced && between(h.hcp, 13, 15), { hcp: [13, 15], bal: true, S: [0, 3], H: [0, 3] }, '4枚メジャーがないバランスハンド13〜15点なので3NT');
   R('1m', '2N', h => h.balanced && between(h.hcp, 11, 12), { hcp: [11, 12], bal: true, S: [0, 3], H: [0, 3] }, '4枚メジャーがないバランスハンド11〜12点なので2NTで招待');
-  R('1m', '1N', h => between(h.hcp, 6, 10), { hcp: [6, 10], S: [0, 3], H: [0, 3] }, '4枚メジャーがなく6〜10点なので1NT');
-  R('1m', '2m', (h, c) => h.hcp >= 13 && h.len[c.b.m] >= 4, (b) => ({ [b.m]: [4, 13], hcp: [13, 37] }), '強いがほかに適当なビッドがないのでインバーテッド・マイナーレイズ（ゲームフォーシング）', 'GF');
+  R('1m', '1N', h => h.adj >= 6 && h.adj < 11, { hcp: [6, 10], S: [0, 3], H: [0, 3] }, '4枚メジャーがなく6〜10点なので1NT');
+  R('1m', '2m', (h, c) => h.adj >= 13 && h.len[c.b.m] >= 4, (b) => ({ [b.m]: [4, 13], hcp: [13, 37] }), '強いがほかに適当なビッドがないのでインバーテッド・マイナーレイズ（ゲームフォーシング）', 'GF');
   R('1m', 'P', () => true, { hcp: [0, 5] }, '5点以下なのでパス');
 
   // 1m-1M のオープナー
