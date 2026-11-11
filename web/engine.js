@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.8.1';
+  const ENGINE_VERSION = '0.9.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -578,7 +578,7 @@
   R('1m', '2m', (h, c) => h.adj >= 13 && h.len[c.b.m] >= (c.b.m === 'C' ? 5 : 4), (b) => ({ [b.m]: [b.m === 'C' ? 5 : 4, 13], hcp: [13, 37], S: [0, 3], H: [0, 3] }),
     '4枚メジャーがなくマイナーのサポートがあり13点以上なのでインバーテッド・マイナーレイズ（ゲームフォーシング）', 'GF');
   R('1m', '2H', (h, c) => h.len[c.b.m] >= 4 && h.adj >= 10.5 && h.adj < 13, (b) => ({ [b.m]: [4, 13], hcp: [10, 12], S: [0, 3], H: [0, 3] }), 'マイナー4枚以上のサポートで強めの10〜12点なので2♥（GFではないレイズ）', 1);
-  R('1m', '2S', (h, c) => h.len[c.b.m] >= 5 && h.adj >= 7 && h.adj < 10.5, (b) => ({ [b.m]: [5, 13], hcp: [7, 10], S: [0, 3], H: [0, 3] }), 'マイナー5枚以上のサポートで7〜9点（弱めの10点まで）なので2♠（GFではないレイズ）', 1);
+  R('1m', '2S', (h, c) => (h.len[c.b.m] >= 6 || (h.len[c.b.m] === 5 && (SUITS.some(s => s !== c.b.m && h.len[s] >= 5) || SUITS.some(s => h.len[s] <= 1)))) && h.adj >= 7 && h.adj < 10.5, (b) => ({ [b.m]: [5, 13], hcp: [7, 10], S: [0, 3], H: [0, 3] }), 'マイナー6枚以上（5枚なら5-5や1345のような形）のサポートで7〜9点（弱めの10点まで）なので2♠（GFではないレイズ）', 1);
   R('1m', '3m', (h, c) => h.len[c.b.m] >= 5 && h.adj >= 3 && h.adj < 7, (b) => ({ [b.m]: [5, 13], hcp: [3, 6], S: [0, 3], H: [0, 3] }), 'マイナー5枚以上のサポートでとても弱いので3マイナー（プリエンプティブ・レイズ）');
   R('1m', '3N', h => h.balanced && between(h.hcp, 13, 15), { hcp: [13, 15], bal: true, S: [0, 3], H: [0, 3] }, '4枚メジャーがないバランスハンド13〜15点なので3NT');
   R('1m', '2N', h => h.balanced && between(h.hcp, 11, 12), { hcp: [11, 12], bal: true, S: [0, 3], H: [0, 3] }, '4枚メジャーがないバランスハンド11〜12点なので2NTで招待');
@@ -599,9 +599,9 @@
   R('1m 1M', '3m', (h, c) => h.len[c.b.m] >= 6 && between(h.hcp, 15, 17), (b) => ({ [b.m]: [6, 13], hcp: [15, 17] }), 'マイナー6枚以上・15〜17点なので3マイナー');
   R('1D 1M', '3C', h => h.len.C >= 4 && h.hcp >= 18, { C: [4, 13], hcp: [18, 21] }, '18点以上でクラブ4枚以上なのでジャンプシフト（ゲームフォーシング）', 'GF');
   R('1D 1M', '2C', h => h.len.C >= 4, { C: [4, 13], hcp: [11.5, 17.99] }, 'クラブ4枚以上のアンバランスハンドなので2♣（低いランクのニュースート：15点まで、強い15〜17点は3回目に招待）');
-  R('1m 1M', '2m', (h, c) => h.len[c.b.m] >= 5, (b) => ({ [b.m]: [5, 13], hcp: [11, 14] }), 'マイナーが長いので2マイナー');
+  R('1m 1M', '2m', (h, c) => h.len[c.b.m] >= 6, (b) => ({ [b.m]: [6, 13], hcp: [11, 14] }), 'マイナー6枚以上なので2マイナー（2mのリビッドは6枚以上）');
   R('1m 1M', '2M', (h, c) => h.len[c.b.M] >= 3 && h.hcp < 15, null, 'メジャー3枚サポートで形が悪いので2メジャー');
-  R('1m 1M', '1N', h => h.hcp < 15, (b) => ({ hcp: [11, 14] }), 'ほかに適当なビッドがないので1NT');
+  R('1m 1M', '1N', h => h.hcp < 15, (b) => ({ hcp: [11, 14] }), 'ほかに適当なビッドがないので1NT（6枚以上を誤魔化すよりバランスハンドを誤魔化す方が良い）');
   R('1m 1M', '2N', () => true, (b) => ({ hcp: [18, 19] }), '18点以上でほかに適当なビッドがないので2NT');
   // 1m-1M-2m のレスポンダー（2のレベルのニュースートはインビテーション以上）
   //   1♣-1♠-2♣：2♦＝インビ以上（♦と無関係・♥4枚なし）／ 2♥＝♥ちょうど4枚・インビ以上 ／ 2♠＝6枚以上のサインオフ
@@ -627,6 +627,11 @@
       if (t.sign && h.len[M] >= 6) return { call: t.sign, why: `${JA_SUIT[M]}6枚以上で弱い${h.len[m] <= 1 ? `（パートナーの${JA_SUIT[m]}に1枚以下なので低く評価）` : ''}ので${callText(t.sign)}（サインオフ）` };
       return null;
     }
+    if (v >= 13 && m === 'C' && M === 'H') {
+      // 1♣-1♥-2♣：GFは2♦からでも2♠からでも示せる。ストッパーがある方、両方あるなら低い方
+      const call = !h.stopper('D') && h.stopper('S') ? '2S' : '2D';
+      return { call, why: `ゲームの点数がある。GFは2♦でも2♠でも示せるので、${h.stopper('D') && h.stopper('S') ? '両方ストッパーがあるので低い方の2♦' : `ストッパーがある${callText(call)}`}` };
+    }
     if (v >= 13 && t.gf) return { call: t.gf, why: `ゲームの点数があるので${callText(t.gf)}（スートに関係ないゲームフォーシング）` };
     if (v >= 13 && t.inv) return { call: t.inv, why: `ゲームの点数があるので、まずインビテーション以上の${callText(t.inv)}（スートに関係ない）から` };
     const X = SUITS.find(x => x !== M && x !== m && h.len[x] >= 5);
@@ -644,6 +649,14 @@
     if (isBid(call) && call[0] === '3' && call[1] !== 'N' && call[1] !== b.m && call[1] !== b.M) return { shows: { [b.M]: [5, 13], [call[1]]: [5, 13], hcp: [10.5, 12.99] } };
     return null;
   });
+  // 1x-1M-2M-3M（招待）：オープナーは上の方（ダミーポイント13点以上）なら受ける。パートナーがパス済みかどうかは考えない
+  R(seq => seq.length === 4 && seq[0][0] === '1' && /^1[HS]$/.test(seq[1]) && seq[2] === '2' + seq[1][1] && seq[3] === '3' + seq[1][1] ? { M: seq[1][1] } : null,
+    '4M', (h, c) => h.dp(c.b.M, 4) >= 13, null, (h, c) => `招待に対して上の方（ダミーポイント${fmt(h.dp(c.b.M, 4))}点）なのでゲーム`);
+  R(seq => seq.length === 4 && seq[0][0] === '1' && /^1[HS]$/.test(seq[1]) && seq[2] === '2' + seq[1][1] && seq[3] === '3' + seq[1][1] ? { M: seq[1][1] } : null,
+    'P', () => true, null, '招待に対して最低点なのでパス');
+  // 1m-x-2m-4m：♣のサポートの招待は3mがあるので、4mはスラムトライ（パスできない）
+  R(seq => seq.length === 3 && /^1[CD]$/.test(seq[0]) && seq[1][0] === '1' && seq[2] === '2' + seq[0][1] ? { m: seq[0][1] } : null,
+    '4m', () => false, (b) => ({ [b.m]: [3, 13], agree: b.m, interest: true }), 'スラムトライ', 'GF');
   // オープナー：インビ以上・GFの人工的なビッドに対して、パートナーのMの3枚サポートを最優先で示す
   RD(seq => {
     if (seq.length !== 4 || !/^1[CD]$/.test(seq[0]) || !/^1[HS]$/.test(seq[1]) || seq[2] !== '2' + seq[0][1]) return null;
@@ -657,10 +670,12 @@
   // フィットが決まった後（ジャンプレイズの後など）、別のスートのビッドはより上を目指す：ノンジャンプの4のレベルはコントロール
   RD(seq => seq.length === 3 && /^1[CDH]$/.test(seq[0]) && /^1[HS]$/.test(seq[1]) && seq[2] === '3' + seq[1][1] ? { M: seq[1][1] } : null, (h, c) => {
     const { M } = c.b;
-    if (!slamPossible(h, c)) return null;
+    // ジャンプレイズ（15〜17）を受けて、合計が29点ぐらいあればコントロールでスラムトライ
+    const p = c.partner.hcp;
+    if (h.adj + (p[0] + Math.min(p[1], p[0] + 8)) / 2 < 29) return null;
     for (let r = rankOf('3' + M) + 1; r < rankOf('4' + M); r++) {
       const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
-      if (s !== 'N' && s !== M && hasControl(h, s)) return { call, why: `フィットが決まり、2人の強さを合わせるとスラムの可能性があるので${callText(call)}：${JA_SUIT[s]}のコントロールを示す` };
+      if (s !== 'N' && s !== M && hasControl(h, s, c)) return { call, why: `フィットが決まり、2人の強さを合わせるとスラムの可能性があるので${callText(call)}：${JA_SUIT[s]}のコントロールを示す` };
     }
     return null;
   }, (call, b, before) => isBid(call) && call[1] !== 'N' && call[1] !== b.M && rankOf(call) < rankOf('4' + b.M)
@@ -671,7 +686,7 @@
   R('1C 1D', '1N', h => h.balanced && h.hcp < 15, { hcp: [11.5, 14.99], bal: true }, 'バランスハンドの最低点なので1NT');
   R('1C 1D', '2N', h => h.balanced && between(h.hcp, 18, 19), { hcp: [18, 19], bal: true }, 'バランスハンド18〜19点なので2NT');
   R('1C 1D', '2D', h => h.len.D >= 4, { D: [4, 13] }, 'ダイヤ4枚以上のサポートがあるので2♦');
-  R('1C 1D', '2C', h => h.len.C >= 5, { C: [5, 13] }, 'クラブが長いので2♣');
+  R('1C 1D', '2C', h => h.len.C >= 6, { C: [6, 13] }, 'クラブ6枚以上なので2♣（2mのリビッドは6枚以上）');
   R('1C 1D', '1N', () => true, null, 'ほかに適当なビッドがないので1NT');
   // 1m-1NT, 1m-2NT, 1m-3NT, 1m-3m
   R('1C 1N', '2C', h => h.len.C >= 4 && h.adj < 18, null, 'パートナーは♣4枚以上を持っているので、1NTより2♣の方がプレイしやすい');
@@ -1070,6 +1085,8 @@
     const inv = h.len[Y] >= 6 ? h.dpLong(Y, 2.5) : h.adj; // 6枚以上ならパートナーの平均2.5枚と合わせてショートを加点
     if (inv >= 10.5) return { call: '2C', why: `${h.len[Y] >= 6 ? `${JA_SUIT[Y]}6枚以上（ショートを加点して${fmt(inv)}点）` : '11〜12点'}なので2♣（2ウェイ・チェックバック。オープナーは必ず2♦と答える）` };
     if (h.len.D >= 6 && h.adj < 8) return { call: '2C', why: 'ダイヤ6枚以上でとても弱いので、2♣（2♦を強制）を使って2♦で止める' };
+    const O = Y === 'S' ? 'H' : null; // ♠5枚・♥4枚以上の弱い手の2♥（低いランクへ下りるサインオフ）
+    if (O && h.len[Y] >= 5 && h.len[O] >= 4 && legal('2' + O, c.seq)) return { call: '2' + O, why: `${JA_SUIT[Y]}5枚・${JA_SUIT[O]}4枚以上の弱い手なので2${SYM[O]}（5-4以上のサインオフ）` };
     if (h.len[Y] >= 6 && Y !== 'D') return { call: '2' + Y, why: `${JA_SUIT[Y]}6枚以上で弱いので2${SYM[Y]}で止める` };
     return { call: 'P', why: 'ゲームの可能性がないのでパス' };
   }, (call, b) => {
@@ -1306,7 +1323,16 @@
   function isMaj(s) { return s === 'H' || s === 'S'; }
   function gameCall(T) { return gameLevel(T) + T; }
   function keycards(h, T) { return SUITS.filter(s => h.hand[s].includes('A')).length + (h.hand[T].includes('K') ? 1 : 0); }
-  function strengthFor(h, T, c) { return h.dp(T, c.partner[T][0]); }
+  // パートナーのスートのショートは加点しない
+  function strengthFor(h, T, c) {
+    let v = h.dp(T, c.partner[T][0]);
+    const base = h.dpBonus(T, c.partner[T][0]) > 0;
+    if (base) for (const s of SUITS) if (s !== T && c.partner[s][0] >= 3 && h.len[s] <= 1) {
+      const t = h.dp(T, c.partner[T][0]) - h.adj; // ショートの点の目安を戻す
+      v -= h.len[s] === 0 ? Math.min(t, 3) : Math.min(t, 1);
+    }
+    return v;
+  }
   function motivation(h, T, c) {
     const spare = Math.max(0, Math.floor((strengthFor(h, T, c) - c.self.hcp[0]) / 2));
     return keycards(h, T) + spare;
@@ -1327,7 +1353,10 @@
     if (!legal('2N', seq)) return '3N';
     return h.adj >= 15 && h.adj < 18 ? '3N' : '2N';
   }
-  function hasControl(h, s) { return h.hand[s].includes('A') || h.hand[s].includes('K') || h.len[s] <= 1; }
+  function hasControl(h, s, c) {
+    if (h.hand[s].includes('A') || h.hand[s].includes('K')) return true;
+    return h.len[s] <= 1 && !(c && c.partner && c.partner[s][0] >= 3); // パートナーのスートのショートはコントロールにしない
+  }
   function freshSlam() {
     return { T: null, active: false, interest: [0, 0], ctrl: [[], []], deny: [[], []], rk: null, ntSign: false, agreeIdx: -1, splShort: null };
   }
@@ -1401,8 +1430,8 @@
     const allowed = mot >= 5 ? 99 : mot >= 3 ? 2 : mot >= 1 ? 1 : 0;
     const pMot = [0, 1, 3, 5][Math.min(3, st.interest[pa])];
     const side = SUITS.filter(s => s !== T);
-    const covered = side.every(s => hasControl(h, s) || st.ctrl[pa].includes(s));
-    const hole = side.find(s => !hasControl(h, s) && st.deny[pa].includes(s));
+    const covered = side.every(s => hasControl(h, s, c) || st.ctrl[pa].includes(s));
+    const hole = side.find(s => !hasControl(h, s, c) && st.deny[pa].includes(s));
     const motTxt = `自分のやる気${mot}・パートナーのやる気${pMot}以上`;
     if (covered && mot + pMot >= 6) {
       if (legal('4N', seq)) return { call: '4N', why: `全スートにコントロールがあり、2人のやる気の合計が6以上（${motTxt}）なので4NT（RKCB：キーカードを聞く）` };
@@ -1419,7 +1448,7 @@
     for (let r = lb ? rankOf(lb) + 1 : 0; r < rankOf(G); r++) {
       const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
       if (s === 'N' || s === T || st.ctrl[me].includes(s)) continue;
-      if (hasControl(h, s)) return { call, why: `スラムに興味がある（${motTxt}）ので${callText(call)}：${JA_SUIT[s]}のコントロール（A・K・ショートのどれか）を示す` };
+      if (hasControl(h, s, c)) return { call, why: `スラムに興味がある（${motTxt}）ので${callText(call)}：${JA_SUIT[s]}のコントロール（A・K・ショートのどれか）を示す` };
     }
     return signoff(`ゲームより下でコントロールを示せるビッドがないので${callText(G)}で止める`);
   }
