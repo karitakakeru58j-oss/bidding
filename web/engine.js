@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.5.3';
+  const ENGINE_VERSION = '0.6.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -73,7 +73,7 @@
       top5: s => count(s, 'AKQJT'),
       stopper: s => {
         const x = hand[s], n = x.length;
-        return x.includes('A') || (x.includes('K') && n >= 2) || (x.includes('Q') && n >= 3) || (x.includes('J') && n >= 4);
+        return x.includes('A') || (x.includes('K') && n >= 2) || (x.includes('Q') && n >= 3) || n >= 4; // A／Kの2枚以上／Qの3枚以上／4枚以上
       },
       longest: () => SUITS.slice().sort((a, b) => len[b] - len[a] || STRAINS.indexOf(b) - STRAINS.indexOf(a))[0],
       shortSuits: () => SUITS.filter(s => len[s] <= 1),
@@ -507,9 +507,9 @@
   R('1H 1S', '3C', h => h.len.C >= 4 && h.hcp >= 18, { C: [4, 13], hcp: [18, 21] }, '18点以上でクラブ4枚以上なのでジャンプシフト（ゲームフォーシング）', 'GF');
   R('1H 1S', '3D', h => h.len.D >= 4 && h.hcp >= 18, { D: [4, 13], hcp: [18, 21] }, '18点以上でダイヤ4枚以上なのでジャンプシフト（ゲームフォーシング）', 'GF');
   R('1H 1S', '2H', h => h.len.H >= 6, { H: [6, 13], hcp: [11, 14] }, 'ハート6枚以上なので2♥');
-  R('1H 1S', '2D', h => h.len.D >= 4 && h.len.D > h.len.C, { D: [4, 13], hcp: [11.5, 17.99] }, 'ダイヤ4枚以上なので2♦（3つ目のスート＝アンバランスハンド）');
-  R('1H 1S', '2C', h => h.len.C >= 4, { C: [4, 13], hcp: [11.5, 17.99] }, 'クラブ4枚以上なので2♣（3つ目のスート＝アンバランスハンド）');
-  R('1H 1S', '2D', h => h.len.D >= 4, { D: [4, 13], hcp: [11.5, 17.99] }, 'ダイヤ4枚以上なので2♦（3つ目のスート＝アンバランスハンド）');
+  R('1H 1S', '2D', h => h.len.D >= 4 && h.len.D > h.len.C, { D: [4, 13], hcp: [11.5, 17.99] }, 'ダイヤ4枚以上なので2♦（低いランクのニュースート：15点まで、強い15〜17点は3回目に招待）');
+  R('1H 1S', '2C', h => h.len.C >= 4, { C: [4, 13], hcp: [11.5, 17.99] }, 'クラブ4枚以上なので2♣（低いランクのニュースート：15点まで、強い15〜17点は3回目に招待）');
+  R('1H 1S', '2D', h => h.len.D >= 4, { D: [4, 13], hcp: [11.5, 17.99] }, 'ダイヤ4枚以上なので2♦（低いランクのニュースート：15点まで、強い15〜17点は3回目に招待）');
   R('1H 1S', '2H', () => true, null, 'ほかに適当なビッドがないので2♥');
 
   // 2/1 のあとのオープナー
@@ -562,7 +562,8 @@
   R('1C 1S', '2H', h => h.len.H >= 4 && h.hcp >= 16, { H: [4, 13], C: [5, 13], hcp: [16, 21] }, 'ハート4枚・16点以上なのでリバース（2♥）', 1);
   R('1C 1M', '2D', h => h.len.D >= 4 && h.hcp >= 16, { D: [4, 13], C: [5, 13], hcp: [16, 21] }, 'ダイヤ4枚・16点以上なのでリバース（2♦）', 1);
   R('1m 1M', '3m', (h, c) => h.len[c.b.m] >= 6 && between(h.hcp, 15, 17), (b) => ({ [b.m]: [6, 13], hcp: [15, 17] }), 'マイナー6枚以上・15〜17点なので3マイナー');
-  R('1D 1M', '2C', h => h.len.C >= 4, { C: [4, 13], hcp: [11.5, 17.99] }, 'クラブ4枚以上のアンバランスハンドなので2♣（3つ目のスート）');
+  R('1D 1M', '3C', h => h.len.C >= 4 && h.hcp >= 18, { C: [4, 13], hcp: [18, 21] }, '18点以上でクラブ4枚以上なのでジャンプシフト（ゲームフォーシング）', 'GF');
+  R('1D 1M', '2C', h => h.len.C >= 4, { C: [4, 13], hcp: [11.5, 17.99] }, 'クラブ4枚以上のアンバランスハンドなので2♣（低いランクのニュースート：15点まで、強い15〜17点は3回目に招待）');
   R('1m 1M', '2m', (h, c) => h.len[c.b.m] >= 5, (b) => ({ [b.m]: [5, 13], hcp: [11, 14] }), 'マイナーが長いので2マイナー');
   R('1m 1M', '2M', (h, c) => h.len[c.b.M] >= 3 && h.hcp < 15, null, 'メジャー3枚サポートで形が悪いので2メジャー');
   R('1m 1M', '1N', h => h.hcp < 15, (b) => ({ hcp: [11, 14] }), 'ほかに適当なビッドがないので1NT');
@@ -643,6 +644,159 @@
       ? `${JA_SUIT[T]}のフィットを示す。ゲームフォーシング中で、スラムへのやる気が${mot}（1以上）なので安く${callText(call)}（スラムに興味あり）`
       : `${JA_SUIT[T]}のフィットを示す。スラムへのやる気が0なので${callText(call)}（スラムに興味なし）`;
   };
+
+  // ===== オープナーの2回目：1stスーツより低いランクのニュースートとリバース =====
+  //   ランク：♣<♦<♥<♠
+  //   低いランクのニュースート：ノンジャンプ＝15点まで（強い15〜17は3回目に招待）、ジャンプ＝18点以上（GF）
+  //   高いランクのニュースート（2のレベル）＝リバース：16点以上
+  const RANK = s => 'CDHS'.indexOf(s);
+  // [1A, 1B(スートか1NT), 2Z]：Zが1stスーツより低いランクのノンジャンプ
+  function lowSuitSeq(seq) {
+    if (seq.length !== 3 || !seq.every(isBid)) return null;
+    const [o1, r1, o2] = seq;
+    if (o1[0] !== '1' || r1[0] !== '1' || o2[0] !== '2') return null;
+    const A = o1[1], B = r1[1], Z = o2[1];
+    if (A === 'N' || Z === 'N' || Z === A || Z === B || RANK(Z) >= RANK(A)) return null;
+    if (o2 !== cheapest(Z, [o1, r1])) return null;
+    return { A, B, Z };
+  }
+  // [1A, 1B(スート), 2Z]：Zが1stスーツより高いランクのノンジャンプ（リバース）
+  function revSeq(seq) {
+    if (seq.length !== 3 || !seq.every(isBid)) return null;
+    const [o1, r1, o2] = seq;
+    if (o1[0] !== '1' || r1[0] !== '1' || o2[0] !== '2') return null;
+    const A = o1[1], B = r1[1], Z = o2[1];
+    if ([A, B, Z].includes('N') || new Set([A, B, Z]).size !== 3 || RANK(Z) <= RANK(A)) return null;
+    if (o2 !== cheapest(Z, [o1, r1])) return null;
+    const W = SUITS.find(s => ![A, B, Z].includes(s));
+    const wCall = cheapest(W, seq);
+    const lowRelay = rankOf(wCall) < rankOf('2N') ? wCall : '2N';
+    const highRelay = lowRelay === '2N' ? wCall : '2N';
+    return { A, B, Z, W, lowRelay, highRelay };
+  }
+  // [1A, 1B(スート), 3Z]：低いランクのニュースートへのジャンプ（18点以上、GF）
+  function jumpShiftSeq(seq) {
+    if (seq.length !== 3 || !seq.every(isBid)) return null;
+    const [o1, r1, o2] = seq;
+    if (o1[0] !== '1' || r1[0] !== '1' || o2[0] !== '3') return null;
+    const A = o1[1], B = r1[1], Z = o2[1];
+    if ([A, B, Z].includes('N') || new Set([A, B, Z]).size !== 3 || RANK(Z) >= RANK(A)) return null;
+    if (levelOf(cheapest(Z, [o1, r1])) !== 2) return null;
+    return { A, B, Z, W: SUITS.find(s => ![A, B, Z].includes(s)) };
+  }
+  const ext = (base, n, tail) => seq => {
+    if (seq.length !== n + tail.length) return null;
+    const b = base(seq.slice(0, n));
+    if (!b) return null;
+    for (let i = 0; i < tail.length; i++) {
+      const t = tail[i], c = seq[n + i];
+      if (typeof t === 'function' ? !t(c, b) : (t !== '*' && t !== c)) return null;
+    }
+    return b;
+  };
+
+  // --- 低いランクのニュースートの後：オープナーの3回目（強い15〜17点は招待） ---
+  RD(ext(lowSuitSeq, 3, [(c, b) => isBid(c) && levelOf(c) === 2 && (c[1] === b.A || c[1] === b.B) && c !== '2N']), (h, c) => {
+    const { A, B } = c.b, r = c.seq[3];
+    if (h.adj < 15.5) return { call: 'P', why: '2回目のノンジャンプのニュースートは15点までで、こちらは弱い方なのでパス' };
+    if (h.adj >= 18) return null;
+    if (r[1] === A) return { call: '3' + A, why: `強い15〜17点なので、パートナーのプリファレンスを3${SYM[A]}に上げて招待` };
+    if (h.len[B] >= 2) return { call: '3' + B, why: `強い15〜17点で、パートナーの${JA_SUIT[B]}に2枚以上あるので3${SYM[B]}で招待` };
+    return { call: '2N', why: '強い15〜17点なので2NTで招待' };
+  }, (call, b, before) => {
+    if (call === '3' + b.A || call === '3' + b.B || call === '2N') return { shows: { hcp: [15.5, 17.99] } };
+    if (call === 'P') return { shows: { hcp: [11.5, 15.49] } };
+    return null;
+  });
+
+  // --- ジャンプ（18点以上・GF）の後のレスポンダー ---
+  RD(jumpShiftSeq, (h, c) => {
+    const { A, B, Z, W } = c.b, s = c.seq;
+    if (h.len[A] >= 3) return { call: cheapest(A, s), why: `${JA_SUIT[A]}（オープナーの1stスーツ）に3枚以上のサポートがあるので3のレベルで示す` };
+    if (h.len[B] >= 5) return { call: cheapest(B, s), why: `${JA_SUIT[B]}が5枚以上あるのでリビッド` };
+    if (h.stopper(W)) return { call: '3N', why: `${JA_SUIT[W]}（アンビッドスート）にストッパーがあるので3NT` };
+    if (h.len[Z] >= 4 && rankOf(cheapest(Z, s)) < rankOf('3N')) return { call: cheapest(Z, s), why: `${JA_SUIT[Z]}に4枚以上のサポートがあるのでレイズ` };
+    const w = cheapest(W, s);
+    if (rankOf(w) < rankOf('3N')) return { call: w, why: `3NTを目指しているが、${JA_SUIT[W]}のストッパーがなくて困っているので${callText(w)}（ストッパーアスキング）` };
+    return { call: '3N', why: 'ほかに示すものがないので3NT' };
+  }, (call, b) => {
+    if (!isBid(call)) return null;
+    const t = call[1];
+    if (t === b.A) return { shows: { [b.A]: [3, 13], agree: b.A } };
+    if (t === b.B) return { shows: { [b.B]: [5, 13] } };
+    if (t === b.Z) return { shows: { [b.Z]: [4, 13], agree: b.Z } };
+    if (call === '3N') return { shows: { stop: [b.W] } };
+    if (t === b.W) return { shows: {} };
+    return null;
+  });
+  RD(ext(jumpShiftSeq, 3, [(c, b) => c === cheapest(b.W, [])  || (isBid(c) && c[1] === b.W)]), (h, c) => {
+    const { W } = c.b;
+    if (h.stopper(W)) return { call: cheapest('N', c.seq), why: `パートナーは${JA_SUIT[W]}のストッパーを聞いている。ストッパーがあるのでNT` };
+    return null;
+  }, (call, b) => call[1] === 'N' ? { shows: { stop: [b.W] } } : null);
+
+  // --- リバースの後のレスポンダー ---
+  //   1stスーツ＝3枚以上サポートFG ／ 2ndスーツのレイズ＝4枚以上サポートFG ／ 自分の1stスーツ＝5枚以上・8点以下
+  //   2NTと4つ目のスートのうち低い方＝8点以下、高い方＝強い8点以上（GF）
+  RD(revSeq, (h, c) => {
+    const { A, B, Z, W, lowRelay, highRelay } = c.b, s = c.seq;
+    if (h.adj < 8.5) {
+      if (h.len[B] >= 5) return { call: cheapest(B, s), why: `${JA_SUIT[B]}5枚以上で8点以下なのでリビッド` };
+      return { call: lowRelay, why: `8点以下なので、2NTと${JA_SUIT[W]}のうち低い方の${callText(lowRelay)}` };
+    }
+    if (h.len[A] >= 3) return { call: cheapest(A, s), why: `${JA_SUIT[A]}（オープナーの1stスーツ）に3枚以上のサポートがあり、強い8点以上なのでゲームフォーシング` };
+    if (h.len[Z] >= 4) return { call: cheapest(Z, s), why: `${JA_SUIT[Z]}（オープナーの2ndスーツ）に4枚以上のサポートがあるのでレイズ（ゲームフォーシング）` };
+    return { call: highRelay, why: `強い8点以上なので、2NTと${JA_SUIT[W]}のうち高い方の${callText(highRelay)}（ゲームフォーシング）` };
+  }, (call, b) => {
+    if (!isBid(call)) return null;
+    if (call === b.lowRelay) return { shows: { hcp: [0, 8.49] }, force: 1 };
+    if (call === b.highRelay) return { shows: { hcp: [8.5, 37] }, force: 'GF' };
+    if (call[1] === b.B) return { shows: { [b.B]: [5, 13], hcp: [0, 8.49] }, force: 1 };
+    if (call[1] === b.A) return { shows: { [b.A]: [3, 13], hcp: [8.5, 37], agree: b.A }, force: 'GF' };
+    if (call[1] === b.Z) return { shows: { [b.Z]: [4, 13], hcp: [8.5, 37], agree: b.Z }, force: 'GF' };
+    return null;
+  });
+  // --- リバースの後のオープナーの3回目（レスポンダーの答えはパスできない） ---
+  RD(ext(revSeq, 3, ['*']), (h, c) => {
+    const { A, B, Z, W, lowRelay, highRelay } = c.b, s = c.seq, r = s[3];
+    const weak = r === lowRelay || (isBid(r) && r[1] === B);
+    if (weak) {
+      const partnerFive = isBid(r) && r[1] === B;
+      if (h.adj < 18) {
+        if (partnerFive && h.len[B] >= 3) return { call: cheapest(B, s), why: `パートナーは${JA_SUIT[B]}5枚以上で8点以下。18点ないので${JA_SUIT[B]}をレイズ` };
+        if (h.len[A] < 6 && legal('2N', s)) return { call: '2N', why: 'パートナーは8点以下。18点ないので2NT' };
+        const a3 = cheapest(A, s);
+        return { call: a3, why: `パートナーは8点以下。18点ないので${callText(a3)}（3のレベルの1stスーツ）` };
+      }
+      if (partnerFive && h.len[B] >= 3 && isMaj(B)) return { call: '4' + B, why: `パートナーは${JA_SUIT[B]}5枚以上。18点以上あるのでゲーム` };
+      if (h.stopper(W)) return { call: '3N', why: `18点以上あり、${JA_SUIT[W]}（アンビッドスート）にストッパーがあるので3NT` };
+      const z3 = cheapest(Z, s);
+      return { call: z3, why: `18点以上あるので${callText(z3)}（ゲームフォーシング）` };
+    }
+    if (r === highRelay) {
+      if (h.stopper(W)) return { call: cheapest('N', s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[W]}（アンビッドスート）にストッパーがあるのでNT` };
+      if (h.len[B] >= 3) return { call: cheapest(B, s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[W]}のストッパーはないが、${JA_SUIT[B]}に3枚あるので示す` };
+      if (h.len[A] >= 6) return { call: cheapest(A, s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[A]}6枚以上` };
+      if (h.len[Z] >= 5) return { call: cheapest(Z, s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[Z]}5枚以上` };
+      const w = cheapest(W, s);
+      if (rankOf(w) < rankOf('3N')) return { call: w, why: `パートナーは強い8点以上（GF）。${JA_SUIT[W]}のストッパーがないので${callText(w)}（ストッパーアスキング）` };
+    }
+    return null;
+  }, (call, b, before) => {
+    const r = before[3], weak = r === b.lowRelay || (isBid(r) && r[1] === b.B);
+    if (!isBid(call)) return null;
+    if (weak) {
+      if (call === '2N' || call === cheapest(b.A, before) || (call === cheapest(b.B, before) && levelOf(call) <= 3)) return { shows: { hcp: [16, 17.99] } };
+      return { shows: { hcp: [18, 21.99] }, force: 'GF' };
+    }
+    if (r === b.highRelay) {
+      if (call[1] === 'N') return { shows: { stop: [b.W] } };
+      if (call[1] === b.B) return { shows: { [b.B]: [3, 3] } };
+      return { shows: {} };
+    }
+    return null;
+  });
+  RD(ext(revSeq, 3, ['*', '*']), (h, c) => !c.gf && !c.forcing ? { call: 'P', why: 'オープナーは18点ないことを示したので、弱いこちらはパス' } : null, () => null);
 
   // 2/1の後、レスポンダーがオープナーのメジャーへのサポートを示す
   //   3枚以上 → 3M（スラムに興味あり）か4M（興味なし）の2択
@@ -961,6 +1115,15 @@
     }
     // ルールにないビッド：自然なビッドとして解釈する
     const shows = {};
+    if (isBid(call) && call[1] !== 'N' && ctx.gf && rankOf(call) < rankOf('3N')) {
+      // GFでのアンビッドスート：2スートしか出ていなければストッパーショーイング、3スートならストッパーアスキング
+      const bid = new Set(seqBefore.filter(c => isBid(c) && c[1] !== 'N').map(c => c[1]));
+      if (!bid.has(call[1])) {
+        const unbid = SUITS.filter(x => !bid.has(x));
+        if (unbid.length === 2) return { shows: { stop: [call[1]] }, force: 0, rule: null };
+        if (unbid.length === 1) return { shows: {}, force: 0, rule: null };
+      }
+    }
     if (isBid(call) && call[1] !== 'N') {
       const s = call[1];
       const mine = ctx.self, pard = ctx.partner;
@@ -981,7 +1144,7 @@
     for (let i = 0; i < seq.length; i++) {
       const me = i % 2;
       if (slam.active) { slamInterpret(slam, seq.slice(0, i), seq[i], me); forcing = false; continue; }
-      const r = interpret(seq.slice(0, i), seq[i], { self: know[me], partner: know[1 - me] });
+      const r = interpret(seq.slice(0, i), seq[i], { self: know[me], partner: know[1 - me], gf });
       merge(know[me], r.shows);
       const passedResp = respPassed && i === 1;
       if (r.force === 'GF' && !passedResp) gf = true;
@@ -1153,6 +1316,26 @@
     const major = fit && (fit.s === 'H' || fit.s === 'S');
     const stoppersOk = SUITS.every(s => h.stopper(s) || p[s][0] >= 4 || h.len[s] >= 4 || p.stop.includes(s));
 
+    // ストッパー（Mのフィットがないと分かったGF）：
+    //   3スートが出ている → 4つ目のスートのストッパーがあればNT、なければそのスート（ストッパーアスキング）
+    //   2スートが出ている → アンビッドスートの両方が止まればNT、でなければ内容の良い方（ストッパーショーイング）
+    if (ctx.gf && !major && totMin < 33 && lb && rankOf(lb) < rankOf('3N')) {
+      const bidS = new Set(seq.filter(c => isBid(c) && c[1] !== 'N').map(c => c[1]));
+      const unbid = SUITS.filter(s => !bidS.has(s));
+      const stopped = s => h.stopper(s) || p.stop.includes(s);
+      const nt = cheapest('N', seq);
+      if (unbid.length === 1) {
+        const W = unbid[0];
+        if (stopped(W)) return { call: nt, why: `${JA_SUIT[W]}（4つ目のスート）のストッパーが${h.stopper(W) ? 'ある' : 'パートナーにある'}のでNT（${notes.join('、')}）` };
+        const w = cheapest(W, seq);
+        if (rankOf(w) < rankOf('3N')) return { call: w, why: `${JA_SUIT[W]}（4つ目のスート）のストッパーがないので${callText(w)}（ストッパーアスキング）` };
+      } else if (unbid.length === 2) {
+        if (unbid.every(stopped)) return { call: nt, why: `アンビッドスート（${unbid.map(s => JA_SUIT[s]).join('・')}）が両方止まっているのでNT` };
+        const cand = unbid.filter(s => !p.stop.includes(s)).sort((a, b) => (h.stopper(b) - h.stopper(a)) || (h.sHcp[b] - h.sHcp[a]))
+          .map(s => cheapest(s, seq)).filter(c => c && rankOf(c) < rankOf('3N'));
+        if (cand.length) return { call: cand[0], why: `アンビッドスートのうち内容の良い${JA_SUIT[cand[0][1]]}をビッド（ストッパーショーイング）` };
+      }
+    }
     // スラム
     if (totMin >= 33) {
       const r = fit ? pick(['6' + fit.s], 'スラムの点数があるのでフィットのスートでスラム') : pick(['6N'], 'スラムの点数があるので6NT');
