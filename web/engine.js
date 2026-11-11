@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.6.0';
+  const ENGINE_VERSION = '0.6.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -461,6 +461,14 @@
   R('1M 4M', 'P', () => true, null, 'パートナーがゲームを決めたのでパス');
 
   // 1M-1NT（セミフォーシング）
+  // 1NT応答へのリバース（1stスーツより高いランクの4枚スート、16点以上）
+  RD(seq => seq.length === 2 && /^1[CDH]$/.test(seq[0]) && seq[1] === '1N' ? { A: seq[0][1] } : null, (h, c) => {
+    const A = c.b.A;
+    if (h.balanced || h.adj < 16 || h.len[A] < 5) return null;
+    const Z = SUITS.filter(z => RANK(z) > RANK(A) && h.len[z] >= 4 && h.len[z] < h.len[A]).sort((x, y) => h.len[y] - h.len[x] || RANK(x) - RANK(y))[0];
+    if (!Z || levelOf(cheapest(Z, c.seq)) !== 2) return null;
+    return { call: '2' + Z, why: `${JA_SUIT[Z]}4枚以上・16点以上なのでリバース（2${SYM[Z]}）` };
+  }, (call, b) => isBid(call) && call[0] === '2' && RANK(call[1]) > RANK(b.A) && call[1] !== 'N' ? { shows: { [call[1]]: [4, 13], [b.A]: [5, 13], hcp: [16, 21] }, force: 1 } : null);
   R('1M 1N', '2N', h => h.balanced && between(h.hcp, 18, 19), { hcp: [18, 19], bal: true }, 'バランスハンド18〜19点なので2NT');
   R('1M 1N', 'P', h => h.pattern === '5332' && between(h.hcp, 11, 14), { hcp: [11, 14] }, '5332の最低点なのでパス（セミフォーシングなのでパスしてよい）');
   R('1M 1N', '4M', (h, c) => h.len[c.b.M] >= 6 && h.hcp >= 18, null, 'メジャー6枚以上で18点以上なのでゲーム');
@@ -666,13 +674,15 @@
     const [o1, r1, o2] = seq;
     if (o1[0] !== '1' || r1[0] !== '1' || o2[0] !== '2') return null;
     const A = o1[1], B = r1[1], Z = o2[1];
-    if ([A, B, Z].includes('N') || new Set([A, B, Z]).size !== 3 || RANK(Z) <= RANK(A)) return null;
+    if (A === 'N' || Z === 'N' || new Set([A, B, Z]).size !== 3 || RANK(Z) <= RANK(A)) return null;
     if (o2 !== cheapest(Z, [o1, r1])) return null;
-    const W = SUITS.find(s => ![A, B, Z].includes(s));
+    // W：アンビッドスート（1NT応答の後で2つあるときは低い方）
+    const unbid = SUITS.filter(s => ![A, B, Z].includes(s)).sort((x, y) => RANK(x) - RANK(y));
+    const W = unbid[0];
     const wCall = cheapest(W, seq);
     const lowRelay = rankOf(wCall) < rankOf('2N') ? wCall : '2N';
     const highRelay = lowRelay === '2N' ? wCall : '2N';
-    return { A, B, Z, W, lowRelay, highRelay };
+    return { A, B, Z, W, unbid, lowRelay, highRelay };
   }
   // [1A, 1B(スート), 3Z]：低いランクのニュースートへのジャンプ（18点以上、GF）
   function jumpShiftSeq(seq) {
@@ -700,12 +710,24 @@
     const { A, B } = c.b, r = c.seq[3];
     if (h.adj < 15.5) return { call: 'P', why: '2回目のノンジャンプのニュースートは15点までで、こちらは弱い方なのでパス' };
     if (h.adj >= 18) return null;
-    if (r[1] === A) return { call: '3' + A, why: `強い15〜17点なので、パートナーのプリファレンスを3${SYM[A]}に上げて招待` };
+    if (r[1] === A) {
+      // 1stスーツに戻されたとき：a. 1Mレスポンスに3枚 → 2M ／ b. 1stスーツ6枚 → 3にレイズ ／
+      //   c. アンビッドスートに1つ以上ストッパー → 2NT ／ d. アンビッドスート（2つなら低い方）
+      const s = c.seq, unbid = SUITS.filter(x => x !== A && x !== B && x !== c.b.Z).sort((x, y) => RANK(x) - RANK(y));
+      if (isMaj(B) && h.len[B] === 3 && legal(cheapest(B, s), s) && levelOf(cheapest(B, s)) === 2)
+        return { call: cheapest(B, s), why: `強い15〜17点。パートナーの${JA_SUIT[B]}に3枚あるので${callText(cheapest(B, s))}` };
+      if (h.len[A] >= 6) return { call: '3' + A, why: `強い15〜17点で${JA_SUIT[A]}6枚以上なので3${SYM[A]}に上げて招待` };
+      if (unbid.some(x => h.stopper(x)) && legal('2N', s)) return { call: '2N', why: `強い15〜17点で、アンビッドスートにストッパーがあるので2NTで招待` };
+      const u = cheapest(unbid[0], s);
+      return { call: u, why: `強い15〜17点。アンビッドスートにストッパーがないので${callText(u)}（アンビッドスート${unbid.length > 1 ? 'の低い方' : ''}）` };
+    }
     if (h.len[B] >= 2) return { call: '3' + B, why: `強い15〜17点で、パートナーの${JA_SUIT[B]}に2枚以上あるので3${SYM[B]}で招待` };
     return { call: '2N', why: '強い15〜17点なので2NTで招待' };
   }, (call, b, before) => {
     if (call === '3' + b.A || call === '3' + b.B || call === '2N') return { shows: { hcp: [15.5, 17.99] } };
     if (call === 'P') return { shows: { hcp: [11.5, 15.49] } };
+    if (isBid(call) && call[1] === b.B) return { shows: { hcp: [15.5, 17.99], [b.B]: [3, 3] } };
+    if (isBid(call) && call[1] !== b.A && call[1] !== b.Z && call[1] !== 'N') return { shows: { hcp: [15.5, 17.99] } };
     return null;
   });
 
@@ -729,7 +751,7 @@
     if (t === b.W) return { shows: {} };
     return null;
   });
-  RD(ext(jumpShiftSeq, 3, [(c, b) => c === cheapest(b.W, [])  || (isBid(c) && c[1] === b.W)]), (h, c) => {
+  RD(ext(jumpShiftSeq, 3, [(c, b) => isBid(c) && c[1] === b.W]), (h, c) => {
     const { W } = c.b;
     if (h.stopper(W)) return { call: cheapest('N', c.seq), why: `パートナーは${JA_SUIT[W]}のストッパーを聞いている。ストッパーがあるのでNT` };
     return null;
@@ -740,6 +762,14 @@
   //   2NTと4つ目のスートのうち低い方＝8点以下、高い方＝強い8点以上（GF）
   RD(revSeq, (h, c) => {
     const { A, B, Z, W, lowRelay, highRelay } = c.b, s = c.seq;
+    if (B === 'N') {
+      // 1NT応答の後のリバース：アンビッドの低い方と2NTのうち低い方＝GFでない、高い方＝GF。
+      //   ノンジャンプで3のレベルのニュースート＝5枚以上GF
+      if (h.adj < 8.5) return { call: lowRelay, why: `8点以下なので、2NTと${JA_SUIT[W]}のうち低い方の${callText(lowRelay)}（ゲームフォーシングでない）` };
+      const five = c.b.unbid.find(x => h.len[x] >= 5 && levelOf(cheapest(x, s)) === 3 && cheapest(x, s) !== highRelay && cheapest(x, s) !== lowRelay);
+      if (five) return { call: cheapest(five, s), why: `${JA_SUIT[five]}5枚以上なので3のレベルのニュースート（ゲームフォーシング）` };
+      return { call: highRelay, why: `強い8点以上なので、2NTと${JA_SUIT[W]}のうち高い方の${callText(highRelay)}（ゲームフォーシング）` };
+    }
     if (h.adj < 8.5) {
       if (h.len[B] >= 5) return { call: cheapest(B, s), why: `${JA_SUIT[B]}5枚以上で8点以下なのでリビッド` };
       return { call: lowRelay, why: `8点以下なので、2NTと${JA_SUIT[W]}のうち低い方の${callText(lowRelay)}` };
@@ -751,6 +781,7 @@
     if (!isBid(call)) return null;
     if (call === b.lowRelay) return { shows: { hcp: [0, 8.49] }, force: 1 };
     if (call === b.highRelay) return { shows: { hcp: [8.5, 37] }, force: 'GF' };
+    if (b.B === 'N') return b.unbid.includes(call[1]) && levelOf(call) === 3 ? { shows: { [call[1]]: [5, 13], hcp: [8.5, 37] }, force: 'GF' } : null;
     if (call[1] === b.B) return { shows: { [b.B]: [5, 13], hcp: [0, 8.49] }, force: 1 };
     if (call[1] === b.A) return { shows: { [b.A]: [3, 13], hcp: [8.5, 37], agree: b.A }, force: 'GF' };
     if (call[1] === b.Z) return { shows: { [b.Z]: [4, 13], hcp: [8.5, 37], agree: b.Z }, force: 'GF' };
@@ -760,8 +791,9 @@
   RD(ext(revSeq, 3, ['*']), (h, c) => {
     const { A, B, Z, W, lowRelay, highRelay } = c.b, s = c.seq, r = s[3];
     const weak = r === lowRelay || (isBid(r) && r[1] === B);
+    const unbidStopped = c.b.unbid.every(x => h.stopper(x));
     if (weak) {
-      const partnerFive = isBid(r) && r[1] === B;
+      const partnerFive = isBid(r) && r[1] === B && B !== 'N';
       if (h.adj < 18) {
         if (partnerFive && h.len[B] >= 3) return { call: cheapest(B, s), why: `パートナーは${JA_SUIT[B]}5枚以上で8点以下。18点ないので${JA_SUIT[B]}をレイズ` };
         if (h.len[A] < 6 && legal('2N', s)) return { call: '2N', why: 'パートナーは8点以下。18点ないので2NT' };
@@ -769,13 +801,13 @@
         return { call: a3, why: `パートナーは8点以下。18点ないので${callText(a3)}（3のレベルの1stスーツ）` };
       }
       if (partnerFive && h.len[B] >= 3 && isMaj(B)) return { call: '4' + B, why: `パートナーは${JA_SUIT[B]}5枚以上。18点以上あるのでゲーム` };
-      if (h.stopper(W)) return { call: '3N', why: `18点以上あり、${JA_SUIT[W]}（アンビッドスート）にストッパーがあるので3NT` };
+      if (unbidStopped) return { call: '3N', why: `18点以上あり、アンビッドスートにストッパーがあるので3NT` };
       const z3 = cheapest(Z, s);
       return { call: z3, why: `18点以上あるので${callText(z3)}（ゲームフォーシング）` };
     }
     if (r === highRelay) {
-      if (h.stopper(W)) return { call: cheapest('N', s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[W]}（アンビッドスート）にストッパーがあるのでNT` };
-      if (h.len[B] >= 3) return { call: cheapest(B, s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[W]}のストッパーはないが、${JA_SUIT[B]}に3枚あるので示す` };
+      if (unbidStopped) return { call: cheapest('N', s), why: `パートナーは強い8点以上（GF）。アンビッドスートにストッパーがあるのでNT` };
+      if (B !== 'N' && h.len[B] >= 3) return { call: cheapest(B, s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[W]}のストッパーはないが、${JA_SUIT[B]}に3枚あるので示す` };
       if (h.len[A] >= 6) return { call: cheapest(A, s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[A]}6枚以上` };
       if (h.len[Z] >= 5) return { call: cheapest(Z, s), why: `パートナーは強い8点以上（GF）。${JA_SUIT[Z]}5枚以上` };
       const w = cheapest(W, s);
@@ -783,7 +815,7 @@
     }
     return null;
   }, (call, b, before) => {
-    const r = before[3], weak = r === b.lowRelay || (isBid(r) && r[1] === b.B);
+    const r = before[3], weak = r === b.lowRelay || (isBid(r) && r[1] === b.B && b.B !== 'N');
     if (!isBid(call)) return null;
     if (weak) {
       if (call === '2N' || call === cheapest(b.A, before) || (call === cheapest(b.B, before) && levelOf(call) <= 3)) return { shows: { hcp: [16, 17.99] } };
