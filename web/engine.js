@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.7.1';
+  const ENGINE_VERSION = '0.8.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -115,6 +115,7 @@
       else if (pLen === 4 && mine >= 5) t1 = [4, 5];
       if (!t1) return 0;
       let b = twoSuiter(s);
+      for (const o of SUITS) if (o !== s && hand[o] === 'K') b -= 1; // フィットした後のシングルトンのKは2点として数える
       if (pLen >= 5 && mine >= 5) b += mine - 4;     // 5枚以上のサポートは1枚ごとに+1
       for (const o of SUITS) if (o !== s) { if (len[o] === 1 && !/[KQJ]/.test(hand[o])) b += t1[0]; else if (len[o] === 0) b += t1[1]; }
       return b;
@@ -230,8 +231,8 @@
 
   // ===== パス済みのパートナーの応答へのオープナー =====
   R(seq => seq.length === 2 && seq.every(isBid) && seq[0][0] === '1' && seq[1][0] === '1' && seq[1][1] !== 'N' ? { Y: seq[1][1] } : null,
-    'P', (h, c) => c.respPassed && h.len[c.b.Y] >= 4 && h.dp(c.b.Y, 4) < 14.5,
-    null, 'パートナーはパス済みなのでゲームの可能性はない。フィットがあり最低点なので、低いレベルでプレイするためにパス');
+    'P', (h, c) => c.respPassed && h.len[c.b.Y] >= 4 && h.dp(c.b.Y, 4) < 12,
+    null, 'パートナーはパス済みなのでゲームの可能性はない。フィットがあり最低点（ダミーポイント12点未満）なので、低いレベルでプレイするためにパス');
   // ===== オープニング =====
   R('', 'P', (h, c) => c.pos === 3 && h.adj < 22 && !opens(h, c), { hcp: [0, 12.49] }, '4番手で3人がパスしている。ゲームの可能性は低く、スペードが短いのでオープンぎりぎりの強さではパス（4番手は12.5点以上か、点数＋スペードの枚数が15以上でオープン）');
   R('', '2C', h => h.hcp >= 22, { hcp: [22, 37] }, '22点以上なのでストロング2♣オープン', 1);
@@ -241,7 +242,13 @@
   const ntShape = (h, c) => {
     if (h.balanced) return true;
     // 6322で6枚のマイナーの内容が悪い（AKQが1枚以下）なら1NTでもよい
-    if (h.pattern === '6322') { const six = SUITS.find(s => h.len[s] === 6); if (!isMaj(six) && h.top3(six) <= 1) return true; }
+    // 6枚マイナーの6322は1NTでよい（3のレベルのリビッドには弱いことが多い）
+    if (h.pattern === '6322') { const six = SUITS.find(s => h.len[s] === 6); if (!isMaj(six)) return true; }
+    // 6331で6枚マイナーの内容が悪く（AKQが1枚以下）、シングルトンがA・K・Q
+    if (h.pattern === '6331') {
+      const six = SUITS.find(s => h.len[s] === 6), one = SUITS.find(s => h.len[s] === 1);
+      if (!isMaj(six) && h.top3(six) <= 1 && /[AKQ]/.test(h.hand[one])) return true;
+    }
     const single = SUITS.find(s => h.len[s] === 1);
     if (!single || !/[AKQ]/.test(h.hand[single])) return false;
     if (h.pattern === '4441') return true;
@@ -555,7 +562,13 @@
   }
   const bidMajorFirst = h => h.len.H >= 4 || h.len.S >= 4;
   // 4点を超えたら応答。ただし6点未満でA・Kが1枚もない（コントロール0）なら4Mのチャンスが薄いのでパス
-  const resp4 = h => h.adj > 4 && (h.adj >= 6 || h.len.H >= 6 || h.len.S >= 6 || SUITS.some(s => /[AK]/.test(h.hand[s])));
+  // 1のレベルのスートの応答：点数＋形（ボイド+3、シングルトン+1、4枚を超える1枚ごとに+1）が6以上。
+  //   A・Kが1枚もない手は、シングルトンかボイドがあるときだけ
+  const respPts = h => h.adj + SUITS.reduce((t, s) => t + (h.len[s] === 0 ? 3 : h.len[s] === 1 ? 1 : 0) + Math.max(0, h.len[s] - 4), 0);
+  const resp4 = h => respPts(h) >= 6 && (SUITS.some(s => /[AK]/.test(h.hand[s])) || SUITS.some(s => h.len[s] <= 1));
+  // 1♣-1NTは♣4枚以上を保証（♣3枚以下の手はほかの応答をする）。♦4枚・♣4枚以上の弱い手は1NTを選ぶことがある
+  R('1C', '1N', h => !bidMajorFirst(h) && h.len.C >= 4 && h.len.D === 4 && h.adj >= 6 && h.adj < 11, { hcp: [6, 10.99], C: [4, 13], S: [0, 3], H: [0, 3] },
+    '4枚メジャーがなく、♣4枚以上・♦4枚の6〜10点なので1NT（1♣-1NTは♣4枚以上を保証し、♣のレイズとして働く）');
   R('1C', '1D', h => h.adj >= 6 && h.len.D >= 4 && (!bidMajorFirst(h) || (h.len.D >= 5 && h.hcp >= 11 && h.len.D > h.len.H && h.len.D > h.len.S)),
     { D: [4, 13], hcp: [6, 37] }, 'ダイヤ4枚以上（4枚メジャーがないか、ダイヤがずっと長く強い）なので1♦', 1);
   R('1m', '1S', h => resp4(h) && h.len.S >= 4 && (h.len.S > h.len.H || (h.len.S === h.len.H && h.len.S >= 5)), { S: [4, 13], hcp: [6, 37] }, 'スペード4枚以上（ハートより長い）なので1♠', 1);
@@ -569,7 +582,7 @@
   R('1m', '3m', (h, c) => h.len[c.b.m] >= 5 && h.adj >= 3 && h.adj < 7, (b) => ({ [b.m]: [5, 13], hcp: [3, 6], S: [0, 3], H: [0, 3] }), 'マイナー5枚以上のサポートでとても弱いので3マイナー（プリエンプティブ・レイズ）');
   R('1m', '3N', h => h.balanced && between(h.hcp, 13, 15), { hcp: [13, 15], bal: true, S: [0, 3], H: [0, 3] }, '4枚メジャーがないバランスハンド13〜15点なので3NT');
   R('1m', '2N', h => h.balanced && between(h.hcp, 11, 12), { hcp: [11, 12], bal: true, S: [0, 3], H: [0, 3] }, '4枚メジャーがないバランスハンド11〜12点なので2NTで招待');
-  R('1m', '1N', h => h.adj >= 6 && h.adj < 11, { hcp: [6, 10], S: [0, 3], H: [0, 3] }, '4枚メジャーがなく6〜10点なので1NT');
+  R('1m', '1N', h => h.adj >= 6 && h.adj < 11, (b) => ({ hcp: [6, 10], S: [0, 3], H: [0, 3], ...(b.m === 'C' ? { C: [4, 13] } : {}) }), '4枚メジャーがなく6〜10点なので1NT');
   R('1m', '2m', (h, c) => h.adj >= 13 && h.len[c.b.m] >= 4, (b) => ({ [b.m]: [4, 13], hcp: [13, 37] }), '強いがほかに適当なビッドがないのでインバーテッド・マイナーレイズ（ゲームフォーシング）', 'GF');
   R('1m', 'P', () => true, { hcp: [0, 5] }, '5点以下なのでパス');
 
@@ -626,6 +639,27 @@
     if (isBid(call) && call[0] === '3' && call[1] !== 'N' && call[1] !== b.m && call[1] !== b.M) return { shows: { [b.M]: [5, 13], [call[1]]: [5, 13], hcp: [10.5, 12.99] } };
     return null;
   });
+  // オープナー：インビ以上・GFの人工的なビッドに対して、パートナーのMの3枚サポートを最優先で示す
+  RD(seq => {
+    if (seq.length !== 4 || !/^1[CD]$/.test(seq[0]) || !/^1[HS]$/.test(seq[1]) || seq[2] !== '2' + seq[0][1]) return null;
+    const t = M2[seq[0][1] + ' ' + seq[1][1]];
+    return seq[3] === t.inv || seq[3] === t.gf ? { m: seq[0][1], M: seq[1][1], t } : null;
+  }, (h, c) => {
+    const { M } = c.b;
+    if (h.len[M] >= 3) { const call = cheapest(M, c.seq); return { call, why: `パートナーの${JA_SUIT[M]}に3枚サポートがあるので、フィットの可能性を最優先で示す（${callText(call)}）` }; }
+    return null;
+  }, (call, b) => isBid(call) && call[1] === b.M ? { shows: { [b.M]: [3, 3] } } : null);
+  // フィットが決まった後（ジャンプレイズの後など）、別のスートのビッドはより上を目指す：ノンジャンプの4のレベルはコントロール
+  RD(seq => seq.length === 3 && /^1[CDH]$/.test(seq[0]) && /^1[HS]$/.test(seq[1]) && seq[2] === '3' + seq[1][1] ? { M: seq[1][1] } : null, (h, c) => {
+    const { M } = c.b;
+    if (!slamPossible(h, c)) return null;
+    for (let r = rankOf('3' + M) + 1; r < rankOf('4' + M); r++) {
+      const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
+      if (s !== 'N' && s !== M && hasControl(h, s)) return { call, why: `フィットが決まり、2人の強さを合わせるとスラムの可能性があるので${callText(call)}：${JA_SUIT[s]}のコントロールを示す` };
+    }
+    return null;
+  }, (call, b, before) => isBid(call) && call[1] !== 'N' && call[1] !== b.M && rankOf(call) < rankOf('4' + b.M)
+    ? { shows: { agree: b.M, interest: true, ctrl: [call[1]] }, force: 'GF' } : null);
   // 1C-1D のオープナー
   R('1C 1D', '1H', h => !h.balanced && h.len.H >= 4, { H: [4, 13], hcp: [11.5, 17.99] }, 'ハート4枚があるアンバランスハンドなので1♥（3つ目のスート。バランスハンドなら1NT）');
   R('1C 1D', '1S', h => !h.balanced && h.len.S >= 4, { S: [4, 13], H: [0, 3], hcp: [11.5, 17.99] }, 'スペード4枚があるアンバランスハンドなので1♠（3つ目のスート）');
@@ -635,8 +669,13 @@
   R('1C 1D', '2C', h => h.len.C >= 5, { C: [5, 13] }, 'クラブが長いので2♣');
   R('1C 1D', '1N', () => true, null, 'ほかに適当なビッドがないので1NT');
   // 1m-1NT, 1m-2NT, 1m-3NT, 1m-3m
+  R('1C 1N', '2C', h => h.len.C >= 4 && h.adj < 18, null, 'パートナーは♣4枚以上を持っているので、1NTより2♣の方がプレイしやすい');
+  R('1D 1N', '3C', h => h.len.C >= 4 && h.adj >= 18, { C: [4, 13], hcp: [18, 21] }, '18点以上でクラブ4枚以上なのでジャンプシフト（ゲームフォーシング）', 'GF');
+  R('1m 1N', '3N', (h, c) => h.len[c.b.m] >= 7 && h.top5(c.b.m) >= 4 && h.adj >= 16, null, '長く強いマイナーがトリックになるので3NTをプレイしたい');
   R('1m 1N', 'P', h => h.balanced && h.hcp < 15, null, 'バランスハンドの最低点なのでパス');
   R('1m 1N', '2N', h => h.balanced && h.hcp >= 18, null, 'バランスハンド18〜19点なので2NTで招待');
+  R('1C 1N 2C', 'P', () => true, null, 'オープナーが♣でのプレイを選んだのでパス');
+  R('1D 1N 2C 2N', '3N', h => h.adj >= 16, null, '強いので招待を受けて3NT');
   R('1D 1N', '2C', h => h.len.C >= 4, null, 'クラブ4枚以上なので2♣');
   R('1m 1N', '2m', (h, c) => h.len[c.b.m] >= 6, null, 'マイナー6枚以上なので2マイナー');
   R('1m 1N', 'P', () => true, null, 'パス');
@@ -1009,7 +1048,9 @@
     const { X, Y } = c.b;
     const others = SUITS.filter(s => s !== X && s !== Y);
     const slam = slamPossible(h, c);
-    if (slam && h.len[Y] >= 6 && !others.some(s => h.len[s] >= 5))
+    // 6枚以上の1スーターは、パートナーの平均2.5枚と合わせてショートを加点して判断
+    const slam1 = h.len[Y] >= 6 && h.dpLong(Y, 2.5) + (c.partner.hcp[0] + Math.min(c.partner.hcp[1], c.partner.hcp[0] + 8)) / 2 >= 31;
+    if ((slam || slam1) && h.len[Y] >= 6 && !others.some(s => h.len[s] >= 5))
       return { call: '3' + Y, why: `${JA_SUIT[Y]}6枚以上の1スーターでスラムの可能性があるので、1NTにジャンプして3${SYM[Y]}（スラムトライ）` };
     const Z = others.find(s => h.len[s] >= 5);
     if (slam && h.len[Y] >= 5 && Z)
@@ -1023,8 +1064,8 @@
     }
     const inv = h.len[Y] >= 6 ? h.dpLong(Y, 2.5) : h.adj; // 6枚以上ならパートナーの平均2.5枚と合わせてショートを加点
     if (inv >= 10.5) return { call: '2C', why: `${h.len[Y] >= 6 ? `${JA_SUIT[Y]}6枚以上（ショートを加点して${fmt(inv)}点）` : '11〜12点'}なので2♣（2ウェイ・チェックバック。オープナーは必ず2♦と答える）` };
-    if (h.len.D >= 6) return { call: '2C', why: 'ダイヤ6枚以上で弱いので、2♣（2♦を強制）を使って2♦で止める' };
-    if (h.len[Y] >= 6) return { call: '2' + Y, why: `${JA_SUIT[Y]}6枚以上で弱いので2${SYM[Y]}で止める` };
+    if (h.len.D >= 6 && h.adj < 8) return { call: '2C', why: 'ダイヤ6枚以上でとても弱いので、2♣（2♦を強制）を使って2♦で止める' };
+    if (h.len[Y] >= 6 && Y !== 'D') return { call: '2' + Y, why: `${JA_SUIT[Y]}6枚以上で弱いので2${SYM[Y]}で止める` };
     return { call: 'P', why: 'ゲームの可能性がないのでパス' };
   }, (call, b) => {
     if (call === '2C') return { shows: { hcp: [0, 12.99] }, force: 1 };
@@ -1368,7 +1409,7 @@
     if (st.interest[me] >= allowed)
       return signoff(mot === 0 ? `スラムへのやる気がない（${motTxt}）ので${callText(G)}で止める` : `やる気（${motTxt}）の分だけスラムに興味を示したので${callText(G)}で止める`);
     const ch = cheapest(T, seq);
-    if (st.interest[0] + st.interest[1] === 0 && ch && rankOf(ch) < rankOf(G))
+    if (isMaj(T) && st.interest[0] + st.interest[1] === 0 && ch && rankOf(ch) < rankOf(G))
       return { call: ch, why: `スラムに興味がある（${motTxt}）ので${callText(ch)}（フィットを確かめてスラムに興味を示す）` };
     for (let r = lb ? rankOf(lb) + 1 : 0; r < rankOf(G); r++) {
       const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
