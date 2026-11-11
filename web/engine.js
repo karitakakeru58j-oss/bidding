@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.8.0';
+  const ENGINE_VERSION = '0.8.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -604,13 +604,14 @@
   R('1m 1M', '1N', h => h.hcp < 15, (b) => ({ hcp: [11, 14] }), 'ほかに適当なビッドがないので1NT');
   R('1m 1M', '2N', () => true, (b) => ({ hcp: [18, 19] }), '18点以上でほかに適当なビッドがないので2NT');
   // 1m-1M-2m のレスポンダー（2のレベルのニュースートはインビテーション以上）
-  //   1♣-1♠-2♣：2♦＝インビ以上（♦と無関係）／ 2♥＝♥ちょうど4枚・インビ以上 ／ 2♠＝GF（♠と無関係）
+  //   1♣-1♠-2♣：2♦＝インビ以上（♦と無関係・♥4枚なし）／ 2♥＝♥ちょうど4枚・インビ以上 ／ 2♠＝6枚以上のサインオフ
+  //     （2♠はニュースートではない。GFは♥の有無で2♦か2♥から）
   //   1♣-1♥-2♣：2♦＝インビ以上（♦と無関係）／ 2♥＝6枚以上のサインオフ ／ 2♠＝GF（♠と無関係。オープナーは♠4枚なし）
   //   1♦-1♥-2♦：2♥＝6枚以上のサインオフ（ニュースートではない）／ 2♠＝GF（♠と無関係）／ 3♣＝♥と♣の5-5以上・インビ
   //   1♦-1♠-2♦：2♥＝♥ちょうど4枚・インビ以上 ／ 2♠＝6枚以上のサインオフ ／ 3♣＝♣と無関係、♥4枚なしのGF
   //   それ以外の3のレベルのニュースート＝5-5以上のインビ
   const M2 = {
-    'C S': { inv: '2D', four: '2H', gf: '2S', sign: null },
+    'C S': { inv: '2D', four: '2H', gf: null, sign: '2S' },
     'C H': { inv: '2D', four: null, gf: '2S', sign: '2H' },
     'D H': { inv: null, four: null, gf: '2S', sign: '2H' },
     'D S': { inv: null, four: '2H', gf: '3C', sign: '2S' },
@@ -618,12 +619,16 @@
   RD(seq => seq.length === 3 && /^1[CD]$/.test(seq[0]) && /^1[HS]$/.test(seq[1]) && seq[2] === '2' + seq[0][1]
     ? { m: seq[0][1], M: seq[1][1], O: seq[1][1] === 'H' ? 'S' : 'H', t: M2[seq[0][1] + ' ' + seq[1][1]] } : null, (h, c) => {
     const { m, M, O, t } = c.b;
-    if (h.adj < 10.5) {
-      if (t.sign && h.len[M] >= 6) return { call: t.sign, why: `${JA_SUIT[M]}6枚以上で弱いので${callText(t.sign)}（サインオフ）` };
+    // オープナーのリビッドしたマイナーに1枚以下（ミスフィット）なら1点低く評価
+    const v = h.adj - (h.len[m] <= 1 ? 1 : 0);
+    // もう一方のメジャーちょうど4枚は、別のフィットの可能性があるのでミスフィットでも示す
+    if (h.adj >= 10.5 && t.four && h.len[O] === 4) return { call: t.four, why: `${JA_SUIT[O]}ちょうど4枚でインビテーション以上なので${callText(t.four)}` };
+    if (v < 10.5) {
+      if (t.sign && h.len[M] >= 6) return { call: t.sign, why: `${JA_SUIT[M]}6枚以上で弱い${h.len[m] <= 1 ? `（パートナーの${JA_SUIT[m]}に1枚以下なので低く評価）` : ''}ので${callText(t.sign)}（サインオフ）` };
       return null;
     }
-    if (t.four && h.len[O] === 4) return { call: t.four, why: `${JA_SUIT[O]}ちょうど4枚でインビテーション以上なので${callText(t.four)}` };
-    if (h.adj >= 13) return { call: t.gf, why: `ゲームの点数があるので${callText(t.gf)}（スートに関係ないゲームフォーシング）` };
+    if (v >= 13 && t.gf) return { call: t.gf, why: `ゲームの点数があるので${callText(t.gf)}（スートに関係ないゲームフォーシング）` };
+    if (v >= 13 && t.inv) return { call: t.inv, why: `ゲームの点数があるので、まずインビテーション以上の${callText(t.inv)}（スートに関係ない）から` };
     const X = SUITS.find(x => x !== M && x !== m && h.len[x] >= 5);
     if (h.len[M] >= 5 && X) { const x3 = cheapest(X, c.seq); if (levelOf(x3) === 3 && x3 !== t.gf) return { call: x3, why: `${JA_SUIT[M]}と${JA_SUIT[X]}の5-5以上でインビテーションなので${callText(x3)}` }; }
     if (t.inv) return { call: t.inv, why: `インビテーション以上の点数なので${callText(t.inv)}（スートに関係ないインビテーション以上）` };
@@ -643,7 +648,7 @@
   RD(seq => {
     if (seq.length !== 4 || !/^1[CD]$/.test(seq[0]) || !/^1[HS]$/.test(seq[1]) || seq[2] !== '2' + seq[0][1]) return null;
     const t = M2[seq[0][1] + ' ' + seq[1][1]];
-    return seq[3] === t.inv || seq[3] === t.gf ? { m: seq[0][1], M: seq[1][1], t } : null;
+    return seq[3] === t.inv || seq[3] === t.gf || seq[3] === t.four ? { m: seq[0][1], M: seq[1][1], t } : null;
   }, (h, c) => {
     const { M } = c.b;
     if (h.len[M] >= 3) { const call = cheapest(M, c.seq); return { call, why: `パートナーの${JA_SUIT[M]}に3枚サポートがあるので、フィットの可能性を最優先で示す（${callText(call)}）` }; }
