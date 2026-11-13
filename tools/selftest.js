@@ -261,8 +261,13 @@ try {
 }
 // 介入：敵のオープンの直後に候補と判断が出るか
 {
-  const r = E.chooseCall(H('KQJ94.83.A72.643'), ['1H'], 'E');
+  E.overcall.train(require('../data/overcalls.json'));             // 介入の回答で学習
+  const r = E.chooseCall(H('AKJ94.83.A72.643'), ['1H'], 'E');
   if (r.call !== '1S' || r.ruleId !== 'overcall') { ng++; console.log('NG 介入', r.call, r.why); } else console.log('介入の判断: OK');
+  const OC = E.overcall;
+  const c1 = OC.candidate(H('.AKQ872.64.T6432'), '1S');           // AKQとボイド → 普通の2♥（ウィークの3♥にしない）
+  const g = OC.heuristic(OC.features(H('KT6.QJT732.K7.JT'), '1S', { call: '2H' }), { call: '2H' }).game; // 10点 → ゲームの可能性は低め
+  if (c1.call !== '2H' || g > 3) { ng++; console.log('NG 介入の候補・推定', c1.call, g); } else console.log('介入の候補・推定: OK');
   const n1 = E.chooseCall(H('KJ4.AQ3.KJ92.Q54'), ['1C'], 'E');   // 16点・♣Qxx → 1NT
   const n2 = E.chooseCall(H('KJ4.AQ3.KJ92.Q54'), ['1D'], 'E');   // ♦KJ92 → 1NT
   const n3 = E.chooseCall(H('KQ4.AQ3.KJ9.J542'), ['1C'], 'E');  // ♣Jxxx（4枚）→ 1NT

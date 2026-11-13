@@ -44,7 +44,9 @@
     const suits = SUITS.filter(s => s !== O).sort((a, b) => h.len[b] - h.len[a] || STR.indexOf(b) - STR.indexOf(a));
     const s = suits[0];
     // ウィーク（ジャンプ）：6枚以上・弱い
-    if (h.len[s] >= 6 && h.adj >= 4 && h.adj < 11) {
+    // ただしAKQのうち2枚以上のスートで、ボイドか5-5以上の手はゲームの可能性が高すぎるので普通のオーバーコール
+    const strongShape = h.top3(s) >= 2 && (SUITS.some(t => h.len[t] === 0) || SUITS.filter(t => t !== s).some(t => h.len[t] >= 5));
+    if (h.len[s] >= 6 && h.adj >= 4 && h.adj < 11 && !strongShape) {
       const c1 = cheapest(s, open), jump = (Number(c1[0]) + 1) + s;
       if (Number(jump[0]) <= 3) return { type: 'weak', call: jump, suit: s };
     }
@@ -60,28 +62,40 @@
   // ------------------------------------------------------------------
   // 2. パラメータ：手の特徴と目安の式
   // ------------------------------------------------------------------
+  // 3つのパラメータは、それぞれ次だけから判断する
+  //   リードショーイング＝ビッドするスートの内容、ゲームの可能性＝HCP、競り合い＝シェイプ
   function features(hand, open, cand) {
-    const h = evaluate(hand), O = open[1], s = cand.suit;
-    const len = s ? h.len[s] : 0;
-    const top3 = s ? h.top3(s) : 0, top5 = s ? h.top5(s) : 0;
-    const suitHcp = s ? h.sHcp[s] : 0;
-    const space = rankOf(cand.call) - rankOf(open); // 奪う段数
+    const h = evaluate(hand);
+    const s = cand.suit || (cand.call && cand.call[1] !== 'N' ? cand.call[1] : null);
+    const x = s ? hand[s] : '';
+    const has = c => x.includes(c) ? 1 : 0;
+    const lens = SUITS.map(t => h.len[t]).sort((a, b) => b - a);
     return {
-      adj: h.adj, len, top3, top5, suitHcp, outside: h.rawHcp - suitHcp, space,
-      major: s && isMaj(s) ? 1 : 0, spade: s === 'S' ? 1 : 0,
-      shortO: h.len[O] <= 1 ? 1 : 0, stopO: h.stopper(O) ? 1 : 0, lenO: h.len[O],
+      // スートの内容
+      len: s ? h.len[s] : 0, A: has('A'), K: has('K'), Q: has('Q'), J: has('J'), T: has('T'), N9: has('9'),
+      two3: s && h.top3(s) >= 2 ? 1 : 0,
+      // 点数
+      hcp: h.rawHcp,
+      // シェイプ
+      l1: lens[0], l2: lens[1], single: SUITS.filter(t => h.len[t] === 1).length, voids: SUITS.filter(t => h.len[t] === 0).length,
     };
   }
+  function suitScore(f) { return 1.5 * f.A + 1.2 * f.K + 1.0 * f.Q + 0.8 * f.J + 0.5 * f.T + 0.2 * f.N9 + 1.0 * f.two3; }
+  function shapeScore(f) { return Math.max(0, f.l1 + f.l2 - 8) + f.single + 2 * f.voids; }
   function heuristic(f, cand) {
-    const nt = cand.type === '1N';
-    const lead = nt ? 2 + f.stopO : 1 + 1.4 * f.top3 + 0.4 * Math.max(0, f.top5 - f.top3);
-    const g = f.adj + (f.len - 5) * 1.2 + (f.major ? 1 : 0) + (f.shortO ? 1 : 0);
-    const game = nt ? clamp(1 + (f.adj - 12) * 0.9) : g < 8 ? 1 + g / 8 : clamp(2 + (g - 8) / 2.4);
-    const compete = nt ? 2 : 1 + (f.len - 5) * 1.2 + (f.major ? 0.8 : 0) + f.spade * 0.5 + f.shortO * 0.7 + (f.adj >= 8 ? 0.5 : 0);
-    return { lead: clamp(lead), game: clamp(game), compete: clamp(compete), preempt: preemptOf(cand.call) };
+    return {
+      lead: clamp(0.2 + 1.3 * suitScore(f)),
+      game: clamp(1 + (f.hcp - 7) * 0.6),
+      compete: clamp(1 + 1.3 * shapeScore(f)),
+      preempt: preemptOf(cand.call),
+    };
   }
-  const FKEYS = ['adj', 'len', 'top3', 'top5', 'suitHcp', 'outside', 'space', 'major', 'spade', 'shortO', 'stopO'];
-  const fvec = (f, type) => [1, ...FKEYS.map(k => f[k]), ...TYPES.map(t => t === type ? 1 : 0)];
+  // 補正の学習に使う特徴も、パラメータごとに分ける（ほかの要素が混ざらないように）
+  const PFEAT = {
+    lead: f => [1, f.A, f.K, f.Q, f.J, f.T, f.N9, f.two3, f.len],
+    game: f => [1, f.hcp],
+    compete: f => [1, f.l1, f.l2, f.single, f.voids],
+  };
 
   // ------------------------------------------------------------------
   // 小さな線形代数（リッジ回帰用）
@@ -127,13 +141,13 @@
     const recs = (records || []).filter(r => r && r.params && typeof r.decision === 'boolean' && TYPES.includes(r.type));
     // パラメータの予測（目安の式からのずれを手の特徴から学ぶ）
     const corr = {};
-    const X = [], rows = [];
+    const rows = [];
     for (const r of recs) {
       const hand = r.hand || E.pbnToDeal(r.deal)[r.seat || 'S'];
       const f = features(hand, r.open, r);
-      X.push(fvec(f, r.type)); rows.push({ r, base: heuristic(f, r) });
+      rows.push({ r, f, base: heuristic(f, r) });
     }
-    for (const k of RATED) corr[k] = X.length >= 6 ? ridge(X, rows.map(o => o.r.params[k] - o.base[k]), 8) : null;
+    for (const k of RATED) corr[k] = rows.length >= 6 ? ridge(rows.map(o => PFEAT[k](o.f)), rows.map(o => o.r.params[k] - o.base[k]), 6) : null;
     // プリエンプト性はビッドで決まる値を使う（以前の記録で評価していても置き換える）
     const fixed = recs.map(r => ({ ...r.params, preempt: preemptOf(r.call) }));
     // 判断の重み：全体 → 種類ごと（全体に引き寄せる）
@@ -153,8 +167,8 @@
   function estimate(hand, open, cand) {
     const f = features(hand, open, cand), base = heuristic(f, cand);
     if (!MODEL) return base;
-    const x = fvec(f, cand.type), out = {};
-    for (const k of RATED) { const b = MODEL.corr[k]; out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
+    const out = {};
+    for (const k of RATED) { const b = MODEL.corr[k], x = PFEAT[k](f); out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
     out.preempt = base.preempt;
     return out;
   }
