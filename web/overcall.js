@@ -3,7 +3,9 @@
  *
  * 流れ
  *   1. 候補：手と敵のオープンから「介入し得るなら、どの種類の何のビッドか」を決める
- *      種類：1D / 1M / 1N / 2m / 2M / weak（ウィークオーバーコール＝ジャンプ）
+ *      種類：1D / 1M / 2m / 2M / weak（ウィークオーバーコール＝ジャンプ）
+ *      1NTオーバーコールは学習しない：1NTオープンと同じ形で補正込み16点以上、オープンのスートにストッパー
+ *      （A、Kの2枚以上、Qの2枚以上、Jの3枚以上、または4枚以上）があればビッドする
  *   2. パラメータ（1〜5）：リードショーイング・ゲームの可能性・競り合い・プリエンプト性
  *      最初は目安の式で推定し、あなたの評価がたまると手の特徴から評価を予測するように補正する
  *   3. 判断：種類ごとに「4つのパラメータの重み」を学習し、介入する確率を出す（ロジスティック回帰）
@@ -14,7 +16,7 @@
   const E = root.BridgeEngine || (typeof require !== 'undefined' ? require('./engine.js') : null);
   const { SUITS, SYM, JA_SUIT, evaluate, isBid, rankOf, callText } = E;
 
-  const TYPES = ['1D', '1M', '1N', '2m', '2M', 'weak'];
+  const TYPES = ['1D', '1M', '2m', '2M', 'weak'];
   const TYPE_JA = { '1D': '1♦オーバーコール', '1M': '1Mオーバーコール', '1N': '1NTオーバーコール', '2m': '2mオーバーコール', '2M': '2Mオーバーコール', weak: 'ウィークオーバーコール' };
   const PARAMS = ['lead', 'game', 'compete', 'preempt'];
   const PARAM_JA = { lead: 'リードショーイング', game: 'ゲームの可能性', compete: '競り合い', preempt: 'プリエンプト性' };
@@ -36,8 +38,6 @@
       const c1 = cheapest(s, open), jump = (Number(c1[0]) + 1) + s;
       if (Number(jump[0]) <= 3) return { type: 'weak', call: jump, suit: s };
     }
-    // 1NT：バランス・15〜18・オープンのスートにストッパー
-    if (h.balanced && h.adj >= 14.5 && h.adj < 19 && h.stopper(O)) return { type: '1N', call: '1N', suit: null };
     if (h.len[s] < 5) return null;
     const call = cheapest(s, open);
     const lv = Number(call[0]);
@@ -151,8 +151,16 @@
     return sigmoid(px(params).reduce((t, xi, i) => t + xi * w[i], 0));
   }
 
+  // 1NTオーバーコール（ルール）：1NTオープンの形・補正込み16点以上（19点未満）・オープンのスートに止め
+  function ntOvercall(hand, open) {
+    const h = evaluate(hand), O = open[1], x = hand[O];
+    const stop = h.stopper(O) || (x.includes('Q') && x.length >= 2) || (x.includes('J') && x.length >= 3);
+    return E.ntShape(h, { pos: 0 }) && h.adj >= 16 && h.adj < 19 && stop;
+  }
   // 介入の判断（engine の chooseCall から呼ばれる）
   function decide(hand, open) {
+    if (/^1[CDHS]$/.test(open) && ntOvercall(hand, open))
+      return { call: '1N', why: `1NTオープンの形で補正込み16点以上、${JA_SUIT[open[1]]}が止まっているので1NTオーバーコール`, cand: { type: '1N', call: '1N' } };
     const cand = candidate(hand, open);
     if (!cand) return { call: 'P', why: '介入し得る形・強さではないのでパス', cand: null };
     const params = estimate(hand, open, cand);
@@ -173,7 +181,7 @@
     });
   }
 
-  const api = { TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
+  const api = { ntOvercall, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
   E.overcall = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

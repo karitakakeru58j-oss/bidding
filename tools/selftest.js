@@ -263,5 +263,10 @@ try {
 {
   const r = E.chooseCall(H('KQJ94.83.A72.643'), ['1H'], 'E');
   if (r.call !== '1S' || r.ruleId !== 'overcall') { ng++; console.log('NG 介入', r.call, r.why); } else console.log('介入の判断: OK');
+  const n1 = E.chooseCall(H('KJ4.AQ3.KJ92.Q54'), ['1C'], 'E');   // 16点・♣Qxx → 1NT
+  const n2 = E.chooseCall(H('KJ4.AQ3.KJ92.Q54'), ['1D'], 'E');   // ♦KJ92 → 1NT
+  const n3 = E.chooseCall(H('KQ4.AQ3.KJ9.J542'), ['1C'], 'E');  // ♣Jxxx（4枚）→ 1NT
+  const n4 = E.chooseCall(H('KJ4.AQ32.K92.854'), ['1C'], 'E');   // ♣止めなし → 1NTにしない
+  if (n1.call !== '1N' || n2.call !== '1N' || n3.call !== '1N' || n4.call === '1N') { ng++; console.log('NG 1NTオーバーコール', n1.call, n2.call, n3.call, n4.call); } else console.log('1NTオーバーコール: OK');
 }
 process.exit(ng ? 1 : 0);

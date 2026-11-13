@@ -404,6 +404,7 @@
       const hands = E.deal();
       const open = E.chooseCall(hands.E, [], 'N').call; // 東の手で1番手のオープンを決める
       if (!/^1[CDHS]$/.test(open)) continue;
+      if (OC.ntOvercall(hands.S, open)) continue; // 1NTオーバーコールはルールで決めるので出題しない
       const cand = OC.candidate(hands.S, open);
       if (!cand) continue;
       const q = { hands, dealer: 'E', auction: [open], open, cand };

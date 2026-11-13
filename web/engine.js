@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.12.0';
+  const ENGINE_VERSION = '0.12.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1840,7 +1840,7 @@
     ENGINE_VERSION, SUITS, SEATS, SYM, JA_SUIT, RULES,
     evaluate, chooseCall, autoAuction, analyze, isOver, legal, lastBid, isBid, rankOf,
     callText, callPbn, parseCall, deal, dealToPbn, pbnToDeal, handToPbn, pbnToHand,
-    exampleFeatures, seqKeyOf, buildContext, matchSeq,
+    exampleFeatures, seqKeyOf, buildContext, matchSeq, ntShape: (h, c) => ntShape(h, c),
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BridgeEngine = api;
