@@ -46,11 +46,16 @@
     // ウィーク（ジャンプ）：6枚以上・弱い
     // ただしAKQのうち2枚以上のスートで、ボイドか5-5以上の手はゲームの可能性が高すぎるので普通のオーバーコール
     const strongShape = h.top3(s) >= 2 && (SUITS.some(t => h.len[t] === 0) || SUITS.filter(t => t !== s).some(t => h.len[t] >= 5));
-    if (h.len[s] >= 6 && h.adj >= 4 && h.adj < 11 && !strongShape) {
+    // ウィークは2〜9点（HCP）。10点以上はジャンプせず普通にオーバーコールする
+    if (h.len[s] >= 6 && h.rawHcp >= 2 && h.rawHcp <= 9 && !strongShape) {
       const c1 = cheapest(s, open), jump = (Number(c1[0]) + 1) + s;
       if (Number(jump[0]) <= 3) return { type: 'weak', call: jump, suit: s };
     }
-    if (h.len[s] < 5) return null;
+    // 1♦オーバーコールの特例：♣のオープンに対して、ほかに5枚スートがなければ♦4枚でもビッドすることがある
+    if (h.len[s] < 5) {
+      if (O === 'C' && h.len.D >= 4 && h.adj >= 8 && h.adj < 18) return { type: '1D', call: '1D', suit: 'D' };
+      return null;
+    }
     const call = cheapest(s, open);
     const lv = Number(call[0]);
     if (lv === 1 && (h.adj < 5.5 || h.adj >= 18)) return null;
@@ -84,16 +89,26 @@
   function shapeScore(f) { return Math.max(0, f.l1 + f.l2 - 8) + f.single + 2 * f.voids; }
   // ゲームの可能性はオーバーコールの種類ごとの点数の幅で決める（同じ点数でも種類が違えば評価が違う）
   //   例：1Mはおおむね8〜17点で14点以上なら必ずする → 12〜13点は4。2mはおおむね11〜17点 → 12〜13点は3
-  const GAME_RANGE = { '1D': [8, 13], '1M': [7, 14], '2m': [9, 16], '2M': [8, 15], weak: [3, 12] };
+  //   1♦は10〜17点（10点でビッドすることはほとんどない）→ 13点で3。2Mは2mとほぼ同じ。ウィークは2〜9点
+  const GAME_RANGE = { '1D': [9, 17], '1M': [7, 14], '2m': [9, 16], '2M': [9, 16], weak: [2, 9] };
   function gameOf(hcp, type) {
     const [lo, hi] = GAME_RANGE[type] || [8, 14];
     return clamp(1 + (hcp - lo) * 4 / (hi - lo));
+  }
+  // 競り合い（シェイプ）も種類ごと：
+  //   1♦は4枚でもビッドするので5枚あれば2以上。2mは5枚ではほとんどビッドしない（6322で2）、
+  //   2Mは5枚でもゲームの可能性があればビッドする（6322で3）
+  function competeOf(f, type) {
+    const sh = 1.3 * shapeScore(f);
+    if (type === '1D') return clamp(1 + Math.max(0, f.len - 4) + sh);
+    if (type === '2M') return clamp(1.7 + sh);
+    return clamp(1 + sh);
   }
   function heuristic(f, cand) {
     return {
       lead: clamp(0.2 + 1.3 * suitScore(f)),
       game: gameOf(f.hcp, cand.type),
-      compete: clamp(1 + 1.3 * shapeScore(f)),
+      compete: competeOf(f, cand.type),
       preempt: preemptOf(cand.call),
     };
   }
@@ -141,6 +156,9 @@
   // ------------------------------------------------------------------
   // 判断の重み：[切片, lead, game, compete, preempt]（パラメータは 3 を中心にする）
   const DEFAULT_W = [0.3, 0.9, 1.2, 0.9, 0.7];
+  // 種類ごとの最初の重み。ウィークは強ければいいわけではないので、ゲームの可能性の重みを低めにする
+  const DEFAULT_WT = { weak: [0.3, 0.9, 0.4, 1.1, 0.7] };
+  const defW = t => (DEFAULT_WT[t] || DEFAULT_W).slice();
   const px = p => [1, ...PARAMS.map(k => p[k] - 3)];
   let MODEL = null;
 
@@ -169,7 +187,7 @@
     for (const t of TYPES) {
       const idx = recs.map((r, i) => r.type === t ? i : -1).filter(i => i >= 0);
       // 判断の重みも種類ごとに学ぶ（ほかの種類の回答は使わない。回答が少ないうちは最初の目安の重みに近い）
-      byType[t] = { n: idx.length, yes: idx.filter(i => PY[i]).length, w: idx.length ? logistic(idx.map(i => PX[i]), idx.map(i => PY[i]), DEFAULT_W, 1) : DEFAULT_W.slice() };
+      byType[t] = { n: idx.length, yes: idx.filter(i => PY[i]).length, w: idx.length ? logistic(idx.map(i => PX[i]), idx.map(i => PY[i]), defW(t), 1) : defW(t) };
       const mean = (sel) => { const ii = idx.filter(i => PY[i] === sel); return Object.fromEntries(PARAMS.map(k => [k, ii.length ? ii.reduce((t, i) => t + fixed[i][k], 0) / ii.length : null])); };
       byType[t].meanYes = mean(1); byType[t].meanNo = mean(0);
     }
@@ -186,7 +204,7 @@
     return out;
   }
   function probability(type, params) {
-    const w = MODEL ? MODEL.byType[type].w : DEFAULT_W;
+    const w = MODEL ? MODEL.byType[type].w : defW(type);
     return sigmoid(px(params).reduce((t, xi, i) => t + xi * w[i], 0));
   }
 

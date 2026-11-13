@@ -400,6 +400,7 @@
     const want = OC.TYPES.filter(t => counts[t] === min);
     const target = want[Math.floor(Math.random() * want.length)];
     let fallback = null;
+    const want4D = target === '1D' && Math.random() < 0.5; // 1♦は♦4枚の手も半分くらい出す
     for (let t = 0; t < 6000; t++) {
       const hands = E.deal();
       const open = E.chooseCall(hands.E, [], 'N').call; // 東の手で1番手のオープンを決める
@@ -408,7 +409,7 @@
       const cand = OC.candidate(hands.S, open);
       if (!cand) continue;
       const q = { hands, dealer: 'E', auction: [open], open, cand };
-      if (cand.type === target) return q;
+      if (cand.type === target && (!want4D || hands.S.D.length === 4)) return q;
       if (!fallback) fallback = q;
     }
     return fallback;
