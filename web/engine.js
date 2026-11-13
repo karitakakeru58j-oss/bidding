@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.11.2';
+  const ENGINE_VERSION = '0.11.3';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -110,7 +110,9 @@
     const twoSuiter = s => {
       const top2 = SUITS.slice().sort((a, b) => len[b] - len[a]).slice(0, 2);
       const sum = len[top2[0]] + len[top2[1]];
-      return top2.includes(s) && len[s] >= 4 && sum >= 10 ? 1.5 + (sum - 10) : 0;
+      const other = top2.find(x => x !== s);
+      // もう一方の長いスートにA・K・Qがないとき（中身のない長いスート）は加点しない
+      return top2.includes(s) && len[s] >= 4 && sum >= 10 && other && /[AKQ]/.test(hand[other]) ? 1.5 + (sum - 10) : 0;
     };
     h.dpBonus = (s, pLen) => {
       const mine = len[s];
@@ -663,7 +665,7 @@
   R('1m 1M', '2N', (h, c) => h.pattern === '4441' && h.len[c.b.M] <= 1 && h.adj >= 18 && h.adj < 20, (b) => ({ hcp: [18, 19.99] }),
     '18〜19点の4441で、パートナーのスートが1枚。リバースには1stスーツ5枚以上が必要なので2NT');
   R('1D 1M', '3C', h => h.len.C >= 4 && h.hcp >= 18, { C: [4, 13], hcp: [18, 21] }, '18点以上でクラブ4枚以上なのでジャンプシフト（ゲームフォーシング）', 'GF');
-  R('1D 1M', '2C', h => h.len.C >= 4, { C: [4, 13], hcp: [11.5, 17.99] }, 'クラブ4枚以上のアンバランスハンドなので2♣（低いランクのニュースート：15点まで、強い15〜17点は3回目に招待）');
+  R('1D 1M', '2C', h => h.len.C >= 4 && h.len.D < 6, { C: [4, 13], hcp: [11.5, 17.99] }, 'クラブ4枚以上のアンバランスハンドなので2♣（低いランクのニュースート：15点まで、強い15〜17点は3回目に招待）');
   R('1m 1M', '2m', (h, c) => h.len[c.b.m] >= 6 && h.rebidPts(c.b.m) < 15.5, (b) => ({ [b.m]: [6, 13], hcp: [11.5, 15.49] }), 'マイナー6枚以上なので2マイナー（2mのリビッドは6枚以上）');
   R('1m 1M', '2M', (h, c) => h.len[c.b.M] >= 3 && h.hcp < 15, null, 'メジャー3枚サポートで形が悪いので2メジャー');
   R('1m 1M', '1N', h => h.hcp < 15, (b) => ({ hcp: [11, 14] }), 'ほかに適当なビッドがないので1NT（6枚以上を誤魔化すよりバランスハンドを誤魔化す方が良い）');
@@ -1437,9 +1439,11 @@
     return slamUsefulHcp(h, c) < 11 ? Math.max(0, m - 1) : m; // 有効な点数が11点未満ならやる気-1
   }
   // パートナーの推定点数の中央と合わせて31点以上ならスラムの可能性あり
+  // スラムの可能性：パートナーの強い方（下限＋6点まで）を想定して、合計32点以上になりうるか
+  //   （下限11.5〜上限14点という想定はインビテーションの判断だけに使う）
   function slamPossible(h, c) {
-    const p = c.partner.hcp, mid = (p[0] + Math.min(p[1], p[0] + 8)) / 2;
-    return h.adj + mid >= 31;
+    const p = c.partner.hcp;
+    return h.adj + Math.min(p[1], p[0] + 6) >= 32;
   }
   // FGでフィットを示す：やる気があれば安く（3Mなど）、なければゲーム
   function agreeCall(h, c, T) {
@@ -1733,7 +1737,7 @@
     let near = nearestExample(h, key, examples, seq);
     // 例のビッドが示す枚数（5枚メジャーなど）をこの手が満たさないときは使わない
     // パスの手で回答例のオープンを使うのは、オープンの強さ（11.5点など）があるときだけ
-    if (near && !seq.length && /^1[CDHS]$/.test(near.ex.call) && !opens(h, ctx)) near = null;
+    if (near && !seq.length) near = null; // オープンはルールで決める（回答例でオープンを変えない）
     if (near && near.ex.call !== res.call) {
       const sh = interpret(seq, near.ex.call, { self: ctx.self, partner: ctx.partner }).shows || {};
       if (SUITS.some(s => Array.isArray(sh[s]) && (h.len[s] < sh[s][0] || h.len[s] > sh[s][1]))) near = null;
