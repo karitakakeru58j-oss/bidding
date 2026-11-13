@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.11.3';
+  const ENGINE_VERSION = '0.11.4';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -424,7 +424,8 @@
   const splSuit = (h, M) => SUITS.filter(o => o !== M && h.len[o] <= 1).sort((a, b) => h.len[a] - h.len[b])[0] || null;
   for (const M of ['H', 'S']) {
     const L = LADDER[M], o = '1' + M, sym = SYM[M], name = JA_SUIT[M];
-    const dpOf = h => h.dp(M, 5);
+    // 2NT（強めの6〜8）やそれより強いレイズは、HCPだけで5点以上ある手。足りなければ3M（弱いレイズ）
+    const dpOf = h => h.rawHcp >= 5 ? h.dp(M, 5) : Math.min(h.dp(M, 5), 6.49);
     R(o, L.gf, h => h.len[M] >= 4 && dpOf(h) >= 16, { [M]: [4, 13], hcp: [16, 37], agree: M },
       `${name}4枚以上のサポートで16点以上（ダミーポイント）なので${callText(L.gf)}（ゲームフォーシングのレイズ）`, 'GF');
     for (const [short, call] of Object.entries(L.spl)) {
@@ -440,7 +441,8 @@
     R(o, L.s68, h => h.len[M] >= 4 && (v => v >= 6.5 && v < 9)(dpOf(h)), { [M]: [4, 13], hcp: [6.5, 8.99] },
       `${name}4枚以上のサポートで強めの6〜8点（ダミーポイント）なので${callText(L.s68)}`, 1);
     R(o, L.weak, h => h.len[M] >= 4 && (v => v >= 3 && v < 6.5)(dpOf(h)), { [M]: [4, 13], hcp: [3, 6.49] },
-      `${name}4枚以上のサポートで3〜弱めの6点（ダミーポイント）なので${callText(L.weak)}（弱いレイズ）`);
+      h => h.rawHcp < 5 && h.dp(M, 5) >= 6.5 ? `${name}4枚以上のサポート。ダミーポイントは${fmt(h.dp(M, 5))}点あるが、HCPが5点未満なので${callText(L.weak)}（弱いレイズ）`
+        : `${name}4枚以上のサポートで3〜弱めの6点（ダミーポイント）なので${callText(L.weak)}（弱いレイズ）`);
   }
   R('1H', '1S', h => h.len.S >= 4 && ((h.len.H < 3 && h.adj > 4) || (h.len.H === 3 && h.dp('H', 5) >= 11)), { S: [4, 13], hcp: [4, 37] },
     h => h.len.H === 3 ? 'スペード4枚以上。ハート3枚のサポートもあるが11点以上なのでまず1♠' : 'スペード4枚以上・4点を超えるので1♠（1巡フォーシング）', 1);
@@ -1074,6 +1076,13 @@
     if (!ask3 && !slam && h.stopper(W)) {
       if (gf) { const nt = gfNT(h, c.seq); return { call: nt, why: `${JA_SUIT[W]}（4つ目のスート）にストッパーがあり、ほかに聞きたいこともない。GFなので${nt === '3N' ? 'ジャンプの3NT＝15〜17点' : '2NT＝12〜14点（18点以上も2NTから）'}` }; }
       return { call: '3N', why: `${JA_SUIT[W]}（4つ目のスート）にストッパーがあり、ほかに聞きたいこともないので3NTに直行` };
+    }
+    // GFでスラムの可能性があるとき：3NT（15〜17）か4つ目のスートかを手で使い分ける
+    //   3NT：自分の1stスーツが4枚（5枚ならAKQのうち1枚以下）で、パートナーのスートが2枚以下（メジャーなら1枚以下）
+    if (gf && slam && !ask3 && legal('2N', c.seq)) {
+      const myOk = h.len[Y] === 4 || (h.len[Y] === 5 && h.top3(Y) <= 1);
+      const pOk = [X, Z].every(s => h.len[s] <= (isMaj(s) ? 1 : 2));
+      if (myOk && pOk) return { call: '3N', why: `スラムの可能性がある。自分の${JA_SUIT[Y]}が${h.len[Y]}枚${h.len[Y] === 5 ? '（AKQは1枚以下）' : ''}で、パートナーのスートが短いので、4つ目のスートでなくジャンプの3NT（15〜17点）` };
     }
     const need = [!h.stopper(W) && `${JA_SUIT[W]}のストッパー`, ask3 && `${JA_SUIT[Y]}の3枚サポート`, slam && 'スラムの可能性'].filter(Boolean).join('・');
     return { call: fsf, why: `ゲームの点数があり、${need}を知りたいのでフォース・スート（${callText(fsf)}：4つ目のスート、ゲームフォーシング）` };
