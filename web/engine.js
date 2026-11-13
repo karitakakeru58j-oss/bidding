@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.10.1';
+  const ENGINE_VERSION = '0.10.2';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -721,7 +721,7 @@
     const { M } = c.b;
     // ジャンプレイズ（15〜17）を受けて、合計が29点ぐらいあればコントロールでスラムトライ
     const p = c.partner.hcp;
-    if (h.adj + (p[0] + Math.min(p[1], p[0] + 8)) / 2 < 29 || motivation(h, M, c) < 3) return null;
+    if (h.adj + (p[0] + Math.min(p[1], p[0] + 8)) / 2 < 29 || motivation(h, M, c) < 2) return null;
     for (let r = rankOf('3' + M) + 1; r < rankOf('4' + M); r++) {
       const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
       if (s !== 'N' && s !== M && hasControl(h, s, c)) return { call, why: `フィットが決まり、2人の強さを合わせるとスラムの可能性があるので${callText(call)}：${JA_SUIT[s]}のコントロールを示す` };
@@ -1350,7 +1350,8 @@
         Object.assign(slam, { T: sh.agree, active: true, agreeIdx: i });
         if (sh.interest) slam.interest[me]++;
         if (sh.ctrl) { slam.ctrl[me].push(...sh.ctrl); slam.splShort = sh.ctrl[0]; }
-        if (sh.interest && sh.ctrl) slam.ctrlBids[me]++; // スラムトライのスプリンター・コントロール＝やる気3以上
+        // 示したやる気：3Mなど＝1、スラムトライのスプリンター・コントロール＝それまでに示したやる気+2
+        if (sh.interest) slam.shown[me] = sh.ctrl ? slam.shown[me] + 2 : Math.max(slam.shown[me], 1);
       }
     }
     const meIdx = seq.length % 2;
@@ -1432,7 +1433,7 @@
     return h.len[s] <= 1 && !(c && c.partner && c.partner[s][0] >= 3); // パートナーのスートのショートはコントロールにしない
   }
   function freshSlam() {
-    return { T: null, active: false, interest: [0, 0], ctrlBids: [0, 0], ctrl: [[], []], deny: [[], []], rk: null, ntSign: false, agreeIdx: -1, splShort: null };
+    return { T: null, active: false, interest: [0, 0], shown: [0, 0], ctrl: [[], []], deny: [[], []], rk: null, ntSign: false, agreeIdx: -1, splShort: null };
   }
   // フィットが決まった後のビッドの意味を記録する
   function slamInterpret(st, before, call, me) {
@@ -1442,10 +1443,10 @@
     if (st.rk && st.rk.resp && st.rk.asker === me && !st.rk.placed) { st.rk.placed = call; return; }
     if (call === '4N') { st.rk = { asker: me }; return; }
     if (call[1] === 'N') { st.ntSign = true; return; }
-    if (call[1] === T) { if (rankOf(call) < rankOf(G)) st.interest[me]++; return; }
+    if (call[1] === T) { if (rankOf(call) < rankOf(G)) { st.interest[me]++; st.shown[me] = Math.max(st.shown[me], 1); } return; }
     if (rankOf(call) < rankOf(G)) {
       st.interest[me]++;
-      st.ctrlBids[me]++;
+      st.shown[me] += 2; // コントロール紹介1回あたり、それまでより2多いやる気を示す
       const lb = lastBid(before);
       for (let r = lb ? rankOf(lb) + 1 : 0; r < rankOf(call); r++) {
         const s = STRAINS[r % 5];
@@ -1502,9 +1503,8 @@
     if (!isMaj(T) && st.splShort && seq.length === st.agreeIdx + 1 && h.sHcp[st.splShort] >= 3 && h.stopper(st.splShort) && legal('3N', seq))
       return { call: '3N', why: `パートナーのショートの${JA_SUIT[st.splShort]}に点がある（無駄になりやすい）のでノートランプを選ぶ` };
     const mot = motivation(h, T, c);
-    const allowed = mot >= 5 ? 99 : mot >= 3 ? 2 : mot >= 1 ? 1 : 0;
-    // パートナーのやる気の推定：3Mなど＝1以上、コントロール（スラムトライのスプリンターを含む）1回＝2以上、2回＝3以上、3回以上＝5以上
-    const pMot = st.ctrlBids[pa] >= 3 ? 5 : st.ctrlBids[pa] >= 2 ? 3 : st.ctrlBids[pa] >= 1 ? 2 : st.interest[pa] >= 1 ? 1 : 0;
+    // パートナーのやる気：これまでのビッドで示した分（3Mなど＝1、コントロール1回ごとに+2）
+    const pMot = st.shown[pa];
     const side = SUITS.filter(s => s !== T);
     const covered = side.every(s => hasControl(h, s, c) || st.ctrl[pa].includes(s));
     const hole = side.find(s => !hasControl(h, s, c) && st.deny[pa].includes(s));
@@ -1516,15 +1516,13 @@
     }
     const signoff = why => legal(G, seq) ? { call: G, why } : P(why.replace(/[^、]*で止める$/, 'パス'));
     if (hole) return signoff(`${JA_SUIT[hole]}に2人ともコントロールがないと分かったので${callText(G)}で止める`);
-    if (st.interest[me] >= allowed)
-      return signoff(mot === 0 ? `スラムへのやる気がない（${motTxt}）ので${callText(G)}で止める` : `やる気（${motTxt}）の分だけスラムに興味を示したので${callText(G)}で止める`);
+    if (mot === 0) return signoff(`スラムへのやる気がない（${motTxt}）ので${callText(G)}で止める`);
     const ch = cheapest(T, seq);
     if (isMaj(T) && st.interest[0] + st.interest[1] === 0 && ch && rankOf(ch) < rankOf(G))
       return { call: ch, why: `スラムに興味がある（${motTxt}）ので${callText(ch)}（フィットを確かめてスラムに興味を示す）` };
-    // コントロールを示すのはやる気3以上から
-    // 1度目のコントロールはやる気2以上、2度目からは3以上
-    const need = st.ctrlBids[me] === 0 ? 2 : 3;
-    if (mot < need) return signoff(`コントロールを示すにはやる気が足りない（${motTxt}。${need === 2 ? '1度目のコントロールはやる気2以上' : '2度目からのコントロールはやる気3以上'}）ので${callText(G)}で止める`);
+    // コントロール紹介は、自分がそれまでに示したやる気より2多いやる気が必要
+    const need = st.shown[me] + 2;
+    if (mot < need) return signoff(`コントロールを示すにはやる気${need}以上が必要（すでにやる気${st.shown[me]}以上を示している。${motTxt}）なので${callText(G)}で止める`);
     for (let r = lb ? rankOf(lb) + 1 : 0; r < rankOf(G); r++) {
       const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
       if (s === 'N' || s === T || st.ctrl[me].includes(s)) continue;

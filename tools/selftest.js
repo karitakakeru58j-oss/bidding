@@ -232,4 +232,9 @@ try {
   const r = E.chooseCall(H('T.KJT7.A53.AKJ63'), [], 'N', ex);
   if (r.call !== '1C') { ng++; console.log('NG 回答例の取り違え', r.call); } else console.log('回答例の枚数チェック: OK');
 }
+// 示したやる気の数え方：1♠-2♣-2NT-3♠-4♣-4♦-4♥ → オープナー4（4♣で2、4♥で4）、レスポンダー3（3♠で1、4♦で3）
+{
+  const sh = E.buildContext(['1S','2C','2N','3S','4C','4D','4H']).slam.shown;
+  if (sh[0] !== 4 || sh[1] !== 3) { ng++; console.log('NG やる気の数え方', sh); } else console.log('示したやる気の数え方: OK');
+}
 process.exit(ng ? 1 : 0);
