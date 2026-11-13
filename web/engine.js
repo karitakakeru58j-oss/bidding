@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.11.4';
+  const ENGINE_VERSION = '0.12.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1708,6 +1708,19 @@
     const d = SEATS.indexOf(dealer);
     const mySeat = SEATS[(d + auction.length) % 4];
     if (mySeat === 'E' || mySeat === 'W') return { call: 'P', why: '相手はパス（今は競り合いなし）', source: 'rule' };
+    // 相手のビッドがあるとき：今は「敵のオープンの直後の介入（オーバーコール）」だけに対応
+    {
+      const oppIdx = auction.findIndex((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'E' || SEATS[(d + i) % 4] === 'W'));
+      if (oppIdx >= 0) {
+        const ourBid = auction.some((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'));
+        const direct = !ourBid && oppIdx === auction.length - 1 && auction.slice(0, oppIdx).every(c => c === 'P');
+        if (direct && api.overcall) {
+          const r = api.overcall.decide(hand, auction[oppIdx]);
+          return { call: r.call, why: r.why, source: 'rule', ruleId: 'overcall', overcall: r };
+        }
+        return { call: 'P', why: '相手が入った競り合いは、まだ直後の介入しか対応していないのでパス', source: 'rule', ruleId: 'competitive' };
+      }
+    }
     const passedBeforeMe = false; // 将来：パス済みハンドを区別する
     const respSeat = seqSeats.length ? (seqSeats[0] === 'N' ? 'S' : 'N') : null;
     const respPassed = !!respSeat && passedSeats.includes(respSeat);

@@ -1,0 +1,179 @@
+/*
+ * overcall.js — 敵のオープンの直後に介入するか（オーバーコール）を判断・学習する
+ *
+ * 流れ
+ *   1. 候補：手と敵のオープンから「介入し得るなら、どの種類の何のビッドか」を決める
+ *      種類：1D / 1M / 1N / 2m / 2M / weak（ウィークオーバーコール＝ジャンプ）
+ *   2. パラメータ（1〜5）：リードショーイング・ゲームの可能性・競り合い・プリエンプト性
+ *      最初は目安の式で推定し、あなたの評価がたまると手の特徴から評価を予測するように補正する
+ *   3. 判断：種類ごとに「4つのパラメータの重み」を学習し、介入する確率を出す（ロジスティック回帰）
+ *      データが少ない種類は、全種類まとめた重みに引き寄せる
+ */
+(function (root) {
+  'use strict';
+  const E = root.BridgeEngine || (typeof require !== 'undefined' ? require('./engine.js') : null);
+  const { SUITS, SYM, JA_SUIT, evaluate, isBid, rankOf, callText } = E;
+
+  const TYPES = ['1D', '1M', '1N', '2m', '2M', 'weak'];
+  const TYPE_JA = { '1D': '1♦オーバーコール', '1M': '1Mオーバーコール', '1N': '1NTオーバーコール', '2m': '2mオーバーコール', '2M': '2Mオーバーコール', weak: 'ウィークオーバーコール' };
+  const PARAMS = ['lead', 'game', 'compete', 'preempt'];
+  const PARAM_JA = { lead: 'リードショーイング', game: 'ゲームの可能性', compete: '競り合い', preempt: 'プリエンプト性' };
+  const isMaj = s => s === 'H' || s === 'S';
+  const clamp = (x, a = 1, b = 5) => Math.max(a, Math.min(b, x));
+  const STR = 'CDHSN';
+  const cheapest = (strain, after) => { for (let lv = 1; lv <= 7; lv++) { const c = lv + strain; if (rankOf(c) > rankOf(after)) return c; } return null; };
+
+  // ------------------------------------------------------------------
+  // 1. 候補
+  // ------------------------------------------------------------------
+  function candidate(hand, open) {
+    if (!/^1[CDHS]$/.test(open)) return null;
+    const h = evaluate(hand), O = open[1];
+    const suits = SUITS.filter(s => s !== O).sort((a, b) => h.len[b] - h.len[a] || STR.indexOf(b) - STR.indexOf(a));
+    const s = suits[0];
+    // ウィーク（ジャンプ）：6枚以上・弱い
+    if (h.len[s] >= 6 && h.adj >= 4 && h.adj < 11) {
+      const c1 = cheapest(s, open), jump = (Number(c1[0]) + 1) + s;
+      if (Number(jump[0]) <= 3) return { type: 'weak', call: jump, suit: s };
+    }
+    // 1NT：バランス・15〜18・オープンのスートにストッパー
+    if (h.balanced && h.adj >= 14.5 && h.adj < 19 && h.stopper(O)) return { type: '1N', call: '1N', suit: null };
+    if (h.len[s] < 5) return null;
+    const call = cheapest(s, open);
+    const lv = Number(call[0]);
+    if (lv === 1 && (h.adj < 5.5 || h.adj >= 18)) return null;
+    if (lv === 2 && (h.adj < 7.5 || h.adj >= 18)) return null;
+    const type = lv === 1 ? (s === 'D' ? '1D' : '1M') : (isMaj(s) ? '2M' : '2m');
+    return { type, call, suit: s };
+  }
+
+  // ------------------------------------------------------------------
+  // 2. パラメータ：手の特徴と目安の式
+  // ------------------------------------------------------------------
+  function features(hand, open, cand) {
+    const h = evaluate(hand), O = open[1], s = cand.suit;
+    const len = s ? h.len[s] : 0;
+    const top3 = s ? h.top3(s) : 0, top5 = s ? h.top5(s) : 0;
+    const suitHcp = s ? h.sHcp[s] : 0;
+    const space = rankOf(cand.call) - rankOf(open); // 奪う段数
+    return {
+      adj: h.adj, len, top3, top5, suitHcp, outside: h.rawHcp - suitHcp, space,
+      major: s && isMaj(s) ? 1 : 0, spade: s === 'S' ? 1 : 0,
+      shortO: h.len[O] <= 1 ? 1 : 0, stopO: h.stopper(O) ? 1 : 0, lenO: h.len[O],
+    };
+  }
+  function heuristic(f, cand) {
+    const nt = cand.type === '1N';
+    const lead = nt ? 2 + f.stopO : 1 + 1.4 * f.top3 + 0.4 * Math.max(0, f.top5 - f.top3);
+    const g = f.adj + (f.len - 5) * 1.2 + (f.major ? 1 : 0) + (f.shortO ? 1 : 0);
+    const game = nt ? clamp(1 + (f.adj - 12) * 0.9) : g < 8 ? 1 + g / 8 : clamp(2 + (g - 8) / 2.4);
+    const compete = nt ? 2 : 1 + (f.len - 5) * 1.2 + (f.major ? 0.8 : 0) + f.spade * 0.5 + f.shortO * 0.7 + (f.adj >= 8 ? 0.5 : 0);
+    const preempt = nt ? 2.5 : 1 + Math.min(3.5, f.space * 0.45) + (f.len >= 6 ? 0.5 : 0) + (cand.type === 'weak' ? 0.5 : 0);
+    return { lead: clamp(lead), game: clamp(game), compete: clamp(compete), preempt: clamp(preempt) };
+  }
+  const FKEYS = ['adj', 'len', 'top3', 'top5', 'suitHcp', 'outside', 'space', 'major', 'spade', 'shortO', 'stopO'];
+  const fvec = (f, type) => [1, ...FKEYS.map(k => f[k]), ...TYPES.map(t => t === type ? 1 : 0)];
+
+  // ------------------------------------------------------------------
+  // 小さな線形代数（リッジ回帰用）
+  // ------------------------------------------------------------------
+  function solve(A, b) {
+    const n = b.length, M = A.map((r, i) => [...r, b[i]]);
+    for (let i = 0; i < n; i++) {
+      let p = i; for (let k = i + 1; k < n; k++) if (Math.abs(M[k][i]) > Math.abs(M[p][i])) p = k;
+      [M[i], M[p]] = [M[p], M[i]];
+      if (Math.abs(M[i][i]) < 1e-12) continue;
+      for (let k = 0; k < n; k++) if (k !== i) { const r = M[k][i] / M[i][i]; for (let j = i; j <= n; j++) M[k][j] -= r * M[i][j]; }
+    }
+    return M.map((r, i) => Math.abs(r[i]) < 1e-12 ? 0 : r[n] / r[i]);
+  }
+  function ridge(X, y, lam) {
+    const d = X[0].length, A = Array.from({ length: d }, () => Array(d).fill(0)), b = Array(d).fill(0);
+    X.forEach((x, n) => { for (let i = 0; i < d; i++) { b[i] += x[i] * y[n]; for (let j = 0; j < d; j++) A[i][j] += x[i] * x[j]; } });
+    for (let i = 0; i < d; i++) A[i][i] += lam;
+    return solve(A, b);
+  }
+  const sigmoid = z => 1 / (1 + Math.exp(-z));
+  // ロジスティック回帰（重みを prior に引き寄せる）
+  function logistic(X, y, prior, lam, iters = 3000, lr = 0.05) {
+    const w = prior.slice();
+    for (let it = 0; it < iters; it++) {
+      const g = w.map((wi, i) => lam * (wi - prior[i]));
+      X.forEach((x, n) => { const e = sigmoid(x.reduce((t, xi, i) => t + xi * w[i], 0)) - y[n]; for (let i = 0; i < w.length; i++) g[i] += e * x[i]; });
+      for (let i = 0; i < w.length; i++) w[i] -= lr * g[i] / Math.max(1, X.length);
+    }
+    return w;
+  }
+
+  // ------------------------------------------------------------------
+  // 3. 学習
+  //   records: [{deal, open, type, call, params:{lead,game,compete,preempt}, decision:true/false}]
+  // ------------------------------------------------------------------
+  // 判断の重み：[切片, lead, game, compete, preempt]（パラメータは 3 を中心にする）
+  const DEFAULT_W = [0.3, 0.9, 1.2, 0.9, 0.7];
+  const px = p => [1, ...PARAMS.map(k => p[k] - 3)];
+  let MODEL = null;
+
+  function train(records) {
+    const recs = (records || []).filter(r => r && r.params && typeof r.decision === 'boolean' && TYPES.includes(r.type));
+    // パラメータの予測（目安の式からのずれを手の特徴から学ぶ）
+    const corr = {};
+    const X = [], rows = [];
+    for (const r of recs) {
+      const hand = r.hand || E.pbnToDeal(r.deal)[r.seat || 'S'];
+      const f = features(hand, r.open, r);
+      X.push(fvec(f, r.type)); rows.push({ r, base: heuristic(f, r) });
+    }
+    for (const k of PARAMS) corr[k] = X.length >= 6 ? ridge(X, rows.map(o => o.r.params[k] - o.base[k]), 8) : null;
+    // 判断の重み：全体 → 種類ごと（全体に引き寄せる）
+    const PX = recs.map(r => px(r.params)), PY = recs.map(r => r.decision ? 1 : 0);
+    const pooled = recs.length >= 4 ? logistic(PX, PY, DEFAULT_W, 1) : DEFAULT_W.slice();
+    const byType = {};
+    for (const t of TYPES) {
+      const idx = recs.map((r, i) => r.type === t ? i : -1).filter(i => i >= 0);
+      byType[t] = { n: idx.length, yes: idx.filter(i => PY[i]).length, w: idx.length ? logistic(idx.map(i => PX[i]), idx.map(i => PY[i]), pooled, 2) : pooled.slice() };
+      const mean = (sel) => { const ii = idx.filter(i => PY[i] === sel); return Object.fromEntries(PARAMS.map(k => [k, ii.length ? ii.reduce((t, i) => t + recs[i].params[k], 0) / ii.length : null])); };
+      byType[t].meanYes = mean(1); byType[t].meanNo = mean(0);
+    }
+    MODEL = { n: recs.length, corr, pooled, byType };
+    return MODEL;
+  }
+
+  function estimate(hand, open, cand) {
+    const f = features(hand, open, cand), base = heuristic(f, cand);
+    if (!MODEL) return base;
+    const x = fvec(f, cand.type), out = {};
+    for (const k of PARAMS) { const b = MODEL.corr[k]; out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
+    return out;
+  }
+  function probability(type, params) {
+    const w = MODEL ? MODEL.byType[type].w : DEFAULT_W;
+    return sigmoid(px(params).reduce((t, xi, i) => t + xi * w[i], 0));
+  }
+
+  // 介入の判断（engine の chooseCall から呼ばれる）
+  function decide(hand, open) {
+    const cand = candidate(hand, open);
+    if (!cand) return { call: 'P', why: '介入し得る形・強さではないのでパス', cand: null };
+    const params = estimate(hand, open, cand);
+    const p = probability(cand.type, params);
+    const ptxt = PARAMS.map(k => `${PARAM_JA[k]}${params[k].toFixed(1)}`).join('・');
+    if (p >= 0.5) return { call: cand.call, why: `${TYPE_JA[cand.type]}の候補（${ptxt}）。介入する確率${Math.round(p * 100)}%なので${callText(cand.call)}`, cand, params, p };
+    return { call: 'P', why: `${TYPE_JA[cand.type]}の候補（${callText(cand.call)}）だが、${ptxt}で介入する確率${Math.round(p * 100)}%なのでパス`, cand, params, p };
+  }
+
+  // 分析：種類ごとにどのパラメータを重視しているか
+  function analysis() {
+    const m = MODEL || train([]);
+    return TYPES.map(t => {
+      const bt = m.byType[t];
+      const weights = Object.fromEntries(PARAMS.map((k, i) => [k, bt.w[i + 1]]));
+      const order = PARAMS.slice().sort((a, b) => weights[b] - weights[a]);
+      return { type: t, name: TYPE_JA[t], n: bt.n, yes: bt.yes, weights, order, meanYes: bt.meanYes, meanNo: bt.meanNo };
+    });
+  }
+
+  const api = { TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
+  E.overcall = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);

@@ -1,5 +1,6 @@
 // エンジンの簡単な動作確認: node tools/selftest.js
 const E = require('../web/engine.js');
+require('../web/overcall.js');
 let seed = 12345;
 const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
 const H = s => E.pbnToHand(s);
@@ -257,5 +258,10 @@ try {
 {
   const sh = E.buildContext(['1S','2C','2N','3S','4C','4D','4H']).slam.shown;
   if (sh[0] !== 4 || sh[1] !== 3) { ng++; console.log('NG やる気の数え方', sh); } else console.log('示したやる気の数え方: OK');
+}
+// 介入：敵のオープンの直後に候補と判断が出るか
+{
+  const r = E.chooseCall(H('KQJ94.83.A72.643'), ['1H'], 'E');
+  if (r.call !== '1S' || r.ruleId !== 'overcall') { ng++; console.log('NG 介入', r.call, r.why); } else console.log('介入の判断: OK');
 }
 process.exit(ng ? 1 : 0);

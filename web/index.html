@@ -52,9 +52,9 @@ header.top {
 .brand { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .brand h1 { font-size: 20px; margin: 0; font-weight: 700; letter-spacing: .02em; }
 .brand .sys { font-size: 12px; color: var(--muted); }
-.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
+.tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
 .tabs button {
-  border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; padding: 8px 4px; border-radius: 7px; cursor: pointer;
+  border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; padding: 8px 2px; border-radius: 7px; cursor: pointer; white-space: nowrap;
 }
 .tabs button[aria-selected="true"] { background: var(--surface); color: var(--fg); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -120,6 +120,18 @@ textarea { width: 100%; min-height: 64px; resize: vertical; }
 .stat { background: var(--surface-2); border-radius: 8px; padding: 8px; text-align: center; }
 .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
 .stat span { font-size: 12px; color: var(--muted); }
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.seg { display: grid; grid-template-columns: repeat(5, 36px); gap: 4px; }
+.seg button { font: inherit; font-weight: 700; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.yn { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.yn button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.ptable { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.ptable th, .ptable td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+.ptable td.num { text-align: right; }
+.wbar { display: inline-block; height: 8px; border-radius: 4px; background: var(--accent); vertical-align: middle; }
+.wbar.neg { background: var(--bad); }
+.octype { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; display: grid; gap: 6px; min-width: 0; }
 .rec { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .rec:first-child { border-top: 0; padding-top: 0; }
 .rec .seq { font-family: var(--font-card); font-size: 14px; word-break: break-word; }
@@ -141,6 +153,7 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
     </div>
     <nav class="tabs" role="tablist">
       <button role="tab" id="tab-quiz" aria-selected="true" data-view="quiz">問題</button>
+      <button role="tab" id="tab-oc" aria-selected="false" data-view="oc">介入</button>
       <button role="tab" id="tab-records" aria-selected="false" data-view="records">記録</button>
       <button role="tab" id="tab-export" aria-selected="false" data-view="export">書き出し</button>
       <button role="tab" id="tab-help" aria-selected="false" data-view="help">使い方</button>
@@ -199,6 +212,37 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
   </section>
 
   <!-- 記録 -->
+  <section id="view-oc" class="wrap" hidden style="gap:14px">
+    <div class="card">
+      <div class="row spread"><span id="oc-info" class="muted">問題を作っています…</span></div>
+      <table class="auction"><thead><tr><th>西</th><th>北</th><th>東</th><th>南</th></tr></thead><tbody id="oc-auction"></tbody></table>
+      <div class="row spread"><span class="label">あなたの手札</span><span id="oc-meta" class="handmeta"></span></div>
+      <div id="oc-hand" class="hand"></div>
+      <div id="oc-cand" class="notice"></div>
+    </div>
+    <div class="card" id="oc-answer">
+      <span class="label">4つのパラメータを1〜5で評価</span>
+      <div id="oc-params" style="display:grid;gap:8px"></div>
+      <span class="label">介入する？</span>
+      <div class="yn"><button class="btn" data-yn="1" aria-pressed="false">介入する</button><button class="btn" data-yn="0" aria-pressed="false">介入しない（パス）</button></div>
+      <textarea id="oc-reason" placeholder="理由（任意）"></textarea>
+      <button id="oc-submit" class="btn primary block" disabled>評価と判断を入れてください</button>
+    </div>
+    <div class="card" id="oc-result" hidden>
+      <div id="oc-res"></div>
+      <div class="row"><button id="oc-next" class="btn primary">次の問題</button></div>
+    </div>
+    <div class="card">
+      <div class="row spread"><span class="label">分析：種類ごとに重視しているパラメータ</span><span id="oc-count" class="muted"></span></div>
+      <div id="oc-analysis" style="display:grid;gap:8px"></div>
+      <p class="muted" style="margin:0">重みは「そのパラメータが1上がると介入しやすくなる度合い」。回答が少ない種類は、全種類をまとめた重みに近い値になります。</p>
+    </div>
+    <div class="card">
+      <span class="label">介入の記録（新しい順）</span>
+      <div id="oc-records"></div>
+    </div>
+  </section>
+
   <section id="view-records" class="wrap" hidden>
     <div class="card">
       <div class="stats">
@@ -261,4 +305,5 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
 </div>
 
 <script src="engine.js"></script>
+<script src="overcall.js"></script>
 <script src="app.js"></script>

@@ -35,6 +35,7 @@
         return;
       }
       this.db = db; this.mode = 'db';
+      ocStore.attach(db);
       const timer = setTimeout(() => { note.hidden = false; note.textContent = '記録を読み込めていません。通信状態を確認してください。'; }, 10000);
       db.collection('answers').onSnapshot(snap => {
         if (!snap.metadata.fromCache) { clearTimeout(timer); note.hidden = true; }
@@ -332,7 +333,21 @@
     });
     return out.join('\n');
   }
-  function renderExport() { $('pbn').textContent = toPbn(store.answers); }
+  function ocPbn(items) {
+    const out = ['', '% 介入（オーバーコール）の回答。Auctionは東のオープンまで。OvercallDecision＝介入する(yes)／しない(no)', ''];
+    items.forEach((r, i) => {
+      out.push(tag('Event', 'Overcall quiz'), tag('Site', ''), tag('Date', (r.created || '').slice(0, 10).replace(/-/g, '.')), tag('Board', i + 1),
+        tag('West', 'Opp'), tag('North', 'Partner'), tag('East', 'Opp'), tag('South', 'You'),
+        tag('Dealer', r.dealer), tag('Vulnerable', r.vul || 'None'), tag('Deal', r.deal),
+        tag('Scoring', ''), tag('Declarer', ''), tag('Contract', ''), tag('Result', ''), tag('Auction', r.dealer));
+      out.push(r.auction.map(E.callPbn).join(' '), '*');
+      out.push(tag('QuizSeat', 'S'), tag('OvercallType', r.type), tag('OvercallBid', E.callPbn(r.call)), tag('OvercallDecision', r.decision ? 'yes' : 'no'),
+        tag('LeadDirecting', r.params.lead), tag('GameChance', r.params.game), tag('Competing', r.params.compete), tag('Preemptive', r.params.preempt),
+        tag('AnswerReason', r.reason || ''), tag('AIBid', E.callPbn(r.ai && r.ai.call || '')), tag('Created', r.created || ''), tag('QuizId', r.id), tag('EngineVersion', r.engine || ''), '');
+    });
+    return out.join('\n');
+  }
+  function renderExport() { $('pbn').textContent = toPbn(store.answers) + (ocStore.items.length ? ocPbn(ocStore.items) : ''); }
   $('copy-pbn').addEventListener('click', () => {
     const text = $('pbn').textContent;
     const done = () => { $('copy-msg').textContent = 'コピーしました'; };
@@ -350,20 +365,146 @@
     const b = $('dl-pbn'); b.hidden = false;
     b.addEventListener('click', async () => {
       try {
-        const r = await dl.save({ filename: 'bidding-quiz.pbn', data: toPbn(store.answers) });
+        const r = await dl.save({ filename: 'bidding-quiz.pbn', data: toPbn(store.answers) + (ocStore.items.length ? ocPbn(ocStore.items) : '') });
         $('copy-msg').textContent = r && r.status === 'saved' ? '保存しました' : '';
       } catch (e) { $('copy-msg').textContent = e && e.code === 'unavailable' ? 'ここでは保存できません' : ''; }
     });
   })();
 
   // ---------------------------------------------------------------
+  // 介入（オーバーコール）の練習：パラメータを1〜5で評価して、介入する／しないを答える
+  // ---------------------------------------------------------------
+  const OC = E.overcall;
+  const OC_KEY = 'bidquiz.overcalls.v1';
+  const ocStore = {
+    mode: 'local', db: null, items: [], listeners: [],
+    onChange(fn) { this.listeners.push(fn); },
+    emit() { this.items.sort((a, b) => (a.created || '').localeCompare(b.created || '')); OC.train(this.items); this.listeners.forEach(f => f()); },
+    loadLocal() { try { this.items = JSON.parse(localStorage.getItem(OC_KEY) || '[]'); } catch (e) { this.items = []; } this.emit(); },
+    saveLocal() { try { localStorage.setItem(OC_KEY, JSON.stringify(this.items)); } catch (e) { /* 保存できない環境 */ } },
+    attach(db) {
+      this.db = db; this.mode = 'db';
+      db.collection('overcalls').onSnapshot(snap => { this.items = snap.docs.map(d => ({ ...d.data(), id: d.id })); this.emit(); },
+        () => { /* 読み込みの失敗は記録の注意書きで知らせる */ });
+    },
+    async add(doc) { if (this.mode === 'db') await this.db.collection('overcalls').doc(doc.id).set(doc); else { this.items.push(doc); this.saveLocal(); this.emit(); } },
+    async remove(id) { if (this.mode === 'db') await this.db.collection('overcalls').doc(id).delete(); else { this.items = this.items.filter(x => x.id !== id); this.saveLocal(); this.emit(); } },
+  };
+  ocStore.loadLocal();
+
+  // 出題：東がオープンし、南（あなた）がすぐ次の手番。回答の少ない種類を優先して出す
+  function makeOcQuiz() {
+    const counts = Object.fromEntries(OC.TYPES.map(t => [t, 0]));
+    for (const r of ocStore.items) if (counts[r.type] != null) counts[r.type]++;
+    const min = Math.min(...Object.values(counts));
+    const want = OC.TYPES.filter(t => counts[t] === min);
+    const target = want[Math.floor(Math.random() * want.length)];
+    let fallback = null;
+    for (let t = 0; t < 6000; t++) {
+      const hands = E.deal();
+      const open = E.chooseCall(hands.E, [], 'N').call; // 東の手で1番手のオープンを決める
+      if (!/^1[CDHS]$/.test(open)) continue;
+      const cand = OC.candidate(hands.S, open);
+      if (!cand) continue;
+      const q = { hands, dealer: 'E', auction: [open], open, cand };
+      if (cand.type === target) return q;
+      if (!fallback) fallback = q;
+    }
+    return fallback;
+  }
+  let oq = null, oAns = null;
+  function ocNew() {
+    oq = makeOcQuiz();
+    oAns = { params: {}, decision: null };
+    $('oc-reason').value = ''; $('oc-result').hidden = true; $('oc-answer').hidden = false;
+    if (!oq) { $('oc-info').textContent = '問題を作れませんでした。もう一度開いてください。'; return; }
+    $('oc-info').textContent = `介入の第${ocStore.items.length + 1}問 ・ 東のオープンの直後 ・ バル なし`;
+    $('oc-auction').innerHTML = auctionRows(oq.auction, oq.dealer, true);
+    const ev = E.evaluate(oq.hands.S);
+    $('oc-hand').innerHTML = handHtml(oq.hands.S);
+    $('oc-meta').textContent = `${ev.rawHcp}点（HCP）・補正込み${Math.round(ev.adj * 10) / 10}点 ・ ${E.SUITS.map(s => ev.len[s]).join('-')}`;
+    $('oc-cand').innerHTML = `候補：<b>${callHtml(oq.cand.call)}</b>（${esc(OC.TYPE_JA[oq.cand.type])}）`;
+    renderOcInputs();
+  }
+  function renderOcInputs() {
+    $('oc-params').innerHTML = OC.PARAMS.map(k => `<div class="prow"><span>${esc(OC.PARAM_JA[k])}</span><div class="seg" data-param="${k}">${
+      [1, 2, 3, 4, 5].map(v => `<button aria-pressed="${oAns.params[k] === v}" data-v="${v}" aria-label="${esc(OC.PARAM_JA[k])} ${v}">${v}</button>`).join('')}</div></div>`).join('');
+    for (const b of document.querySelectorAll('.yn button')) b.setAttribute('aria-pressed', String(oAns.decision === (b.dataset.yn === '1')));
+    const ready = OC.PARAMS.every(k => oAns.params[k]) && oAns.decision !== null;
+    $('oc-submit').disabled = !ready;
+    $('oc-submit').textContent = ready ? (oAns.decision ? `介入する（${E.callText(oq.cand.call)}）で決定` : '介入しない（パス）で決定') : '評価と判断を入れてください';
+  }
+  $('oc-params').addEventListener('click', e => {
+    const b = e.target.closest('button[data-v]'); if (!b) return;
+    oAns.params[b.closest('.seg').dataset.param] = Number(b.dataset.v); renderOcInputs();
+  });
+  document.querySelector('.yn').addEventListener('click', e => {
+    const b = e.target.closest('button[data-yn]'); if (!b) return;
+    oAns.decision = b.dataset.yn === '1'; renderOcInputs();
+  });
+  $('oc-submit').addEventListener('click', async () => {
+    if (!oq) return;
+    const ai = OC.decide(oq.hands.S, oq.open); // 保存の前（この回答を学習する前）のAIの判断
+    const doc = {
+      id: 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), created: new Date().toISOString(), engine: E.ENGINE_VERSION,
+      kind: 'overcall', dealer: oq.dealer, vul: 'None', deal: E.dealToPbn(oq.hands, 'N'), auction: oq.auction.slice(), seat: 'S',
+      open: oq.open, type: oq.cand.type, call: oq.cand.call, params: { ...oAns.params }, decision: oAns.decision,
+      reason: $('oc-reason').value.trim(),
+      ai: { call: ai.call, params: ai.params ? Object.fromEntries(OC.PARAMS.map(k => [k, Math.round(ai.params[k] * 10) / 10])) : null, p: ai.p != null ? Math.round(ai.p * 100) / 100 : null },
+    };
+    $('oc-submit').disabled = true;
+    try { await ocStore.add(doc); } catch (err) { showSaveError(err); $('oc-submit').disabled = false; return; }
+    const yourCall = doc.decision ? doc.call : 'P', same = yourCall === ai.call;
+    let html = `<div class="result ${same ? 'same' : 'diff'}"><div class="row"><span class="pill ${same ? 'same' : 'diff'}">${same ? 'AIと同じ判断' : 'AIと違う判断'}</span></div>`;
+    html += `<div class="compare"><div><div class="label">あなた</div><div class="bigcall">${callHtml(yourCall)}</div></div><div><div class="label">AI（介入する確率${Math.round((ai.p || 0) * 100)}%）</div><div class="bigcall">${callHtml(ai.call)}</div></div></div>`;
+    html += '<table class="ptable"><tr><th>パラメータ</th><th>あなた</th><th>AIの推定</th></tr>' + OC.PARAMS.map(k =>
+      `<tr><td>${esc(OC.PARAM_JA[k])}</td><td class="num">${doc.params[k]}</td><td class="num">${ai.params ? ai.params[k].toFixed(1) : '–'}</td></tr>`).join('') + '</table>';
+    html += '<p class="muted" style="margin:0">この回答はすぐ学習に使われ、下の分析とAIの判断に反映されます。</p></div>';
+    $('oc-res').innerHTML = html; $('oc-answer').hidden = true; $('oc-result').hidden = false;
+    $('oc-auction').innerHTML = auctionRows(oq.auction.concat([yourCall]), oq.dealer, false);
+  });
+  $('oc-next').addEventListener('click', ocNew);
+
+  function renderOcAnalysis() {
+    const rows = OC.analysis();
+    $('oc-count').textContent = `回答 ${ocStore.items.length}件`;
+    $('oc-analysis').innerHTML = rows.map(r => {
+      const maxW = Math.max(0.5, ...OC.PARAMS.map(k => Math.abs(r.weights[k])));
+      const tbl = OC.PARAMS.map(k => {
+        const w = r.weights[k], wpx = Math.round(Math.abs(w) / maxW * 60);
+        const my = r.meanYes[k], mn = r.meanNo[k];
+        return `<tr><td>${esc(OC.PARAM_JA[k])}</td><td><span class="wbar ${w < 0 ? 'neg' : ''}" style="width:${wpx}px"></span> ${w.toFixed(2)}</td><td class="num">${my == null ? '–' : my.toFixed(1)}</td><td class="num">${mn == null ? '–' : mn.toFixed(1)}</td></tr>`;
+      }).join('');
+      return `<div class="octype"><div class="row spread"><b>${esc(r.name)}</b><span class="muted">${r.n}件（する${r.yes}・しない${r.n - r.yes}）</span></div>
+        <div class="muted">重視：${r.order.map(k => esc(OC.PARAM_JA[k])).join(' ＞ ')}${r.n < 5 ? '（回答が少ないので暫定）' : ''}</div>
+        <table class="ptable"><tr><th>パラメータ</th><th>重み</th><th>するの平均</th><th>しないの平均</th></tr>${tbl}</table></div>`;
+    }).join('');
+    const recent = ocStore.items.slice().reverse().slice(0, 30);
+    $('oc-records').innerHTML = recent.length ? recent.map(r => {
+      const h = E.pbnToDeal(r.deal).S;
+      return `<div class="rec" style="border-bottom:1px solid var(--line);padding:8px 0;display:grid;gap:4px">
+        <div class="row spread"><span>(${callHtml(r.open)}) → ${r.decision ? callHtml(r.call) : 'パス'} <span class="muted">${esc(OC.TYPE_JA[r.type])}</span></span>
+        <button class="btn small" data-ocdel="${esc(r.id)}">消す</button></div>
+        <div class="mono">${handShort(h)}</div>
+        <div class="muted">${OC.PARAMS.map(k => esc(OC.PARAM_JA[k]) + r.params[k]).join('・')}${r.reason ? '　「' + esc(r.reason) + '」' : ''}</div></div>`;
+    }).join('') : '<p class="muted" style="margin:0">まだ記録がありません。</p>';
+  }
+  $('oc-records').addEventListener('click', async e => {
+    const b = e.target.closest('button[data-ocdel]'); if (!b) return;
+    if (b.dataset.confirm !== '1') { b.dataset.confirm = '1'; b.textContent = 'もう一度押すと消えます'; return; }
+    try { await ocStore.remove(b.dataset.ocdel); } catch (err) { showSaveError(err); }
+  });
+  ocStore.onChange(() => { if (view === 'oc') renderOcAnalysis(); if (view === 'export') renderExport(); });
+
+  // ---------------------------------------------------------------
   // タブ
   // ---------------------------------------------------------------
-  let view = 'quiz';
+  var view = 'quiz';
   function show(v) {
     view = v;
     for (const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.view === v));
-    for (const name of ['quiz', 'records', 'export', 'help']) $('view-' + name).hidden = name !== v;
+    for (const name of ['quiz', 'oc', 'records', 'export', 'help']) $('view-' + name).hidden = name !== v;
+    if (v === 'oc') { if (!oq) ocNew(); renderOcAnalysis(); }
     if (v === 'records') renderRecords();
     if (v === 'export') renderExport();
   }
