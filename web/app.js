@@ -4,6 +4,15 @@
   const E = window.BridgeEngine;
   const $ = id => document.getElementById(id);
   const SEAT_JA = { N: '北', E: '東', S: '南', W: '西' };
+  // 思わぬエラーが起きたら、画面の上に原因を出す（止まったままにしない）
+  function showFatal(where, e) {
+    const note = document.getElementById('store-note');
+    if (!note) return;
+    note.hidden = false; note.className = 'notice warn';
+    note.textContent = `${where}でエラーが起きました：${e && e.message || e}。この文面をClaudeに伝えてください。`;
+  }
+  window.addEventListener('error', ev => showFatal('ページ', ev.error || ev.message));
+  window.addEventListener('unhandledrejection', ev => showFatal('ページ', ev.reason));
   const ROT = { N: 'S', S: 'N', E: 'W', W: 'E' };
 
   // ---------------------------------------------------------------
@@ -13,7 +22,7 @@
   const store = {
     mode: 'local', db: null, answers: [], listeners: [],
     onChange(fn) { this.listeners.push(fn); },
-    emit() { this.answers.sort((a, b) => (a.created || '').localeCompare(b.created || '')); this.listeners.forEach(f => f()); },
+    emit() { this.answers.sort((a, b) => (a.created || '').localeCompare(b.created || '')); this.listeners.forEach(f => { try { f(); } catch (e) { showFatal('記録の表示', e); } }); },
     loadLocal() {
       try { this.answers = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch (e) { this.answers = []; }
       this.emit();
@@ -379,13 +388,17 @@
   const ocStore = {
     mode: 'local', db: null, items: [], listeners: [],
     onChange(fn) { this.listeners.push(fn); },
-    emit() { this.items.sort((a, b) => (a.created || '').localeCompare(b.created || '')); OC.train(this.items); this.listeners.forEach(f => f()); },
+    emit() {
+      this.items.sort((a, b) => (a.created || '').localeCompare(b.created || ''));
+      try { OC.train(this.items.filter(r => r && r.deal && r.open && r.call && r.params)); } catch (e) { showFatal('介入の学習', e); }
+      this.listeners.forEach(f => { try { f(); } catch (e) { showFatal('介入の表示', e); } });
+    },
     loadLocal() { try { this.items = JSON.parse(localStorage.getItem(OC_KEY) || '[]'); } catch (e) { this.items = []; } this.emit(); },
     saveLocal() { try { localStorage.setItem(OC_KEY, JSON.stringify(this.items)); } catch (e) { /* 保存できない環境 */ } },
     attach(db) {
       this.db = db; this.mode = 'db';
       db.collection('overcalls').onSnapshot(snap => { this.items = snap.docs.map(d => ({ ...d.data(), id: d.id })); this.emit(); },
-        () => { /* 読み込みの失敗は記録の注意書きで知らせる */ });
+        err => showFatal('介入の記録の読み込み', err && (err.code || err.message) || err));
     },
     async add(doc) { if (this.mode === 'db') await this.db.collection('overcalls').doc(doc.id).set(doc); else { this.items.push(doc); this.saveLocal(); this.emit(); } },
     async remove(id) { if (this.mode === 'db') await this.db.collection('overcalls').doc(id).delete(); else { this.items = this.items.filter(x => x.id !== id); this.saveLocal(); this.emit(); } },
@@ -518,6 +531,8 @@
     if (quiz && $('result-card').hidden) $('board-info').textContent = `第${store.answers.length + 1}問 ・ ディーラー ${SEAT_JA[quiz.dealer]} ・ バル なし`;
   });
 
-  newQuiz();
-  store.init();
+  // 最初の問題作りは画面を出してから行う（読み込み中に止まって見えないように）
+  $('board-info').textContent = '問題を作っています…';
+  setTimeout(() => { try { newQuiz(); } catch (e) { showFatal('問題の作成', e); } }, 0);
+  store.init().catch(e => showFatal('記録の読み込み', e));
 })();
