@@ -19,6 +19,16 @@
   const TYPES = ['1D', '1M', '2m', '2M', 'weak'];
   const TYPE_JA = { '1D': '1♦オーバーコール', '1M': '1Mオーバーコール', '1N': '1NTオーバーコール', '2m': '2mオーバーコール', '2M': '2Mオーバーコール', weak: 'ウィークオーバーコール' };
   const PARAMS = ['lead', 'game', 'compete', 'preempt'];
+  const RATED = ['lead', 'game', 'compete']; // あなたが評価するパラメータ（プリエンプト性はビッドで決まる）
+  // プリエンプト性：オーバーコールのビッドで決まる
+  //   1♦＝1、1M＝2、2m・2♥＝3、2♠・3m＝4、3♥以上＝5
+  function preemptOf(call) {
+    if (call === '1D') return 1;
+    if (call === '1H' || call === '1S') return 2;
+    if (call === '2C' || call === '2D' || call === '2H') return 3;
+    if (call === '2S' || call === '3C' || call === '3D') return 4;
+    return 5;
+  }
   const PARAM_JA = { lead: 'リードショーイング', game: 'ゲームの可能性', compete: '競り合い', preempt: 'プリエンプト性' };
   const isMaj = s => s === 'H' || s === 'S';
   const clamp = (x, a = 1, b = 5) => Math.max(a, Math.min(b, x));
@@ -68,8 +78,7 @@
     const g = f.adj + (f.len - 5) * 1.2 + (f.major ? 1 : 0) + (f.shortO ? 1 : 0);
     const game = nt ? clamp(1 + (f.adj - 12) * 0.9) : g < 8 ? 1 + g / 8 : clamp(2 + (g - 8) / 2.4);
     const compete = nt ? 2 : 1 + (f.len - 5) * 1.2 + (f.major ? 0.8 : 0) + f.spade * 0.5 + f.shortO * 0.7 + (f.adj >= 8 ? 0.5 : 0);
-    const preempt = nt ? 2.5 : 1 + Math.min(3.5, f.space * 0.45) + (f.len >= 6 ? 0.5 : 0) + (cand.type === 'weak' ? 0.5 : 0);
-    return { lead: clamp(lead), game: clamp(game), compete: clamp(compete), preempt: clamp(preempt) };
+    return { lead: clamp(lead), game: clamp(game), compete: clamp(compete), preempt: preemptOf(cand.call) };
   }
   const FKEYS = ['adj', 'len', 'top3', 'top5', 'suitHcp', 'outside', 'space', 'major', 'spade', 'shortO', 'stopO'];
   const fvec = (f, type) => [1, ...FKEYS.map(k => f[k]), ...TYPES.map(t => t === type ? 1 : 0)];
@@ -124,15 +133,17 @@
       const f = features(hand, r.open, r);
       X.push(fvec(f, r.type)); rows.push({ r, base: heuristic(f, r) });
     }
-    for (const k of PARAMS) corr[k] = X.length >= 6 ? ridge(X, rows.map(o => o.r.params[k] - o.base[k]), 8) : null;
+    for (const k of RATED) corr[k] = X.length >= 6 ? ridge(X, rows.map(o => o.r.params[k] - o.base[k]), 8) : null;
+    // プリエンプト性はビッドで決まる値を使う（以前の記録で評価していても置き換える）
+    const fixed = recs.map(r => ({ ...r.params, preempt: preemptOf(r.call) }));
     // 判断の重み：全体 → 種類ごと（全体に引き寄せる）
-    const PX = recs.map(r => px(r.params)), PY = recs.map(r => r.decision ? 1 : 0);
+    const PX = fixed.map(p => px(p)), PY = recs.map(r => r.decision ? 1 : 0);
     const pooled = recs.length >= 4 ? logistic(PX, PY, DEFAULT_W, 1) : DEFAULT_W.slice();
     const byType = {};
     for (const t of TYPES) {
       const idx = recs.map((r, i) => r.type === t ? i : -1).filter(i => i >= 0);
       byType[t] = { n: idx.length, yes: idx.filter(i => PY[i]).length, w: idx.length ? logistic(idx.map(i => PX[i]), idx.map(i => PY[i]), pooled, 2) : pooled.slice() };
-      const mean = (sel) => { const ii = idx.filter(i => PY[i] === sel); return Object.fromEntries(PARAMS.map(k => [k, ii.length ? ii.reduce((t, i) => t + recs[i].params[k], 0) / ii.length : null])); };
+      const mean = (sel) => { const ii = idx.filter(i => PY[i] === sel); return Object.fromEntries(PARAMS.map(k => [k, ii.length ? ii.reduce((t, i) => t + fixed[i][k], 0) / ii.length : null])); };
       byType[t].meanYes = mean(1); byType[t].meanNo = mean(0);
     }
     MODEL = { n: recs.length, corr, pooled, byType };
@@ -143,7 +154,8 @@
     const f = features(hand, open, cand), base = heuristic(f, cand);
     if (!MODEL) return base;
     const x = fvec(f, cand.type), out = {};
-    for (const k of PARAMS) { const b = MODEL.corr[k]; out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
+    for (const k of RATED) { const b = MODEL.corr[k]; out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
+    out.preempt = base.preempt;
     return out;
   }
   function probability(type, params) {
@@ -181,7 +193,7 @@
     });
   }
 
-  const api = { ntOvercall, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
+  const api = { ntOvercall, preemptOf, RATED, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
   E.overcall = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

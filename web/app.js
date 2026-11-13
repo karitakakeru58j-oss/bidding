@@ -342,7 +342,7 @@
         tag('Scoring', ''), tag('Declarer', ''), tag('Contract', ''), tag('Result', ''), tag('Auction', r.dealer));
       out.push(r.auction.map(E.callPbn).join(' '), '*');
       out.push(tag('QuizSeat', 'S'), tag('OvercallType', r.type), tag('OvercallBid', E.callPbn(r.call)), tag('OvercallDecision', r.decision ? 'yes' : 'no'),
-        tag('LeadDirecting', r.params.lead), tag('GameChance', r.params.game), tag('Competing', r.params.compete), tag('Preemptive', r.params.preempt),
+        tag('LeadDirecting', r.params.lead), tag('GameChance', r.params.game), tag('Competing', r.params.compete), tag('Preemptive', OC.preemptOf(r.call)),
         tag('AnswerReason', r.reason || ''), tag('AIBid', E.callPbn(r.ai && r.ai.call || '')), tag('Created', r.created || ''), tag('QuizId', r.id), tag('EngineVersion', r.engine || ''), '');
     });
     return out.join('\n');
@@ -428,10 +428,11 @@
     renderOcInputs();
   }
   function renderOcInputs() {
-    $('oc-params').innerHTML = OC.PARAMS.map(k => `<div class="prow"><span>${esc(OC.PARAM_JA[k])}</span><div class="seg" data-param="${k}">${
-      [1, 2, 3, 4, 5].map(v => `<button aria-pressed="${oAns.params[k] === v}" data-v="${v}" aria-label="${esc(OC.PARAM_JA[k])} ${v}">${v}</button>`).join('')}</div></div>`).join('');
+    $('oc-params').innerHTML = OC.RATED.map(k => `<div class="prow"><span>${esc(OC.PARAM_JA[k])}</span><div class="seg" data-param="${k}">${
+      [1, 2, 3, 4, 5].map(v => `<button aria-pressed="${oAns.params[k] === v}" data-v="${v}" aria-label="${esc(OC.PARAM_JA[k])} ${v}">${v}</button>`).join('')}</div></div>`).join('')
+      + `<div class="prow"><span>プリエンプト性 <span class="muted">（${esc(E.callText(oq.cand.call))}で決まる）</span></span><b style="padding-right:8px">${OC.preemptOf(oq.cand.call)}</b></div>`;
     for (const b of document.querySelectorAll('.yn button')) b.setAttribute('aria-pressed', String(oAns.decision === (b.dataset.yn === '1')));
-    const ready = OC.PARAMS.every(k => oAns.params[k]) && oAns.decision !== null;
+    const ready = OC.RATED.every(k => oAns.params[k]) && oAns.decision !== null;
     $('oc-submit').disabled = !ready;
     $('oc-submit').textContent = ready ? (oAns.decision ? `介入する（${E.callText(oq.cand.call)}）で決定` : '介入しない（パス）で決定') : '評価と判断を入れてください';
   }
@@ -449,7 +450,7 @@
     const doc = {
       id: 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), created: new Date().toISOString(), engine: E.ENGINE_VERSION,
       kind: 'overcall', dealer: oq.dealer, vul: 'None', deal: E.dealToPbn(oq.hands, 'N'), auction: oq.auction.slice(), seat: 'S',
-      open: oq.open, type: oq.cand.type, call: oq.cand.call, params: { ...oAns.params }, decision: oAns.decision,
+      open: oq.open, type: oq.cand.type, call: oq.cand.call, params: { ...oAns.params, preempt: OC.preemptOf(oq.cand.call) }, decision: oAns.decision,
       reason: $('oc-reason').value.trim(),
       ai: { call: ai.call, params: ai.params ? Object.fromEntries(OC.PARAMS.map(k => [k, Math.round(ai.params[k] * 10) / 10])) : null, p: ai.p != null ? Math.round(ai.p * 100) / 100 : null },
     };
@@ -459,7 +460,7 @@
     let html = `<div class="result ${same ? 'same' : 'diff'}"><div class="row"><span class="pill ${same ? 'same' : 'diff'}">${same ? 'AIと同じ判断' : 'AIと違う判断'}</span></div>`;
     html += `<div class="compare"><div><div class="label">あなた</div><div class="bigcall">${callHtml(yourCall)}</div></div><div><div class="label">AI（介入する確率${Math.round((ai.p || 0) * 100)}%）</div><div class="bigcall">${callHtml(ai.call)}</div></div></div>`;
     html += '<table class="ptable"><tr><th>パラメータ</th><th>あなた</th><th>AIの推定</th></tr>' + OC.PARAMS.map(k =>
-      `<tr><td>${esc(OC.PARAM_JA[k])}</td><td class="num">${doc.params[k]}</td><td class="num">${ai.params ? ai.params[k].toFixed(1) : '–'}</td></tr>`).join('') + '</table>';
+      `<tr><td>${esc(OC.PARAM_JA[k])}${k === 'preempt' ? '（ビッドで決まる）' : ''}</td><td class="num">${doc.params[k]}</td><td class="num">${ai.params ? (k === 'preempt' ? ai.params[k] : ai.params[k].toFixed(1)) : '–'}</td></tr>`).join('') + '</table>';
     html += '<p class="muted" style="margin:0">この回答はすぐ学習に使われ、下の分析とAIの判断に反映されます。</p></div>';
     $('oc-res').innerHTML = html; $('oc-answer').hidden = true; $('oc-result').hidden = false;
     $('oc-auction').innerHTML = auctionRows(oq.auction.concat([yourCall]), oq.dealer, false);
@@ -487,7 +488,7 @@
         <div class="row spread"><span>(${callHtml(r.open)}) → ${r.decision ? callHtml(r.call) : 'パス'} <span class="muted">${esc(OC.TYPE_JA[r.type])}</span></span>
         <button class="btn small" data-ocdel="${esc(r.id)}">消す</button></div>
         <div class="mono">${handShort(h)}</div>
-        <div class="muted">${OC.PARAMS.map(k => esc(OC.PARAM_JA[k]) + r.params[k]).join('・')}${r.reason ? '　「' + esc(r.reason) + '」' : ''}</div></div>`;
+        <div class="muted">${OC.PARAMS.map(k => esc(OC.PARAM_JA[k]) + (k === 'preempt' ? OC.preemptOf(r.call) : r.params[k])).join('・')}${r.reason ? '　「' + esc(r.reason) + '」' : ''}</div></div>`;
     }).join('') : '<p class="muted" style="margin:0">まだ記録がありません。</p>';
   }
   $('oc-records').addEventListener('click', async e => {
