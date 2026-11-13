@@ -101,11 +101,14 @@
   // 競り合い（シェイプ）も種類ごと：
   //   1♦は4枚でもビッドするので5枚あれば2以上。2mは5枚ではほとんどビッドしない（6322で2）、
   //   2Mは5枚でもゲームの可能性があればビッドする（6322で3）
-  function competeOf(f, type) {
+  function competeOf(f, type, call) {
     // 敵のスートが短いと上がる：ボイド+1、シングルトン+0.6、ダブルトン+0.3、4枚以上-0.4
     const oppAdj = f.lenO === 0 ? 1 : f.lenO === 1 ? 0.6 : f.lenO === 2 ? 0.3 : f.lenO >= 4 ? -0.4 : 0;
     const sh = 1.3 * shapeScore(f) + oppAdj;
     if (type === '1D') return clamp(1 + Math.max(0, f.len - 4) + sh);
+    // 3の代のウィークは7枚が基本：6-4は2の代なら最高級だが、3の代では並以下。長さそのものを重く見る
+    if (type === 'weak' && call && call[0] === '3')
+      return clamp(1.3 + 1.2 * (f.len - 6) + 0.3 * Math.max(0, f.l2 - 3) + 0.5 * f.single + f.voids + oppAdj);
     if (type === '2M') return clamp(1.7 + sh);
     return clamp(1 + sh);
   }
@@ -113,7 +116,7 @@
     return {
       lead: clamp(0.2 + 1.3 * suitScore(f)),
       game: gameOf(f.hcp, cand.type),
-      compete: competeOf(f, cand.type),
+      compete: competeOf(f, cand.type, cand.call),
       preempt: preemptOf(cand.call),
     };
   }
@@ -121,6 +124,10 @@
   // 回答からの補正を学ぶパラメータ。57件の時点では、リードショーイングとゲームの可能性は
   // 補正を学ぶと目安の式より当てはまりが悪くなった（回答が少ない）ので、競り合いだけ学ぶ
   const LEARN = ['compete'];
+  // 補正は、その種類の回答が12件以上たまってから使う（少ないうちは目安の式の方が当てはまりが良かった）
+  // 補正はウィークだけ2の代と3の代に分ける（競り合いの基準が違う）
+  const corrKey = c => c.type === 'weak' ? (c.call && c.call[0] === '3' ? 'weak3' : 'weak2') : c.type;
+  const CORR_KEYS = ['1D', '1M', '2m', '2M', 'weak2', 'weak3'];
   const PFEAT = {
     lead: f => [1, f.A, f.K, f.Q, f.J, f.T, f.N9, f.two3, f.len],
     game: f => [1, f.hcp],
@@ -181,14 +188,14 @@
       rows.push({ r, f, base: heuristic(f, r) });
     }
     // 補正は種類ごとに別々に学ぶ（種類が違えば同じ手でも評価が違うので混ぜない）
-    for (const t of TYPES) {
-      const rt = rows.filter(o => o.r.type === t);
+    for (const t of CORR_KEYS) {
+      const rt = rows.filter(o => corrKey(o.r) === t);
       corr[t] = {};
-      for (const k of LEARN) corr[t][k] = rt.length >= 5 ? ridge(rt.map(o => PFEAT[k](o.f)), rt.map(o => o.r.params[k] - o.base[k]), 10) : null;
+      for (const k of LEARN) corr[t][k] = rt.length >= 12 ? ridge(rt.map(o => PFEAT[k](o.f)), rt.map(o => o.r.params[k] - o.base[k]), 10) : null;
     }
     // プリエンプト性はビッドで決まる値を使う（以前の記録で評価していても置き換える）
     const fixed = recs.map(r => ({ ...r.params, preempt: preemptOf(r.call) }));
-    // 判断の重み：全体 → 種類ごと（全体に引き寄せる）
+    // 判断の重み：種類ごと
     const PX = fixed.map(p => px(p)), PY = recs.map(r => r.decision ? 1 : 0);
     const pooled = recs.length >= 4 ? logistic(PX, PY, DEFAULT_W, 1) : DEFAULT_W.slice();
     const byType = {};
@@ -207,7 +214,7 @@
     const f = features(hand, open, cand), base = heuristic(f, cand);
     if (!MODEL) return base;
     const out = {};
-    for (const k of RATED) { const b = MODEL.corr[cand.type] && MODEL.corr[cand.type][k], x = PFEAT[k](f); out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
+    for (const k of RATED) { const b = MODEL.corr[corrKey(cand)] && MODEL.corr[corrKey(cand)][k], x = PFEAT[k](f); out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
     out.preempt = base.preempt;
     return out;
   }
