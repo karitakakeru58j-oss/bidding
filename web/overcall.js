@@ -48,7 +48,9 @@
     const strongShape = h.top3(s) >= 2 && (SUITS.some(t => h.len[t] === 0) || SUITS.filter(t => t !== s).some(t => h.len[t] >= 5));
     // ウィークは2〜9点（HCP）。10点以上はジャンプせず普通にオーバーコールする
     if (h.len[s] >= 6 && h.rawHcp >= 2 && h.rawHcp <= 9 && !strongShape) {
-      const c1 = cheapest(s, open), jump = (Number(c1[0]) + 1) + s;
+      // 6枚は2の代か3の代（1段ジャンプ）、7枚以上は3の代
+      const c1 = cheapest(s, open);
+      const jump = (h.len[s] >= 7 ? 3 : Number(c1[0]) + 1) + s;
       if (Number(jump[0]) <= 3) return { type: 'weak', call: jump, suit: s };
     }
     // 1♦オーバーコールの特例：♣のオープンに対して、ほかに5枚スートがなければ♦4枚でもビッドすることがある
@@ -83,6 +85,7 @@
       hcp: h.rawHcp,
       // シェイプ
       l1: lens[0], l2: lens[1], single: SUITS.filter(t => h.len[t] === 1).length, voids: SUITS.filter(t => h.len[t] === 0).length,
+      lenO: h.len[open[1]], // 敵のオープンしたスートの長さ（短いほど競り合いの評価が上がる）
     };
   }
   function suitScore(f) { return 1.5 * f.A + 1.2 * f.K + 1.0 * f.Q + 0.8 * f.J + 0.5 * f.T + 0.2 * f.N9 + 1.0 * f.two3; }
@@ -99,7 +102,9 @@
   //   1♦は4枚でもビッドするので5枚あれば2以上。2mは5枚ではほとんどビッドしない（6322で2）、
   //   2Mは5枚でもゲームの可能性があればビッドする（6322で3）
   function competeOf(f, type) {
-    const sh = 1.3 * shapeScore(f);
+    // 敵のスートが短いと上がる：ボイド+1、シングルトン+0.6、ダブルトン+0.3、4枚以上-0.4
+    const oppAdj = f.lenO === 0 ? 1 : f.lenO === 1 ? 0.6 : f.lenO === 2 ? 0.3 : f.lenO >= 4 ? -0.4 : 0;
+    const sh = 1.3 * shapeScore(f) + oppAdj;
     if (type === '1D') return clamp(1 + Math.max(0, f.len - 4) + sh);
     if (type === '2M') return clamp(1.7 + sh);
     return clamp(1 + sh);
@@ -113,10 +118,13 @@
     };
   }
   // 補正の学習に使う特徴も、パラメータごとに分ける（ほかの要素が混ざらないように）
+  // 回答からの補正を学ぶパラメータ。57件の時点では、リードショーイングとゲームの可能性は
+  // 補正を学ぶと目安の式より当てはまりが悪くなった（回答が少ない）ので、競り合いだけ学ぶ
+  const LEARN = ['compete'];
   const PFEAT = {
     lead: f => [1, f.A, f.K, f.Q, f.J, f.T, f.N9, f.two3, f.len],
     game: f => [1, f.hcp],
-    compete: f => [1, f.l1, f.l2, f.single, f.voids],
+    compete: f => [1, f.l1, f.l2, f.single, f.voids, f.lenO],
   };
 
   // ------------------------------------------------------------------
@@ -176,7 +184,7 @@
     for (const t of TYPES) {
       const rt = rows.filter(o => o.r.type === t);
       corr[t] = {};
-      for (const k of RATED) corr[t][k] = rt.length >= 5 ? ridge(rt.map(o => PFEAT[k](o.f)), rt.map(o => o.r.params[k] - o.base[k]), 6) : null;
+      for (const k of LEARN) corr[t][k] = rt.length >= 5 ? ridge(rt.map(o => PFEAT[k](o.f)), rt.map(o => o.r.params[k] - o.base[k]), 10) : null;
     }
     // プリエンプト性はビッドで決まる値を使う（以前の記録で評価していても置き換える）
     const fixed = recs.map(r => ({ ...r.params, preempt: preemptOf(r.call) }));
