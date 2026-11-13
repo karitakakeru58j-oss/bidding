@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.9.0';
+  const ENGINE_VERSION = '0.10.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -524,6 +524,55 @@
   R('1M 1N 3M', '4M', (h, c) => h.dp(c.b.M, 6) >= 8 || (h.hcp >= 7 && h.len[c.b.M] >= 2), null, '招待を受けて4メジャー');
   R('1M 1N 3M', 'P', () => true, null, '弱いので招待を断る');
 
+  // ===== スプリンター（ビッドしたスートが1枚以下。4枚以上のサポートを示すこともある） =====
+  //   1. 2/1GFに対するジャンプシフト：レスポンダーのスートに4枚以上・そのスートが1枚以下（やる気に依らない）
+  //   2. フィットが決まった後のジャンプシフト：スラムトライ（スラムの可能性があるときだけ）
+  //   3. 1Mレスポンスに対するダブルジャンプシフト：Mに4枚以上・1枚以下のスラムトライ（スラムの可能性があるときだけ）
+  const jumpIn = (s, seq, n) => { const ch = cheapest(s, seq); return ch && (levelOf(ch) + n) + s; };
+  function findSplinter(h, seq, T, excl, n) {
+    const cands = SUITS.filter(s => s !== T && !excl.includes(s) && h.len[s] <= 1)
+      .sort((a, b) => h.len[a] - h.len[b]);
+    for (const s of cands) {
+      const call = jumpIn(s, seq, n);
+      if (call && levelOf(call) <= 5 && rankOf(call) < rankOf(gameCall(T))) return { s, call };
+    }
+    return null;
+  }
+  const isSplinterCall = (call, seq, T, excl, n) => isBid(call) && call[1] !== 'N' && call[1] !== T && !excl.includes(call[1]) &&
+    call === jumpIn(call[1], seq, n) && rankOf(call) < rankOf(gameCall(T));
+  // 1. 2/1に対するジャンプシフト
+  const twoOneSeq = seq => seq.length === 2 && /^1[HS]$/.test(seq[0]) && isBid(seq[1]) && seq[1][0] === '2' && seq[1][1] !== 'N' &&
+    seq[1][1] !== seq[0][1] && seq[1] === cheapest(seq[1][1], [seq[0]]) ? { M: seq[0][1], X: seq[1][1] } : null;
+  RD(twoOneSeq, (h, c) => {
+    const { M, X } = c.b;
+    if (h.len[X] < 4) return null;
+    const sp = findSplinter(h, c.seq, X, [M], 1);
+    return sp && { call: sp.call, why: `${JA_SUIT[X]}に4枚以上のサポートがあり、${JA_SUIT[sp.s]}が1枚以下なのでスプリンター（${callText(sp.call)}。GFなのでやる気に依らない）` };
+  }, (call, b, before) => isSplinterCall(call, before, b.X, [b.M], 1)
+    ? { shows: { [b.X]: [4, 13], [call[1]]: [0, 1], agree: b.X, ctrl: [call[1]] }, force: 'GF' } : null);
+  // 2. フィットが決まった後のジャンプシフト
+  const NONGF_RAISE = { H: ['2H', LADDER.H.weak, LADDER.H.s68, LADDER.H.r910, LADDER.H.r1112], S: ['2S', LADDER.S.weak, LADDER.S.s68, LADDER.S.r910, LADDER.S.r1112] };
+  const fitDoneSeq = seq => {
+    if (seq.length === 2 && /^1[HS]$/.test(seq[0]) && NONGF_RAISE[seq[0][1]].includes(seq[1])) return { T: seq[0][1], excl: [] };
+    if (seq.length === 3 && seq[0][0] === '1' && /^1[HS]$/.test(seq[1]) && seq[2] === '2' + seq[1][1]) return { T: seq[1][1], excl: [seq[0][1]] };
+    return null;
+  };
+  RD(fitDoneSeq, (h, c) => {
+    const { T, excl } = c.b, p = c.partner.hcp;
+    if (strengthFor(h, T, c) + (p[0] + Math.min(p[1], p[0] + 8)) / 2 < 31) return null;
+    const sp = findSplinter(h, c.seq, T, excl, 1);
+    return sp && { call: sp.call, why: `${JA_SUIT[T]}のフィットが決まり、スラムの可能性があるので、${JA_SUIT[sp.s]}が1枚以下を示すスプリンター（${callText(sp.call)}）でスラムトライ` };
+  }, (call, b, before) => isSplinterCall(call, before, b.T, b.excl, 1)
+    ? { shows: { [call[1]]: [0, 1], agree: b.T, ctrl: [call[1]], interest: true }, force: 'GF' } : null);
+  // 3. 1Mレスポンスに対するダブルジャンプシフト
+  RD(seq => seq.length === 2 && /^1[CDH]$/.test(seq[0]) && /^1[HS]$/.test(seq[1]) && seq[0] !== seq[1] ? { X: seq[0][1], M: seq[1][1] } : null, (h, c) => {
+    const { X, M } = c.b;
+    if (h.len[M] < 4 || h.dp(M, 4) < 19) return null;
+    const sp = findSplinter(h, c.seq, M, [X], 2);
+    return sp && { call: sp.call, why: `${JA_SUIT[M]}に4枚以上のフィットがあり、${JA_SUIT[sp.s]}が1枚以下でスラムの可能性があるので、ダブルジャンプのスプリンター（${callText(sp.call)}）` };
+  }, (call, b, before) => isSplinterCall(call, before, b.M, [b.X], 2)
+    ? { shows: { [b.M]: [4, 13], [call[1]]: [0, 1], hcp: [19, 21.99], agree: b.M, ctrl: [call[1]], interest: true }, force: 'GF' } : null);
+
   // 1H-1S のオープナー
   R('1H 1S', '4S', h => h.len.S >= 4 && h.dp('S', 4) >= 18, null, 'スペード4枚のサポートで18点以上なので4♠');
   R('1H 1S', '3S', h => h.len.S >= 4 && between(h.dp('S', 4), 15, 17), { S: [4, 4], hcp: [15, 17] }, 'スペード4枚のサポートで15〜17点なので3♠');
@@ -672,7 +721,7 @@
     const { M } = c.b;
     // ジャンプレイズ（15〜17）を受けて、合計が29点ぐらいあればコントロールでスラムトライ
     const p = c.partner.hcp;
-    if (h.adj + (p[0] + Math.min(p[1], p[0] + 8)) / 2 < 29) return null;
+    if (h.adj + (p[0] + Math.min(p[1], p[0] + 8)) / 2 < 29 || motivation(h, M, c) < 3) return null;
     for (let r = rankOf('3' + M) + 1; r < rankOf('4' + M); r++) {
       const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
       if (s !== 'N' && s !== M && hasControl(h, s, c)) return { call, why: `フィットが決まり、2人の強さを合わせるとスラムの可能性があるので${callText(call)}：${JA_SUIT[s]}のコントロールを示す` };
@@ -1301,6 +1350,7 @@
         Object.assign(slam, { T: sh.agree, active: true, agreeIdx: i });
         if (sh.interest) slam.interest[me]++;
         if (sh.ctrl) { slam.ctrl[me].push(...sh.ctrl); slam.splShort = sh.ctrl[0]; }
+        if (sh.interest && sh.ctrl) slam.ctrlBids[me]++; // スラムトライのスプリンター・コントロール＝やる気3以上
       }
     }
     const meIdx = seq.length % 2;
@@ -1358,7 +1408,7 @@
     return h.len[s] <= 1 && !(c && c.partner && c.partner[s][0] >= 3); // パートナーのスートのショートはコントロールにしない
   }
   function freshSlam() {
-    return { T: null, active: false, interest: [0, 0], ctrl: [[], []], deny: [[], []], rk: null, ntSign: false, agreeIdx: -1, splShort: null };
+    return { T: null, active: false, interest: [0, 0], ctrlBids: [0, 0], ctrl: [[], []], deny: [[], []], rk: null, ntSign: false, agreeIdx: -1, splShort: null };
   }
   // フィットが決まった後のビッドの意味を記録する
   function slamInterpret(st, before, call, me) {
@@ -1371,6 +1421,7 @@
     if (call[1] === T) { if (rankOf(call) < rankOf(G)) st.interest[me]++; return; }
     if (rankOf(call) < rankOf(G)) {
       st.interest[me]++;
+      st.ctrlBids[me]++;
       const lb = lastBid(before);
       for (let r = lb ? rankOf(lb) + 1 : 0; r < rankOf(call); r++) {
         const s = STRAINS[r % 5];
@@ -1428,13 +1479,14 @@
       return { call: '3N', why: `パートナーのショートの${JA_SUIT[st.splShort]}に点がある（無駄になりやすい）のでノートランプを選ぶ` };
     const mot = motivation(h, T, c);
     const allowed = mot >= 5 ? 99 : mot >= 3 ? 2 : mot >= 1 ? 1 : 0;
-    const pMot = [0, 1, 3, 5][Math.min(3, st.interest[pa])];
+    // パートナーのやる気の推定：3Mなど＝1以上、コントロール（スラムトライのスプリンターを含む）＝3以上、2回以上＝5以上
+    const pMot = st.ctrlBids[pa] >= 2 ? 5 : st.ctrlBids[pa] >= 1 ? 3 : st.interest[pa] >= 1 ? 1 : 0;
     const side = SUITS.filter(s => s !== T);
     const covered = side.every(s => hasControl(h, s, c) || st.ctrl[pa].includes(s));
     const hole = side.find(s => !hasControl(h, s, c) && st.deny[pa].includes(s));
     const motTxt = `自分のやる気${mot}・パートナーのやる気${pMot}以上`;
-    if (covered && mot + pMot >= 6) {
-      if (legal('4N', seq)) return { call: '4N', why: `全スートにコントロールがあり、2人のやる気の合計が6以上（${motTxt}）なので4NT（RKCB：キーカードを聞く）` };
+    if (covered && mot + pMot >= 7) {
+      if (legal('4N', seq)) return { call: '4N', why: `全スートにコントロールがあり、2人のやる気の合計が7以上（${motTxt}）なので4NT（RKCB：キーカードを聞く）` };
       const six = '6' + T;
       if (legal(six, seq)) return { call: six, why: `全スートにコントロールがあり、やる気も十分（${motTxt}）だが4NTが使えないので${callText(six)}` };
     }
@@ -1445,6 +1497,8 @@
     const ch = cheapest(T, seq);
     if (isMaj(T) && st.interest[0] + st.interest[1] === 0 && ch && rankOf(ch) < rankOf(G))
       return { call: ch, why: `スラムに興味がある（${motTxt}）ので${callText(ch)}（フィットを確かめてスラムに興味を示す）` };
+    // コントロールを示すのはやる気3以上から
+    if (mot < 3) return signoff(`コントロールを示すにはやる気が足りない（${motTxt}。コントロールはやる気3以上）ので${callText(G)}で止める`);
     for (let r = lb ? rankOf(lb) + 1 : 0; r < rankOf(G); r++) {
       const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
       if (s === 'N' || s === T || st.ctrl[me].includes(s)) continue;
