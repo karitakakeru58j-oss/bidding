@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.10.0';
+  const ENGINE_VERSION = '0.10.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1383,9 +1383,33 @@
     }
     return v;
   }
+  // スラムに有効な点数：次の点数は数えない
+  //   パートナーのスートでない：シングルトンのK、2枚以下のスートのQ、A・K・Qと一緒でない単独のJ
+  //   パートナーが1枚以下と示したスート：K・Q・Jすべて
+  function slamUsefulHcp(h, c) {
+    let t = 0;
+    for (const s of SUITS) {
+      const x = h.hand[s], n = x.length;
+      const pSuit = c && c.partner && c.partner[s][0] >= 3;
+      const pShort = c && c.partner && c.partner[s][1] <= 1;
+      for (const card of x) {
+        const v = HCP[card] || 0;
+        if (!v) continue;
+        if (pShort && card !== 'A') continue;
+        if (!pSuit) {
+          if (card === 'K' && n === 1) continue;
+          if (card === 'Q' && n <= 2) continue;
+          if (card === 'J' && !/[AKQ]/.test(x)) continue;
+        }
+        t += v;
+      }
+    }
+    return t;
+  }
   function motivation(h, T, c) {
     const spare = Math.max(0, Math.floor((strengthFor(h, T, c) - c.self.hcp[0]) / 2));
-    return keycards(h, T) + spare;
+    const m = keycards(h, T) + spare;
+    return slamUsefulHcp(h, c) < 11 ? Math.max(0, m - 1) : m; // 有効な点数が11点未満ならやる気-1
   }
   // パートナーの推定点数の中央と合わせて31点以上ならスラムの可能性あり
   function slamPossible(h, c) {
@@ -1479,8 +1503,8 @@
       return { call: '3N', why: `パートナーのショートの${JA_SUIT[st.splShort]}に点がある（無駄になりやすい）のでノートランプを選ぶ` };
     const mot = motivation(h, T, c);
     const allowed = mot >= 5 ? 99 : mot >= 3 ? 2 : mot >= 1 ? 1 : 0;
-    // パートナーのやる気の推定：3Mなど＝1以上、コントロール（スラムトライのスプリンターを含む）＝3以上、2回以上＝5以上
-    const pMot = st.ctrlBids[pa] >= 2 ? 5 : st.ctrlBids[pa] >= 1 ? 3 : st.interest[pa] >= 1 ? 1 : 0;
+    // パートナーのやる気の推定：3Mなど＝1以上、コントロール（スラムトライのスプリンターを含む）1回＝2以上、2回＝3以上、3回以上＝5以上
+    const pMot = st.ctrlBids[pa] >= 3 ? 5 : st.ctrlBids[pa] >= 2 ? 3 : st.ctrlBids[pa] >= 1 ? 2 : st.interest[pa] >= 1 ? 1 : 0;
     const side = SUITS.filter(s => s !== T);
     const covered = side.every(s => hasControl(h, s, c) || st.ctrl[pa].includes(s));
     const hole = side.find(s => !hasControl(h, s, c) && st.deny[pa].includes(s));
@@ -1498,7 +1522,9 @@
     if (isMaj(T) && st.interest[0] + st.interest[1] === 0 && ch && rankOf(ch) < rankOf(G))
       return { call: ch, why: `スラムに興味がある（${motTxt}）ので${callText(ch)}（フィットを確かめてスラムに興味を示す）` };
     // コントロールを示すのはやる気3以上から
-    if (mot < 3) return signoff(`コントロールを示すにはやる気が足りない（${motTxt}。コントロールはやる気3以上）ので${callText(G)}で止める`);
+    // 1度目のコントロールはやる気2以上、2度目からは3以上
+    const need = st.ctrlBids[me] === 0 ? 2 : 3;
+    if (mot < need) return signoff(`コントロールを示すにはやる気が足りない（${motTxt}。${need === 2 ? '1度目のコントロールはやる気2以上' : '2度目からのコントロールはやる気3以上'}）ので${callText(G)}で止める`);
     for (let r = lb ? rankOf(lb) + 1 : 0; r < rankOf(G); r++) {
       const s = STRAINS[r % 5], call = (Math.floor(r / 5) + 1) + s;
       if (s === 'N' || s === T || st.ctrl[me].includes(s)) continue;
