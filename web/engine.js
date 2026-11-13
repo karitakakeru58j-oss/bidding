@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.11.1';
+  const ENGINE_VERSION = '0.11.2';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -98,8 +98,12 @@
     h.rawHcp = hcp;             // 補正なしのHCP（表示・回答例の比較用）
     h.adj = hcp + bonus;        // 補正込みの点数（「強め／弱め」を含めた強さ）
     h.hcp = h.adj;              // ルールの点数はすべて補正込みで判断する
-    // 6枚スートのリビッドの強さ：AKQのうち2枚以上を持つ6枚以上のスートは+1
-    h.rebidPts = s => h.adj + (len[s] >= 6 && h.top3(s) >= 2 ? 1 : 0);
+    // 6枚スートのリビッドの強さ：AKQのうち2枚以上を持つ6枚以上のスートは、A・K・Q・Jの加点の上限を1点から2点に広げる
+    h.rebidPts = s => {
+      if (len[s] < 6 || h.top3(s) < 2) return h.adj;
+      const raw = [...hand[s]].reduce((t, c) => t + ((c === 'A' || c === 'K') ? 1 / 2 : (c === 'Q' || c === 'J') ? 1 / 3 : 0), 0);
+      return h.adj + Math.min(2, raw) - Math.min(1, raw);
+    };
     // ダミーポイント：スート s にフィットを示すとき、サイドのショートに点を足す（Kのシングルトンは足さない）
     //   pLen = パートナーがそのスートに持っていると分かっている最低枚数
     // 5-5・6-4のように2スートで10枚以上ある手は、そのどちらかがフィットしたら+1.5（11枚なら+2.5…）
