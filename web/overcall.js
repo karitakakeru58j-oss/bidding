@@ -82,10 +82,17 @@
   }
   function suitScore(f) { return 1.5 * f.A + 1.2 * f.K + 1.0 * f.Q + 0.8 * f.J + 0.5 * f.T + 0.2 * f.N9 + 1.0 * f.two3; }
   function shapeScore(f) { return Math.max(0, f.l1 + f.l2 - 8) + f.single + 2 * f.voids; }
+  // ゲームの可能性はオーバーコールの種類ごとの点数の幅で決める（同じ点数でも種類が違えば評価が違う）
+  //   例：1Mはおおむね8〜17点で14点以上なら必ずする → 12〜13点は4。2mはおおむね11〜17点 → 12〜13点は3
+  const GAME_RANGE = { '1D': [8, 13], '1M': [7, 14], '2m': [9, 16], '2M': [8, 15], weak: [3, 12] };
+  function gameOf(hcp, type) {
+    const [lo, hi] = GAME_RANGE[type] || [8, 14];
+    return clamp(1 + (hcp - lo) * 4 / (hi - lo));
+  }
   function heuristic(f, cand) {
     return {
       lead: clamp(0.2 + 1.3 * suitScore(f)),
-      game: clamp(1 + (f.hcp - 7) * 0.6),
+      game: gameOf(f.hcp, cand.type),
       compete: clamp(1 + 1.3 * shapeScore(f)),
       preempt: preemptOf(cand.call),
     };
@@ -147,7 +154,12 @@
       const f = features(hand, r.open, r);
       rows.push({ r, f, base: heuristic(f, r) });
     }
-    for (const k of RATED) corr[k] = rows.length >= 6 ? ridge(rows.map(o => PFEAT[k](o.f)), rows.map(o => o.r.params[k] - o.base[k]), 6) : null;
+    // 補正は種類ごとに別々に学ぶ（種類が違えば同じ手でも評価が違うので混ぜない）
+    for (const t of TYPES) {
+      const rt = rows.filter(o => o.r.type === t);
+      corr[t] = {};
+      for (const k of RATED) corr[t][k] = rt.length >= 5 ? ridge(rt.map(o => PFEAT[k](o.f)), rt.map(o => o.r.params[k] - o.base[k]), 6) : null;
+    }
     // プリエンプト性はビッドで決まる値を使う（以前の記録で評価していても置き換える）
     const fixed = recs.map(r => ({ ...r.params, preempt: preemptOf(r.call) }));
     // 判断の重み：全体 → 種類ごと（全体に引き寄せる）
@@ -156,7 +168,8 @@
     const byType = {};
     for (const t of TYPES) {
       const idx = recs.map((r, i) => r.type === t ? i : -1).filter(i => i >= 0);
-      byType[t] = { n: idx.length, yes: idx.filter(i => PY[i]).length, w: idx.length ? logistic(idx.map(i => PX[i]), idx.map(i => PY[i]), pooled, 2) : pooled.slice() };
+      // 判断の重みも種類ごとに学ぶ（ほかの種類の回答は使わない。回答が少ないうちは最初の目安の重みに近い）
+      byType[t] = { n: idx.length, yes: idx.filter(i => PY[i]).length, w: idx.length ? logistic(idx.map(i => PX[i]), idx.map(i => PY[i]), DEFAULT_W, 1) : DEFAULT_W.slice() };
       const mean = (sel) => { const ii = idx.filter(i => PY[i] === sel); return Object.fromEntries(PARAMS.map(k => [k, ii.length ? ii.reduce((t, i) => t + fixed[i][k], 0) / ii.length : null])); };
       byType[t].meanYes = mean(1); byType[t].meanNo = mean(0);
     }
@@ -168,7 +181,7 @@
     const f = features(hand, open, cand), base = heuristic(f, cand);
     if (!MODEL) return base;
     const out = {};
-    for (const k of RATED) { const b = MODEL.corr[k], x = PFEAT[k](f); out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
+    for (const k of RATED) { const b = MODEL.corr[cand.type] && MODEL.corr[cand.type][k], x = PFEAT[k](f); out[k] = clamp(base[k] + (b ? x.reduce((t, xi, i) => t + xi * b[i], 0) : 0)); }
     out.preempt = base.preempt;
     return out;
   }
