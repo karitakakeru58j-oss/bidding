@@ -82,7 +82,7 @@
       len: s ? h.len[s] : 0, A: has('A'), K: has('K'), Q: has('Q'), J: has('J'), T: has('T'), N9: has('9'),
       two3: s && h.top3(s) >= 2 ? 1 : 0,
       // 点数
-      hcp: h.rawHcp,
+      hcp: h.rawHcp, outside: h.rawHcp - (s ? h.sHcp[s] : 0), // スートの外の点数
       // シェイプ
       l1: lens[0], l2: lens[1], single: SUITS.filter(t => h.len[t] === 1).length, voids: SUITS.filter(t => h.len[t] === 0).length,
       lenO: h.len[open[1]], // 敵のオープンしたスートの長さ（短いほど競り合いの評価が上がる）
@@ -119,7 +119,8 @@
   function heuristic(f, cand) {
     return {
       lead: clamp(0.2 + 1.3 * suitScore(f)),
-      game: gameOf(f.hcp, cand.type),
+      // ウィークのゲームの可能性はスートの外の点数も見る（全体の点数＋外の点数を少し）
+      game: cand.type === 'weak' ? clamp(-0.2 + 0.4 * f.hcp + 0.2 * f.outside) : gameOf(f.hcp, cand.type),
       compete: competeOf(f, cand.type, cand.call),
       preempt: preemptOf(cand.call),
     };
