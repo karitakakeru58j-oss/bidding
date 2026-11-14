@@ -109,7 +109,11 @@
     // 3の代のウィークは7枚が基本：6-4は2の代なら最高級だが、3の代では並以下。長さそのものを重く見る
     if (type === 'weak' && call && call[0] === '3')
       return clamp(1.3 + 1.2 * (f.len - 6) + 0.3 * Math.max(0, f.l2 - 3) + 0.5 * f.single + f.voids + oppAdj);
-    if (type === '2M') return clamp(1.7 + sh);
+    // 2の代は、オーバーコールするスートの長さでほぼ決まる（5-4やシングルトンは少し上がる程度）
+    //   2m：5枚で1、6枚で2、8枚で5。2M：5枚で1〜2、6枚で3前後、7枚で5（2mより高め）
+    const side = 0.5 * f.single + f.voids + 0.3 * Math.max(0, f.l2 - 3) + (f.lenO <= 1 ? 0.3 : 0);
+    if (type === '2m') return clamp(1 + 1.0 * (f.len - 5) + side);
+    if (type === '2M') return clamp(1.3 + 1.5 * (f.len - 5) + side);
     return clamp(1 + sh);
   }
   function heuristic(f, cand) {

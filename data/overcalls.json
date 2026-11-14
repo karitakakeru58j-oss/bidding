@@ -2888,5 +2888,549 @@
   "seat": "S",
   "type": "weak",
   "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2C",
+   "p": 0.68,
+   "params": {
+    "compete": 2.4,
+    "game": 3.9,
+    "lead": 5,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "2C",
+  "created": "2026-11-13T09:32:22.996Z",
+  "deal": "N:T87.Q9642.T9.J63 A964.J87.AKJ642. Q53.K.Q73.AK9754 KJ2.AT53.85.QT82",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwes31w40a0oh",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {
+   "compete": 3,
+   "game": 3,
+   "lead": 5,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "2m",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.01,
+   "params": {
+    "compete": 1.9,
+    "game": 1,
+    "lead": 2.5,
+    "preempt": 1
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "1D",
+  "created": "2026-11-13T09:32:44.436Z",
+  "deal": "N:984.KQT5.4.AKQ75 AJ6.A4.AT7.J9643 KQT.J82.QJ532.T8 7532.9763.K986.2",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.7",
+  "id": "omwes3ifokxlqd",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 3,
+   "game": 1,
+   "lead": 2,
+   "preempt": 1
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "1D",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.01,
+   "params": {
+    "compete": 1.1,
+    "game": 1.6,
+    "lead": 2.5,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "2H",
+  "created": "2026-11-13T09:33:19.209Z",
+  "deal": "N:T76.K972.A5.T943 KJ954.A5.QJ43.AK A32.QJ843.K72.82 Q8.T6.T986.QJ765",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.7",
+  "id": "omwes499l4yd6c",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 1,
+   "game": 1,
+   "lead": 2,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "2M",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "1H",
+   "p": 1,
+   "params": {
+    "compete": 5,
+    "game": 5,
+    "lead": 5,
+    "preempt": 2
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "1H",
+  "created": "2026-11-13T09:33:32.896Z",
+  "deal": "N:J2.952.AKJ53.J64 Q75.6.Q2.AKQ7532 AK94.AKT874.874. T863.QJ3.T96.T98",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwes4jts79m5v",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 5,
+   "game": 5,
+   "lead": 5,
+   "preempt": 2
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "1M",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3C",
+   "p": 0.98,
+   "params": {
+    "compete": 4.4,
+    "game": 3.9,
+    "lead": 3.2,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "3C",
+  "created": "2026-11-13T09:33:54.021Z",
+  "deal": "N:AJ9.6.KQT95.KT97 Q7654.AJ43.AJ.Q3 8.QT87.8.AJ86542 KT32.K952.76432.",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwes504lwyaty",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 5,
+   "game": 3,
+   "lead": 3,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0,
+   "params": {
+    "compete": 1,
+    "game": 1.5,
+    "lead": 1,
+    "preempt": 1
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "1D",
+  "created": "2026-11-13T09:34:04.878Z",
+  "deal": "N:JT83.963.J98.T96 A65.Q84.AK7.KQ42 KQ4.AJ5.T543.875 972.KT72.Q62.AJ3",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.7",
+  "id": "omwes58i6b94zp",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 1,
+   "game": 1,
+   "lead": 1,
+   "preempt": 1
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "1D",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "1H",
+   "p": 0.88,
+   "params": {
+    "compete": 3.4,
+    "game": 3.3,
+    "lead": 3.2,
+    "preempt": 2
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "1H",
+  "created": "2026-11-13T09:59:39.369Z",
+  "deal": "N:A3.954.AJT965.T4 Q7.KQT8.43.KQ763 2.AJ762.Q872.A52 KJT98654.3.K.J98",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwet24ixsdxfw",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 3,
+   "game": 3,
+   "lead": 3,
+   "preempt": 2
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "1M",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2H",
+   "p": 0.78,
+   "params": {
+    "compete": 2.5,
+    "game": 3.3,
+    "lead": 3.8,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "2H",
+  "created": "2026-11-13T10:00:13.258Z",
+  "deal": "N:K876.K92.QT8.Q52 QJT92.7.K2.AK873 A53.AJT653.A4.T4 4.Q84.J97653.J96",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwet2uoam8vla",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 2,
+   "game": 4,
+   "lead": 4,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "2M",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2S",
+   "p": 0.79,
+   "params": {
+    "compete": 2.6,
+    "game": 5,
+    "lead": 2.4,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "2S",
+  "created": "2026-11-13T10:01:06.432Z",
+  "deal": "N:2.A94.T9752.KQ63 QJT.QT876.AQ.752 A98754.53.KJ.J84 K63.KJ2.8643.AT9",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwet3zpc0eumr",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {
+   "compete": 2,
+   "game": 3,
+   "lead": 2,
+   "preempt": 4
+  },
+  "reason": "微妙",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2D",
+   "p": 0.97,
+   "params": {
+    "compete": 4.2,
+    "game": 3.3,
+    "lead": 5,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "2D",
+  "created": "2026-11-13T10:01:24.037Z",
+  "deal": "N:AKQJ5.A3.974.T93 T43.KQJ76..AK842 986..AKQJT632.QJ 72.T98542.85.765",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwet4dadahgsp",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {
+   "compete": 5,
+   "game": 3,
+   "lead": 5,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "2m",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.05,
+   "params": {
+    "compete": 1,
+    "game": 2.7,
+    "lead": 3.8,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "2D",
+  "created": "2026-11-13T10:04:15.429Z",
+  "deal": "N:2.86.872.AQT8542 AK986.KJ7542.4.9 53.AQT3.AJT65.J7 QJT74.9.KQ93.K63",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.7",
+  "id": "omwet81j9gv5eg",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {
+   "compete": 1,
+   "game": 2,
+   "lead": 4,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "2m",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.06,
+   "params": {
+    "compete": 3,
+    "game": 2,
+    "lead": 1.8,
+    "preempt": 1
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "1D",
+  "created": "2026-11-13T10:09:06.906Z",
+  "deal": "N:KJ8752.A732.AJT. AQ6.9.Q964.A6543 3.KT6.K532.KQT87 T94.QJ854.87.J92",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.7",
+  "id": "omweteafuli4qz",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 1,
+   "game": 2,
+   "lead": 2,
+   "preempt": 1
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "1D",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.01,
+   "params": {
+    "compete": 3.4,
+    "game": 1,
+    "lead": 1.8,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "2H",
+  "created": "2026-11-13T10:09:35.980Z",
+  "deal": "N:A32.QJ97.Q82.AT7 KQT87.8.AJT65.84 J54.K5432.K.Q653 96.AT6.9743.KJ92",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.7",
+  "id": "omwetewvg402fh",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 2,
+   "game": 1,
+   "lead": 2,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "2M",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "1S",
+   "p": 0.88,
+   "params": {
+    "compete": 1.1,
+    "game": 5,
+    "lead": 2.8,
+    "preempt": 2
+   }
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "1S",
+  "created": "2026-11-13T10:15:48.130Z",
+  "deal": "N:AT972.T.AJ84.JT8 86.AJ7.KT953.A53 KJ543.K32.Q76.KQ Q.Q98654.2.97642",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwetmw0yygrn0",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {
+   "compete": 1,
+   "game": 4,
+   "lead": 3,
+   "preempt": 2
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "1M",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2S",
+   "p": 1,
+   "params": {
+    "compete": 4.9,
+    "game": 5,
+    "lead": 5,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "2S",
+  "created": "2026-11-13T10:16:06.227Z",
+  "deal": "N:765.Q862.8753.J4 4.KT53.J9.AK9873 AQ9832.J9.Q642.T KJT.A74.AKT.Q652",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.7",
+  "id": "omwetn9zn4vv8y",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 5,
+   "game": 4,
+   "lead": 4,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.06,
+   "params": {
+    "compete": 2.7,
+    "game": 1,
+    "lead": 2.2,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "2D",
+  "created": "2026-11-14T00:24:54.401Z",
+  "deal": "N:8542.QJ652.AK3.3 AQJ76..J75.AQJ82 3.K873.QT642.KT4 KT9.AT94.98.9765",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.7",
+  "id": "omwfnyuf5f30jg",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 2,
+   "game": 1,
+   "lead": 2,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "2m",
+  "vul": "None"
  }
 ]
