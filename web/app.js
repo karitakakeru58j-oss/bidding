@@ -493,7 +493,8 @@
       }).join('');
       return `<div class="octype"><div class="row spread"><b>${esc(r.name)}</b><span class="muted">${r.n}件（する${r.yes}・しない${r.n - r.yes}）</span></div>
         <div class="muted">重視：${r.order.map(k => esc(OC.PARAM_JA[k])).join(' ＞ ')}${r.n < 5 ? '（回答が少ないので暫定）' : ''}</div>
-        <table class="ptable"><tr><th>パラメータ</th><th>重み</th><th>するの平均</th><th>しないの平均</th></tr>${tbl}</table></div>`;
+        <table class="ptable"><tr><th>パラメータ</th><th>重み</th><th>するの平均</th><th>しないの平均</th></tr>${tbl}</table>${
+        r.majorGame != null ? `<div class="muted">アンビッドのメジャー4枚（ゲームの可能性3以上で効く）の重み：${r.majorGame.toFixed(2)}（マイナスほど、しない寄り）</div>` : ''}</div>`;
     }).join('');
     const recent = ocStore.items.slice().reverse().slice(0, 30);
     $('oc-records').innerHTML = recent.length ? recent.map(r => {

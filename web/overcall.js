@@ -174,11 +174,18 @@
   //   records: [{deal, open, type, call, params:{lead,game,compete,preempt}, decision:true/false}]
   // ------------------------------------------------------------------
   // 判断の重み：[切片, lead, game, compete, preempt]（パラメータは 3 を中心にする）
-  const DEFAULT_W = [0.3, 0.9, 1.2, 0.9, 0.7];
+  // 判断の重み：[切片, lead, game, compete, preempt, majorGame]
+  //   majorGame（ウィークだけ）：アンビッドのメジャー4枚を持つとき、ゲームの可能性が3から上がるほど大きくなる値
+  const DEFAULT_W = [0.3, 0.9, 1.2, 0.9, 0.7, 0];
   // 種類ごとの最初の重み。ウィークは強ければいいわけではないので、ゲームの可能性の重みを低めにする
-  const DEFAULT_WT = { weak: [0.3, 0.9, 0.4, 1.1, 0.7] };
+  //   ウィークはスートの内容（リードショーイング）がかなり大事。アンビッドのメジャー4枚＋ゲームの可能性が高いとしないことが多い
+  const DEFAULT_WT = { weak: [0.3, 1.6, 0.4, 1.0, 0.7, -1.5] };
   const defW = t => (DEFAULT_WT[t] || DEFAULT_W).slice();
-  const px = p => [1, ...PARAMS.map(k => p[k] - 3)];
+  const px = (p, m4) => [1, ...PARAMS.map(k => p[k] - 3), m4 ? Math.max(0, p.game - 2) : 0];
+  // アンビッドのメジャー（敵のオープンでもオーバーコールのスートでもないメジャー）を4枚以上持っているか
+  function unbidMajor4(hand, open, call) {
+    return ['H', 'S'].some(M => M !== open[1] && M !== call[1] && hand[M].length >= 4);
+  }
   let MODEL = null;
 
   function train(records) {
@@ -189,7 +196,7 @@
     for (const r of recs) {
       const hand = r.hand || E.pbnToDeal(r.deal)[r.seat || 'S'];
       const f = features(hand, r.open, r);
-      rows.push({ r, f, base: heuristic(f, r) });
+      rows.push({ r, f, hand, base: heuristic(f, r) });
     }
     // 補正は種類ごとに別々に学ぶ（種類が違えば同じ手でも評価が違うので混ぜない）
     for (const t of CORR_KEYS) {
@@ -200,7 +207,7 @@
     // プリエンプト性はビッドで決まる値を使う（以前の記録で評価していても置き換える）
     const fixed = recs.map(r => ({ ...r.params, preempt: preemptOf(r.call) }));
     // 判断の重み：種類ごと
-    const PX = fixed.map(p => px(p)), PY = recs.map(r => r.decision ? 1 : 0);
+    const PX = fixed.map((p, i) => px(p, recs[i].type === 'weak' && unbidMajor4(rows[i].hand, recs[i].open, recs[i].call))), PY = recs.map(r => r.decision ? 1 : 0);
     const pooled = recs.length >= 4 ? logistic(PX, PY, DEFAULT_W, 1) : DEFAULT_W.slice();
     const byType = {};
     for (const t of TYPES) {
@@ -222,9 +229,9 @@
     out.preempt = base.preempt;
     return out;
   }
-  function probability(type, params) {
+  function probability(type, params, m4) {
     const w = MODEL ? MODEL.byType[type].w : defW(type);
-    return sigmoid(px(params).reduce((t, xi, i) => t + xi * w[i], 0));
+    return sigmoid(px(params, type === 'weak' && m4).reduce((t, xi, i) => t + xi * w[i], 0));
   }
 
   // 1NTオーバーコール（ルール）：1NTオープンの形・補正込み16点以上（19点未満）・オープンのスートに止め
@@ -240,7 +247,8 @@
     const cand = candidate(hand, open);
     if (!cand) return { call: 'P', why: '介入し得る形・強さではないのでパス', cand: null };
     const params = estimate(hand, open, cand);
-    const p = probability(cand.type, params);
+    const m4 = cand.type === 'weak' && unbidMajor4(hand, open, cand.call);
+    const p = probability(cand.type, params, m4);
     const ptxt = PARAMS.map(k => `${PARAM_JA[k]}${params[k].toFixed(1)}`).join('・');
     if (p >= 0.5) return { call: cand.call, why: `${TYPE_JA[cand.type]}の候補（${ptxt}）。介入する確率${Math.round(p * 100)}%なので${callText(cand.call)}`, cand, params, p };
     return { call: 'P', why: `${TYPE_JA[cand.type]}の候補（${callText(cand.call)}）だが、${ptxt}で介入する確率${Math.round(p * 100)}%なのでパス`, cand, params, p };
@@ -253,11 +261,11 @@
       const bt = m.byType[t];
       const weights = Object.fromEntries(PARAMS.map((k, i) => [k, bt.w[i + 1]]));
       const order = PARAMS.slice().sort((a, b) => weights[b] - weights[a]);
-      return { type: t, name: TYPE_JA[t], n: bt.n, yes: bt.yes, weights, order, meanYes: bt.meanYes, meanNo: bt.meanNo };
+      return { type: t, name: TYPE_JA[t], n: bt.n, yes: bt.yes, weights, order, meanYes: bt.meanYes, meanNo: bt.meanNo, majorGame: t === 'weak' ? bt.w[5] : null };
     });
   }
 
-  const api = { ntOvercall, preemptOf, RATED, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
+  const api = { unbidMajor4, ntOvercall, preemptOf, RATED, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
   E.overcall = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
