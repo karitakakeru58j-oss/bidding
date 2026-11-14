@@ -214,6 +214,17 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
   <!-- 記録 -->
   <section id="view-oc" class="wrap" hidden style="gap:14px">
     <div class="card">
+      <div class="row spread"><label class="row muted" for="oc-filter">出題する種類</label>
+        <select id="oc-filter">
+          <option value="auto">回答の少ない種類から</option>
+          <option value="1D">1♦オーバーコールだけ</option>
+          <option value="1M">1Mオーバーコールだけ</option>
+          <option value="2m">2mオーバーコールだけ</option>
+          <option value="2M">2Mオーバーコールだけ</option>
+          <option value="weak">ウィークだけ（2の代と3の代を半分ずつ）</option>
+          <option value="weak2">ウィーク・2の代だけ</option>
+          <option value="weak3">ウィーク・3の代だけ</option>
+        </select></div>
       <div class="row spread"><span id="oc-info" class="muted">問題を作っています…</span></div>
       <table class="auction"><thead><tr><th>西</th><th>北</th><th>東</th><th>南</th></tr></thead><tbody id="oc-auction"></tbody></table>
       <div class="row spread"><span class="label">あなたの手札</span><span id="oc-meta" class="handmeta"></span></div>

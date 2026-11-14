@@ -411,10 +411,20 @@
     for (const r of ocStore.items) if (counts[r.type] != null) counts[r.type]++;
     const min = Math.min(...Object.values(counts));
     const want = OC.TYPES.filter(t => counts[t] === min);
-    const target = want[Math.floor(Math.random() * want.length)];
+    const filter = $('oc-filter').value;
+    let target = filter === 'auto' ? want[Math.floor(Math.random() * want.length)] : filter;
+    // ウィークの代：weak2／weak3を選んだときはその代、weak（両方）なら回答の少ない方
+    let level = null;
+    if (target === 'weak2' || target === 'weak3') { level = target[4]; target = 'weak'; }
+    else if (target === 'weak') {
+      const n2 = ocStore.items.filter(r => r.type === 'weak' && r.call[0] === '2').length;
+      const n3 = ocStore.items.filter(r => r.type === 'weak' && r.call[0] === '3').length;
+      level = n2 < n3 ? '2' : n3 < n2 ? '3' : (Math.random() < 0.5 ? '2' : '3');
+    }
+    const fixed = filter !== 'auto';
     let fallback = null;
     const want4D = target === '1D' && Math.random() < 0.5; // 1♦は♦4枚の手も半分くらい出す
-    for (let t = 0; t < 6000; t++) {
+    for (let t = 0; t < 30000; t++) {
       const hands = E.deal();
       const open = E.chooseCall(hands.E, [], 'N').call; // 東の手で1番手のオープンを決める
       if (!/^1[CDHS]$/.test(open)) continue;
@@ -422,7 +432,8 @@
       const cand = OC.candidate(hands.S, open);
       if (!cand) continue;
       const q = { hands, dealer: 'E', auction: [open], open, cand };
-      if (cand.type === target && (!want4D || hands.S.D.length === 4)) return q;
+      if (cand.type === target && (!want4D || hands.S.D.length === 4) && (!level || cand.call[0] === level)) return q;
+      if (fixed && cand.type !== target) continue; // 種類を選んだときはほかの種類を出さない
       if (!fallback) fallback = q;
     }
     return fallback;
@@ -480,6 +491,7 @@
     $('oc-auction').innerHTML = auctionRows(oq.auction.concat([yourCall]), oq.dealer, false);
   });
   $('oc-next').addEventListener('click', ocNew);
+  $('oc-filter').addEventListener('change', ocNew);
 
   function renderOcAnalysis() {
     const rows = OC.analysis();
