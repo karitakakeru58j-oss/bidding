@@ -4656,5 +4656,6867 @@
   "seat": "S",
   "type": "2m",
   "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3D",
+   "p": 0.81,
+   "params": {
+    "compete": 2.8,
+    "game": 1,
+    "lead": 2.2,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "3D",
+  "created": "2026-11-14T20:28:20.014Z",
+  "deal": "N:Q75.KQ764.KQ3.82 K932.AJT5.2.AQ64 86.83.JT98754.J7 AJT4.92.A6.KT953",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwguygmmaki7z",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 2,
+   "game": 1,
+   "lead": 2,
+   "preempt": 4
+  },
+  "reason": "微妙",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.39,
+   "params": {
+    "compete": 2.7,
+    "game": 2.2,
+    "lead": 1,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "3D",
+  "created": "2026-11-14T20:28:37.414Z",
+  "deal": "N:QJ86.J9874.KJ.T4 A9753.K6.T.AQ862 T.AT3.876532.953 K42.Q52.AQ94.KJ7",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.11",
+  "id": "omwguyu1ymf557",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 2,
+   "game": 3,
+   "lead": 1,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.09,
+   "params": {
+    "compete": 1.3,
+    "game": 4,
+    "lead": 1,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "3D",
+  "created": "2026-11-14T20:28:51.322Z",
+  "deal": "N:4.AKT7.J963.AJT7 KJT87.942.KQ.Q86 A65.85.T87542.K4 Q932.QJ63.A.9532",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.11",
+  "id": "omwguz4sa3ibe5",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 1,
+   "game": 4,
+   "lead": 1,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3S",
+   "p": 1,
+   "params": {
+    "compete": 3.8,
+    "game": 1.8,
+    "lead": 4.1,
+    "preempt": 5
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "3S",
+  "created": "2026-11-14T20:29:09.855Z",
+  "deal": "N:K6.AQJ852.KQ84.5 .97.AT65.AKJ6432 AJT9543.T6.732.T Q872.K43.J9.Q987",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwguzj33gtler",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 4,
+   "game": 2,
+   "lead": 4,
+   "preempt": 5
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3D",
+   "p": 0.73,
+   "params": {
+    "compete": 1.7,
+    "game": 3.8,
+    "lead": 2.8,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "3D",
+  "created": "2026-11-14T20:29:33.408Z",
+  "deal": "N:5.A653.5.AKQ8753 KJT872.KJ.A9.J64 A4.T97.KJ7432.T2 Q963.Q842.QT86.9",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.11",
+  "id": "omwgv019cbpht0",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 1,
+   "game": 4,
+   "lead": 3,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3D",
+   "p": 0.57,
+   "params": {
+    "compete": 1.7,
+    "game": 4.4,
+    "lead": 2.8,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "3D",
+  "created": "2026-11-14T20:29:58.055Z",
+  "deal": "N:K.AQT9763.Q65.J2 AT762.J2.K.AKQ74 Q54.K85.AT8742.5 J983.4.J93.T9863",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.11",
+  "id": "omwgv0k9za80ua",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 2,
+   "game": 4,
+   "lead": 2,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2S",
+   "p": 0.99,
+   "params": {
+    "compete": 4.2,
+    "game": 3.2,
+    "lead": 3.7,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "2S",
+  "created": "2026-11-14T20:30:11.732Z",
+  "deal": "N:763.8.AQT862.AT7 A42.AK5.95.KQJ83 KJT985.73.K.6542 Q.QJT9642.J743.9",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv0utwjafsl",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 4,
+   "game": 3,
+   "lead": 4,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3D",
+   "p": 0.87,
+   "params": {
+    "compete": 3,
+    "game": 3.8,
+    "lead": 2.8,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "3D",
+  "created": "2026-11-14T20:30:22.431Z",
+  "deal": "N:KQ83.T876.4.KQJ2 AJ75.KQJ943.Q7.6 92.2.AT8653.AT75 T64.A5.KJ92.9843",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv1333x2jdk",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {
+   "compete": 5,
+   "game": 4,
+   "lead": 2,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2H",
+   "p": 0.94,
+   "params": {
+    "compete": 4.9,
+    "game": 2,
+    "lead": 2.2,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "2H",
+  "created": "2026-11-14T20:30:39.109Z",
+  "deal": "N:A943.J7.JT3.8764 QT6..A964.AKQJ93 J752.A86532.75.2 K8.KQT94.KQ82.T5",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv1fydiv7tn",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 5,
+   "game": 2,
+   "lead": 2,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3C",
+   "p": 0.99,
+   "params": {
+    "compete": 3.9,
+    "game": 1.4,
+    "lead": 3.1,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "3C",
+  "created": "2026-11-14T20:31:00.774Z",
+  "deal": "N:T8.AQ843.K832.A6 KJ9654.K2.AQ.T42 2.75.654.KJ98753 AQ73.JT96.JT97.Q",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv1wo6yln27",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {
+   "compete": 5,
+   "game": 2,
+   "lead": 3,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2H",
+   "p": 0.86,
+   "params": {
+    "compete": 4.9,
+    "game": 3,
+    "lead": 1.8,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "2H",
+  "created": "2026-11-14T20:31:34.992Z",
+  "deal": "N:AQT.KJ3.K92.A964 J5.2.AQ5.KQJ8732 K87.Q97654.J864. 96432.AT8.T73.T5",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv2n2oz54ni",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 5,
+   "game": 3,
+   "lead": 1,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2S",
+   "p": 1,
+   "params": {
+    "compete": 4.8,
+    "game": 1.8,
+    "lead": 4.1,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "2S",
+  "created": "2026-11-14T20:31:57.381Z",
+  "deal": "N:.852.AKQJ73.A865 KQ5.KQJ976..KQJ7 AJT976.T4.8542.4 8432.A3.T96.T932",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv34clgch9o",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {
+   "compete": 5,
+   "game": 3,
+   "lead": 4,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3D",
+   "p": 0.82,
+   "params": {
+    "compete": 1.8,
+    "game": 2.4,
+    "lead": 3.2,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "3D",
+  "created": "2026-11-14T20:32:25.733Z",
+  "deal": "N:AQ9742.8.Q3.Q432 K.AKT762.K6.KJ76 T.J954.AJ7542.T5 J8653.Q3.T98.A98",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.11",
+  "id": "omwgv3q85242ej",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {
+   "compete": 2,
+   "game": 3,
+   "lead": 3,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3S",
+   "p": 0.96,
+   "params": {
+    "compete": 4,
+    "game": 2.4,
+    "lead": 2.2,
+    "preempt": 5
+   }
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "3S",
+  "created": "2026-11-14T20:32:55.837Z",
+  "deal": "N:AJ9.AJ54.AT82.95 K5.Q76.K943.A862 QT87632.T9.J.Q74 4.K832.Q765.KJT3",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv4dgdhw1pg",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {
+   "compete": 4,
+   "game": 2,
+   "lead": 2,
+   "preempt": 5
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2S",
+   "p": 0.99,
+   "params": {
+    "compete": 3.3,
+    "game": 3.8,
+    "lead": 5,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "2S",
+  "created": "2026-11-14T20:33:15.555Z",
+  "deal": "N:72.AT.AK9843.T94 964.J9.QT6.AKQ72 AKT853.Q63.5.863 QJ.K87542.J72.J5",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv4so3scfhd",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 3,
+   "game": 5,
+   "lead": 5,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "3D",
+   "p": 0.9,
+   "params": {
+    "compete": 3.5,
+    "game": 3.4,
+    "lead": 2.7,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "3D",
+  "created": "2026-11-14T20:33:59.711Z",
+  "deal": "N:JT9.965.AQJ6.J92 864.AQJ.4.KQT864 753.8.KT98532.A7 AKQ2.KT7432.7.53",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv5qqnorx3b",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 4,
+   "game": 4,
+   "lead": 3,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "P",
+   "p": 0.47,
+   "params": {
+    "compete": 4.8,
+    "game": 2.8,
+    "lead": 1,
+    "preempt": 3
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "2H",
+  "created": "2026-11-14T20:34:24.214Z",
+  "deal": "N:AJ83.KQ9.QT9.752 Q654.AT.J63.AK96 KT97.876532.7.Q8 2.J4.AK8542.JT43",
+  "dealer": "E",
+  "decision": false,
+  "engine": "0.12.11",
+  "id": "omwgv69nak0s9t",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 4,
+   "game": 3,
+   "lead": 1,
+   "preempt": 3
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "ai": {
+   "call": "2S",
+   "p": 0.87,
+   "params": {
+    "compete": 2.3,
+    "game": 2,
+    "lead": 3.1,
+    "preempt": 4
+   }
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "2S",
+  "created": "2026-11-14T20:34:52.616Z",
+  "deal": "N:A76.QJ5.K985.K76 QT2.A8.QT73.AJT4 KJ9543.T72.J6.85 8.K9643.A42.Q932",
+  "dealer": "E",
+  "decision": true,
+  "engine": "0.12.11",
+  "id": "omwgv6vk80a6de",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {
+   "compete": 2,
+   "game": 2,
+   "lead": 3,
+   "preempt": 4
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "weak",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.73,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:13:12.769Z",
+  "deal": "N:Q7.KJ3.QJT85.Q75 AJ843.95.7.AKJT9 KT5.Q742.AK6.843 962.AT86.9432.62",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhof9hc1yv9u",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.53,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:13:36.662Z",
+  "deal": "N:653.AK2.QJ83.J97 KJT.QJ965.AT752. Q972.T83.K9.AK32 A84.74.64.QT8654",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhofrx2sin5r",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:13:42.684Z",
+  "deal": "N:T963.J4.AKQ74.72 AK4.QT93.3.KQT94 Q875.AK72.T95.J6 J2.865.J862.A853",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhofwkchxe3j",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.82,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:13:49.254Z",
+  "deal": "N:T7652.K2.5.JT965 A8.JT986.K83.A87 QJ93.A75.QJ9.KQ4 K4.Q43.AT7642.32",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhog1mugpw2n",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:13:56.381Z",
+  "deal": "N:J83.QT.AJT5.J543 K975.AK42.K643.Q AQ64.J93.Q7.8762 T2.8765.982.AKT9",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhog74tnqhka",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:14:00.751Z",
+  "deal": "N:T73.AJT.AT53.Q92 KJ.Q9852.KQ9.T85 965.K73.J762.AJ4 AQ842.64.84.K763",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhogai75o3yy",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:14:04.466Z",
+  "deal": "N:K.AT76432.AJ93.T A643.8.Q762.AQ93 T98.KQJ5.T4.K762 QJ752.9.K85.J854",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhogddezexqm",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:14:27.642Z",
+  "deal": "N:KJ95.KJ.AQ85.T64 76.AQ986.K.QJ953 AQ83.42.JT74.A82 T42.T753.9632.K7",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhogv965fwhs",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:14:43.370Z",
+  "deal": "N:T3.9843.JT8.K873 J974.KQ2.KQ7.QT5 AQ6.J765.632.J42 K852.AT.A954.A96",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoh7e2edt9m",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:14:47.726Z",
+  "deal": "N:K83.Q842.K93.J62 97.AK93.AT72.Q54 Q652.T75.QJ8.AK3 AJT4.J6.654.T987",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhohar2qlcjg",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:14:51.344Z",
+  "deal": "N:JT762.J.AQ865.73 A54.A765.K.KQ852 KQ93.KT2.T73.J96 8.Q9843.J942.AT4",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhohdjkz67dz",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:14:58.947Z",
+  "deal": "N:Q74.QT54.J65.532 AT.AJ986.T92.Q98 K965.7.KQ87.KJT4 J832.K32.A43.A76",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhohjerry89w",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.78,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:15:08.053Z",
+  "deal": "N:K652.9863.T82.K5 QJ87.KQJ5.9.QJ42 AT9.AT74.J76.A96 43.2.AKQ543.T873",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhohqfpn00g6",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:15:17.178Z",
+  "deal": "N:T95.T94.JT3.K632 KQ8.2.AQ8765.AT5 A743.K875.42.Q74 J62.AQJ63.K9.J98",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhohxh6cy46w",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.77,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:15:24.967Z",
+  "deal": "N:84.QT5.QJ94.8754 Q76.AKJ942.A3.62 K53.763.KT86.AQJ AJT92.8.752.KT93",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoi3hj5p33b",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:15:28.515Z",
+  "deal": "N:.K9852.T63.AJ975 KJ93.QT6.KQ94.KT Q854.AJ7.752.Q63 AT762.43.AJ8.842",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoi6832z2mp",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:15:31.702Z",
+  "deal": "N:43.854.632.J9432 KT982.QJT72.AJ.Q AJ5.A96.Q975.765 Q76.K3.KT84.AKT8",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoi8omibu3v",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:15:36.388Z",
+  "deal": "N:J83.KT43.K3.K975 Q76.A6.A94.JT832 KT54.J852.QJ2.Q4 A92.Q97.T8765.A6",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoicarljk1p",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:15:40.077Z",
+  "deal": "N:AQT2.864.K86.AJ8 K853.A75.A943.64 964.KJ9.QJT.Q952 J7.QT32.752.KT73",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoif59qo3y8",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.51,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:15:46.946Z",
+  "deal": "N:Q98.A3.K8542.J83 742.KQ862.Q63.AK AK65.JT9.A97.742 JT3.754.JT.QT965",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoikg26adhh",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:16:21.735Z",
+  "deal": "N:9763.96..AQJ5432 A5.AT8742.KJT4.K Q42.KQJ.A765.T87 KJT8.53.Q9832.96",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhojbafje82u",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.88,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:18:15.586Z",
+  "deal": "N:T97.Q983.86.J954 AJ3.A2.KJ732.873 865.KJT5.AQT.KT2 KQ42.764.954.AQ6",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwholr4yq12fq",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:18:21.929Z",
+  "deal": "N:643.K.QT8652.A84 A97.AJ764.AJ.KQ9 KQT8.Q92.K97.J75 J52.T853.43.T632",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwholw15ageu4",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:18:35.921Z",
+  "deal": "N:Q7.A43.6532.AQ53 K.T972.AKJ84.T97 A86.KJ65.QT7.J82 JT95432.Q8.9.K64",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhom6ttlxhvo",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:18:39.034Z",
+  "deal": "N:863.987.AQJ3.J84 AKQJT52.A.K.QT97 974.KQ53.T842.K6 .JT642.9765.A532",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhom98a87pfk",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:18:45.466Z",
+  "deal": "N:.T753.AQJ976.762 AK876.AJ9.43.843 543.K62.KT82.QT9 QJT92.Q84.5.AKJ5",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhome6y7had9",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:18:48.328Z",
+  "deal": "N:5.Q8643.T92.K653 AKJ742.A.K654.A8 Q98.K75.Q73.JT74 T63.JT92.AJ8.Q92",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhomgegxy3dl",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:18:52.027Z",
+  "deal": "N:AT.KJ97.QJT976.8 Q8653.864.A3.AK2 K97.AQ52.84.T764 J42.T3.K52.QJ953",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhomj97fggnm",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.51,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:19:15.209Z",
+  "deal": "N:QJ6532.3.AJ98.T2 7.KJT9.K752.A653 A98.AQ8.Q63.J984 KT4.76542.T4.KQ7",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhon155yag89",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:19:23.325Z",
+  "deal": "N:T93.T87.T52.A654 QJ6.AQ643.J8.Q83 K754.92.A94.KJ97 A82.KJ5.KQ763.T2",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhon7el94uya",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.88,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:19:31.330Z",
+  "deal": "N:6.T843.KQT843.T2 J43.J7.A9.KQJ954 KQ98.KQ95.J7.A73 AT752.A62.652.86",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhondkyucczg",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:19:37.331Z",
+  "deal": "N:K9765.T.Q8.KQJ84 A.AK9842.J2.7653 JT43.QJ3.AT54.92 Q82.765.K9763.AT",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoni7nj8x92",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:19:42.194Z",
+  "deal": "N:JT.Q873.A.AT9872 KQ763.JT65.KQ7.J A98.K92.9432.KQ4 542.A4.JT865.653",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhonlyqw9s6n",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:19:45.214Z",
+  "deal": "N:A9762.7.J8762.Q3 5.KQ8543.T94.AKT JT43.AT.K53.8754 KQ8.J962.AQ.J962",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhonoamu0qh1",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:19:49.310Z",
+  "deal": "N:9632.954.72.QT73 AQJ75.A73.Q43.84 KT8.Q862.T85.AJ6 4.KJT.AKJ96.K952",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhonrgeou7ya",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:19:54.949Z",
+  "deal": "N:86.T94.QJ5.K8742 AKJ2.AJ.A872.JT5 QT93.K863.643.A9 754.Q752.KT9.Q63",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhonvt1wasz1",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:20:32.533Z",
+  "deal": "N:3.T963.8654.T732 QJ72.AQ75.AQJ3.A AT96.KJ8.72.QJ86 K854.42.KT9.K954",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhooot1efizc",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:20:53.000Z",
+  "deal": "N:K82.JT83.87.Q874 QJT3.A95.QT54.K5 A764.642.632.AJT 95.KQ7.AKJ9.9632",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhop4lkn8y1t",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:20:56.160Z",
+  "deal": "N:AT75.32.K8.K9542 J8.QJ98.AJ95.AT7 KQ2.KT74.742.863 9643.A65.QT63.QJ",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhop71ce9efg",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:20:58.911Z",
+  "deal": "N:T82.AQT.Q865.T95 A7.KJ964.92.AKJ6 KQ43.82.AJ74.843 J965.753.KT3.Q72",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhop95qfrtev",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.7,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:21:03.704Z",
+  "deal": "N:K83.6.JT84.KT843 QT5.AK875.A7.752 9642.Q3.KQ2.AQJ9 AJ7.JT942.9653.6",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhopcuwfhw1y",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:21:08.479Z",
+  "deal": "N:Q83.4.K532.AJ752 AT754.J9853.A9.K KJ9.AQ62.QT7.T96 62.KT7.J864.Q843",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhopgjj3tmoq",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.88,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:21:12.901Z",
+  "deal": "N:QJ4.542.8542.T52 A9765.9.Q9.AJ763 82.KJT.AKJ7.Q984 KT3.AQ8763.T63.K",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhopjydbtv7g",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.97,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:23:52.270Z",
+  "deal": "N:AQ643.9.J832.KJ4 K98.AQ4.K7.T8632 JT75.KJ73.A4.AQ9 2.T8652.QT965.75",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhosyxap2wy7",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:23:57.361Z",
+  "deal": "N:Q63.T94.AKJ62.87 K98542.A72.QT.K4 AJ7.J865.873.AQ5 T.KQ3.954.JT9632",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhot2up756kx",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:00.746Z",
+  "deal": "N:.A9765.AK9632.KQ AKJ875.KQ4.85.T8 T94.J32.QJ7.AJ32 Q632.T8.T4.97654",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhot5gq8l5fh",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.56,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:05.317Z",
+  "deal": "N:A53.65.T863.T975 QT82.KQJT98.K5.K K764.A7.J72.AJ64 J9.432.AQ94.Q832",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhot8zpng0ki",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:09.272Z",
+  "deal": "N:Q98.K65.KQ.AT932 T.AQ932.AJ874.J8 A765.T84.T96.KQ6 KJ432.J7.532.754",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhotc1kkk0cj",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.91,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:13.641Z",
+  "deal": "N:T42.65.Q982.AJ65 KQJ97.74.AKT6.32 A85.AT3.J73.KQ98 63.KQJ982.54.T74",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhotfexoxjxq",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.87,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:17.464Z",
+  "deal": "N:T8.AT5.QT42.Q976 Q52.KQJ76.K98.T5 A64.94.AJ53.AJ82 KJ973.832.76.K43",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhotid4rf2rp",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:22.890Z",
+  "deal": "N:874.AT3.A82.KT97 AQJ963.K87.Q95.6 T2.QJ52.K764.Q83 K5.964.JT3.AJ542",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhotmjucb6xa",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 1,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:26.601Z",
+  "deal": "N:53.652.KJ9742.K9 KQ.AQT74.865.752 AT92.J3.AQT3.AQT J8764.K98..J8643",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhotpexxzouu",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:31.195Z",
+  "deal": "N:Q972.986.75.Q875 K43.J4.A832.AK43 AJ65.K32.K64.T62 T8.AQT75.QJT9.J9",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhotsyjwp46o",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:34.929Z",
+  "deal": "N:J87.754.952.AT53 A.AT93.AQ864.QJ2 QT62.KQ2.73.K874 K9543.J86.KJT.96",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhotvu90y6ku",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:38.790Z",
+  "deal": "N:JT97.7.A872.AK42 K83.KJT54.Q3.Q65 AQ54.AQ2.T94.983 62.9863.KJ65.JT7",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhotytilwpep",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:42.521Z",
+  "deal": "N:AQ32.AJ8.93.T742 KJT.74.AK4.AQJ65 9854.KQ96.QJ7.93 76.T532.T8652.K8",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhou1p5ey0zw",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:45.580Z",
+  "deal": "N:987.KQ.K543.KJ83 A2.T987.AQJ87.QT K653.AJ54.T62.62 QJT4.632.9.A9754",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhou424twhcb",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:48.200Z",
+  "deal": "N:T763.T.975.AK763 98.K97532.AK4.Q9 AJ2.64.QT82.JT85 KQ54.AQJ8.J63.42",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhou62wipogf",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:24:51.161Z",
+  "deal": "N:Q53.A8754.4.QJT4 A872.3.KQ53.AK98 KT64.QT2.A97.532 J9.KJ96.JT862.76",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhou8d5vmy07",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:25:04.868Z",
+  "deal": "N:J864.J62.632.KT6 KQ9.QT5.KQ95.J87 T752.A87.AT7.Q93 A3.K943.J84.A542",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhouixwobzhr",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:25:08.734Z",
+  "deal": "N:32.J765.A52.KQJ7 AJT974..Q643.A93 KQ8.T82.KT8.8542 65.AKQ943.J97.T6",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoulxa7aice",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:25:46.910Z",
+  "deal": "N:K9.AT8.7653.AQ65 J864.KJ.AKQ982.3 AQ32.Q93.J4.KJ74 T75.76542.T.T982",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhovfdqnrnag",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.62,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:00.607Z",
+  "deal": "N:A93.92.QJ4.AKT72 QJ2.AQT3.KT62.53 K76.K64.A83.QJ84 T854.J875.975.96",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhovpy7oqs54",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:04.663Z",
+  "deal": "N:AK.QT2.J54.98432 JT9753.K5.AQ7.KQ 82.A76.K986.AJT6 Q64.J9843.T32.75",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhovt2vzn3qi",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.99,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:10.655Z",
+  "deal": "N:Q983.AT75.Q8.K52 J5.KQ9643.A2.Q64 AK4.J82.KT53.AT9 T762..J9764.J873",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhovxpbkvj8f",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:14.529Z",
+  "deal": "N:K73.KJ7.J754.J32 J52.Q843.AK62.K7 AQ96.962.T3.AQT6 T84.AT5.Q98.9854",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhow0oxrxb8q",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:22.622Z",
+  "deal": "N:T832.J86.94.8532 K54.A97.AKT2.KQ9 J97.Q42.653.AJ76 AQ6.KT53.QJ87.T4",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhow6xqyvbsy",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.9,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:32.944Z",
+  "deal": "N:AK64.T654.JT9.64 J3.KJ7.AK753.J75 Q52.AQ98.Q6.AT93 T987.32.842.KQ82",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhowewgyv1dk",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:37.292Z",
+  "deal": "N:96.K873.A82.KQ52 K8742.A4.KT96.A4 AT3.QJ96.Q54.T83 QJ5.T52.J73.J976",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhowi986ed8j",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.98,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:41.702Z",
+  "deal": "N:J72.AJ97.J962.T5 AKQ643.Q.T83.J86 85.K865.AQ74.AQ3 T9.T432.K5.K9742",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhowlnqt31dn",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:26:45.422Z",
+  "deal": "N:KT5.QJ4.T62.Q763 AJ87.T92.KQJ4.K2 9643.765.A98.A85 Q2.AK83.753.JT94",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhowoj2c5v8m",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.7,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:27:21.274Z",
+  "deal": "N:T.KJ7.K98432.J75 Q9876.Q82.A.AQ63 A53.AT53.JT5.KT8 KJ42.964.Q76.942",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoxg6ygsb3p",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.94,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:27:26.627Z",
+  "deal": "N:J72.73.8764.AJ72 T86.AQJ65.KT32.8 K43.T98.AQ9.KQ93 AQ95.K42.J5.T654",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoxkbnxiah0",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:27:30.238Z",
+  "deal": "N:J74.A652.8.KJT96 AT965.84.AQ64.Q5 82.KT7.J752.A843 KQ3.QJ93.KT93.72",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoxn3yf4vbn",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.78,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:27:45.029Z",
+  "deal": "N:J874.82.Q93.KT52 AT5.A97.JT6.AJ94 Q63.KQT6.A84.Q73 K92.J543.K752.86",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoxyitlgrim",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:09.075Z",
+  "deal": "N:AK3.85.74.T87532 QT976.AKQT4.AK.6 J42.J962.98.AKQ9 85.73.QJT6532.J4",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoyh2ri48pe",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.87,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:14.831Z",
+  "deal": "N:AJ943.62.Q873.95 85.AQ3.942.AJT43 K62.JT94.AT5.KQ8 QT7.K875.KJ6.762",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoylink7w39",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:18.587Z",
+  "deal": "N:J3.AT65.T87.A873 Q654.J73.AKQ.J95 KT72.Q82.432.K64 A98.K94.J965.QT2",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoyoezt0ez6",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:26.708Z",
+  "deal": "N:QT2.T8.A43.JT986 K6.AQJ6.JT75.Q73 953.K932.Q86.K42 AJ874.754.K92.A5",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoyuoki2jpe",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:32.471Z",
+  "deal": "N:973.Q982.93.AQT6 KJT64.J64.K75.K2 AQ8.K75.QJ4.9853 52.AT3.AT862.J74",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoyz4nke1vb",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:39.009Z",
+  "deal": "N:Q.T5.AQT87.KJ982 AK974.Q873.63.A4 86.AKJ2.KJ95.T53 JT532.964.42.Q76",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoz469ucg5g",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:44.546Z",
+  "deal": "N:K97.T7543.T87.94 A82.K2.AQJ4.8652 QJT5.AJ98.95.J73 643.Q6.K632.AKQT",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoz8g275sfy",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:48.395Z",
+  "deal": "N:QJ3.KT92.Q96.983 A954.A.KJ75432.K K82.J854.AT8.T64 T76.Q763..AQJ752",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhozbezat8ai",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:51.111Z",
+  "deal": "N:A53.KQT8.J6.Q854 KQJ864.9.KQ974.6 T97.J532.853.AK7 2.A764.AT2.JT932",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhozdif3dm8x",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:28:57.625Z",
+  "deal": "N:2.QT.AT876.A9843 863.AKJ8.Q4.KQT6 A754.7632.K9.J52 KQJT9.954.J532.7",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhozijdqcoze",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:04.689Z",
+  "deal": "N:JT85.J6.T5.KQ942 A74.A92.AQ862.T8 9632.K853.KJ7.A3 KQ.QT74.943.J765",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhoznzlr33dq",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:07.870Z",
+  "deal": "N:93.AQJ4.983.KT98 AKQ62.75.A754.65 874.T986.K2.AJ73 JT5.K32.QJT6.Q42",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhozqfytzqsv",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:10.740Z",
+  "deal": "N:Q962.AKT.JT75.93 AK854.J8.AQ6.KQ7 J7.932.K832.AJ65 T3.Q7654.94.T842",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhozsnoci0bb",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:13.447Z",
+  "deal": "N:Q53.QJ62.854.K98 AJT8764.A3.T.A73 92.KT98.KJ76.J42 K.754.AQ932.QT65",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhozuqvpiko6",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:15.915Z",
+  "deal": "N:KT962.T.95.AQT85 43.AKQ8543.AJ.76 AJ5.76.T743.K932 Q87.J92.KQ862.J4",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhozwnfe0fbd",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:20.928Z",
+  "deal": "N:A86532.KQ.T4.J85 T.AT984.AQ986.A2 K974.2.KJ53.KT96 QJ.J7653.72.Q743",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp00iowthq0",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:23.409Z",
+  "deal": "N:K7.Q8653.J2.KQ86 AJT94.7.AKT5.AT9 863.AK42.763.J54 Q52.JT9.Q984.732",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp02fl3c9k5",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:25.968Z",
+  "deal": "N:94.J842.KT6.QJ74 AJT53.K63.A984.3 K76.Q95.Q53.KT86 Q82.AT7.J72.A952",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp04eoglsmf",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:31.886Z",
+  "deal": "N:A6.953.A8654.K82 K32.QJT.KT72.AJ7 Q974.A742.QJ3.T3 JT85.K86.9.Q9654",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp08z2ym8zl",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:35.732Z",
+  "deal": "N:K6.T73.J4.KQ9863 T83.A842.AKQ7.J2 AQ52.KQJ5.T82.74 J974.96.9653.AT5",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp0bxwlrsxq",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.98,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:40.859Z",
+  "deal": "N:K9632.532.T4.J62 T84.T.KQJ83.AT94 QJ75.AKQ7.72.K85 A.J9864.A965.Q73",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp0fwbzh2m0",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:46.180Z",
+  "deal": "N:T9.QJ96.KQ74.Q87 K86542.K.A6.KJT5 Q3.A432.JT82.A64 AJ7.T875.953.932",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp0k04lwr78",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.65,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:50.505Z",
+  "deal": "N:J83.976.QJ.T9752 QT6.KQJ2.T95.KJ3 AK72.AT54.863.Q6 954.83.AK742.A84",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp0nc9jenjt",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:53.292Z",
+  "deal": "N:KQJ942.6.Q72.754 63.AKT83.K6.KT92 A87.Q7.9854.A863 T5.J9542.AJT3.QJ",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp0phoyi2kn",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.98,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:29:59.233Z",
+  "deal": "N:T95.T73.K862.T53 AJ73.QJ86.Q5.A82 K862.AK54.T4.KQ7 Q4.92.AJ973.J964",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp0u2p0ickk",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:30:02.804Z",
+  "deal": "N:T84.T76.832.KQT2 K2.A52.AJT.98543 QJ75.K43.964.A76 A963.QJ98.KQ75.J",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp0wtwb8mm5",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:30:05.710Z",
+  "deal": "N:T32.T6542.AK2.A5 KQ4.AQ9873.Q6.96 987.KJ.J874.KJT8 AJ65..T953.Q7432",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp0z2m38u8c",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:30:16.932Z",
+  "deal": "N:Q72.975.765.9765 K85.A63.Q932.KT3 A64.K84.KJ8.J842 JT93.QJT2.AT4.AQ",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp17qcb06k6",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:30:19.633Z",
+  "deal": "N:AJ82.J5.KT532.Q5 KQT94.KQ73.J.AT6 765.A98.A94.J842 3.T642.Q876.K973",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp19tdkpb4r",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:30:22.698Z",
+  "deal": "N:654.974.KQ9.QJ65 K87.J8.AJ85.K742 Q92.K53.632.AT93 AJT3.AQT62.T74.8",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp1c6iv9i8d",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:30:25.451Z",
+  "deal": "N:K42.32.A4.QJ9652 AQT86.AT8.J963.7 J75.J96.T75.AKT8 93.KQ754.KQ82.43",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp1eaz67gub",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.81,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:30:29.178Z",
+  "deal": "N:T96.Q8.AQ764.T42 AK842.J743.92.K3 753.AK6.KT53.QJ8 QJ.T952.J8.A9765",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp1h6iaugad",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:30:34.224Z",
+  "deal": "N:32.AJT653.K9.T32 AK765.Q2.Q642.Q8 J9.K987.AJ87.K97 QT84.4.T53.AJ654",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp1l2o4g038",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:00.041Z",
+  "deal": "N:96.Q75.J9874.KT4 KT75.AKJ92.T5.Q7 AJ32.3.KQ32.8653 Q84.T864.A6.AJ92",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp24zturnbn",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:03.287Z",
+  "deal": "N:AT.QJT.Q97532.74 754.A432.AJT4.A5 KJ86.K975.86.Q32 Q932.86.K.KJT986",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp27hzdi2v0",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.98,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:07.709Z",
+  "deal": "N:AQ42.97653.T2.74 85.A4.984.AKQ983 KJT3.KT82.AQJ.J5 976.QJ.K7653.T62",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp2aws3xoz7",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.91,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:12.081Z",
+  "deal": "N:T5.QJT6.8643.KQ5 Q42.AK875.Q.JT42 AK96.943.K52.A96 J873.2.AJT97.873",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp2ea93e9s5",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:15.793Z",
+  "deal": "N:K64.T73.AQ842.K6 AJ5.KQ965.J.AJ82 QT72.AJ8.T96.QT7 983.42.K753.9543",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp2h5dozywq",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.92,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:18.926Z",
+  "deal": "N:KT975.Q42.AT84.9 QJ643.J85.Q2.AQ2 A8.A763.K53.K875 2.KT9.J976.JT643",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp2jke9z1e4",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:22.759Z",
+  "deal": "N:A7.A62.KJ54.9876 K4.KJ843.7.KQJT3 T962.Q75.Q92.A42 QJ853.T9.AT863.5",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp2miv5fm5g",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.95,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:26.672Z",
+  "deal": "N:62.QJ965.86.AKT3 AQJT3.T7.KQJ3.J5 K7.AK42.AT5.7642 9854.83.9742.Q98",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp2pjk89k0u",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:31:33.391Z",
+  "deal": "N:QT92.J95.T5.J764 K.K8764.A632.KT9 A85.A2.Q987.Q532 J7643.QT3.KJ4.A8",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp2uq71w5zi",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:32:08.698Z",
+  "deal": "N:82.T32.Q985.K984 KQ64.Q97.AJ7642. T953.J854.KT.AQT AJ7.AK6.3.J76532",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp3lyy9r0n3",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:32:24.134Z",
+  "deal": "N:A75.96.JT7.A8653 KJT86.JT5.KQ53.9 432.K432.A864.JT Q9.AQ87.92.KQ742",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp3xvqoofbp",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:32:26.877Z",
+  "deal": "N:K76.QJ6.AQ5.A943 AQ4.KT874.JT8.Q2 JT9.A95.K964.876 8532.32.732.KJT5",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp3zzx9cvq2",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:32:30.324Z",
+  "deal": "N:542.T97.84.QJT76 AKQT6.K62.A653.9 83.Q85.QJ97.AK83 J97.AJ43.KT2.542",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp42nobfx0j",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.54,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:32:43.000Z",
+  "deal": "N:Q3.KJ964.53.J632 AKJ92.832.K8.QT5 875.AQ75.QT97.A4 T64.T.AJ642.K987",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp4cfshkbnr",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:32:47.614Z",
+  "deal": "N:8764.5.A94.QJ953 AKT9.A92.QJ872.7 Q53.QJ74.K6.KT62 J2.KT863.T53.A84",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp4fzyxpvfn",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T10:33:18.038Z",
+  "deal": "N:AJ65.JT8.42.KQJT T984.AK743.T.A87 KQ3.652.KQJ7.932 72.Q9.A98653.654",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhp53h27qy6s",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:15.734Z",
+  "deal": "N:J3.J842.T72.AT85 KQT8.T.AK85.Q763 942.AKQ9.Q43.J42 A765.7653.J96.K9",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrkhue01tz9",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.83,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:21.870Z",
+  "deal": "N:K8642.J63.A3.Q63 AQ7.AQT74.J4.J87 J93.K52.QT2.AK94 T5.98.K98765.T52",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrkmkup5b04",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.76,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:27.146Z",
+  "deal": "N:J9.AT86.KQJ9862. KQT7432.5.AT3.K9 85.KQJ7.754.AQJ4 A6.9432..T876532",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrkqnebu40g",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:31.176Z",
+  "deal": "N:J876.Q7.8.J98642 AT2.AKJ3.KJ954.Q KQ94.T986.76.KT5 53.542.AQT32.A73",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrktrcnebyq",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:35.101Z",
+  "deal": "N:63.QJ98.9542.852 QJ7.K.K87.AQJ763 9852.T74.AJ6.K94 AKT4.A6532.QT3.T",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrkwsd86rp3",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:37.483Z",
+  "deal": "N:Q3.KQ7.J954.T864 KJ765.JT8.A8.QJ2 T94.642.KQ32.A53 A82.A953.T76.K97",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrkymjdf5yy",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.84,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:48.444Z",
+  "deal": "N:AQ65.QJT963.A.65 .842.QT874.AKJ74 J987.AK75.K9.QT3 KT432..J6532.982",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrl730xmira",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:51.784Z",
+  "deal": "N:Q642.A975.T.J764 J873..AKQ63.KT52 KT95.JT6.984.AQ9 A.KQ8432.J752.83",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrl9nshcajj",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.94,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:41:57.335Z",
+  "deal": "N:J43.KJ64.AK.9862 KQT952.QT7.JT.A4 A76.A832.Q83.KJ7 8.95.976542.QT53",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrldxz4bgyh",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.77,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:03.839Z",
+  "deal": "N:J762.3.Q8753.A43 AKQT9.QT75.6.KQ6 854.A62.AKJ.J952 3.KJ984.T942.T87",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrliyncgf8x",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:07.901Z",
+  "deal": "N:KJ763.83.2.KQ873 5.AQJ972.AJT7.T9 A92.KT5.K985.J64 QT84.64.Q643.A52",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrlm3hpxwg3",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:12.374Z",
+  "deal": "N:KQ72.T98.974.742 AJ5.K7432.K853.9 T986.QJ.QJT6.A83 43.A65.A2.KQJT65",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrlpjqhvybs",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:14.811Z",
+  "deal": "N:63.KQ.QJ974.Q765 K975.T9.AKT63.A8 AT84.A743.85.932 QJ2.J8652.2.KJT4",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrlrff0o1hc",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 1,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:17.683Z",
+  "deal": "N:AQJ6.865.J83.J95 T97543.A72.Q.AQ4 K.KQJ4.KT92.KT82 82.T93.A7654.763",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrltn78hecd",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:22.969Z",
+  "deal": "N:A932.J842.72.K95 KJ7.KT.KT84.Q643 QT54.Q975.J53.A2 86.A63.AQ96.JT87",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrlxq11bv8j",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:25.896Z",
+  "deal": "N:J72.Q9652.T643.2 QT43.K.KQ92.K953 K865.A83.J87.Q87 A9.JT74.A5.AJT64",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrlzzcpiwzb",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:32.449Z",
+  "deal": "N:AQT875.74.J5.KQ5 K96.AQT8.KQ43.72 J42.632.A76.AJ84 3.KJ95.T982.T963",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrm51d52t3l",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:36.542Z",
+  "deal": "N:873.8.KJ832.K642 AKQJ964.QT6.4.97 T.9753.AT65.AQJ5 52.AKJ42.Q97.T83",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrm872svhkx",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:42:41.717Z",
+  "deal": "N:3.T765.K87.QJ852 KQ96.A4.AT962.K4 AT52.KJ9.Q43.T93 J874.Q832.J5.A76",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrmc6tv7zlj",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.86,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:43:20.629Z",
+  "deal": "N:AJ3.J94.T97652.4 Q652.AK752..K863 K984.QT3.KJ84.AT T7.86.AQ3.QJ9752",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrn67p50luw",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:43:26.193Z",
+  "deal": "N:Q93.AT62.53.7653 J82.QJ74.AKJ94.T AK76.983.87.KJ82 T54.K5.QT62.AQ94",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrnai9na7fq",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 1,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:43:29.446Z",
+  "deal": "N:J963.532.JT6.T83 K7.QJ64.KQ74.Q75 AT54.AK87.53.AJ4 Q82.T9.A982.K962",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrnd0mefp0v",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.97,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:43:35.182Z",
+  "deal": "N:A5.95432.QT87.74 73.AKQJT.5.K9862 KT64.87.KJ63.AQJ QJ982.6.A942.T53",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrnhfybunfp",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:43:41.566Z",
+  "deal": "N:KQ942.K97..Q9532 3.T.AQJ753.AK764 AJT6.Q654.K2.JT8 875.AJ832.T9864.",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrnmdahrb3k",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.79,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:43:49.670Z",
+  "deal": "N:QJT83.98742.J3.A AK7.KQ.KQ942.Q65 965.AJ63.AT.KJ32 42.T5.8765.T9874",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrnsmessrtc",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:43:54.458Z",
+  "deal": "N:A62.Q97.T42.J932 QJT75.K854.K7.K8 93.JT63.AJ53.Q75 K84.A2.Q986.AT64",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrnwbe6ph8h",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.57,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:44:09.551Z",
+  "deal": "N:QT85.8.973.J7653 AK97.AQJ964.Q5.K J63.K32.AKJ.T942 42.T75.T8642.AQ8",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhro7ynzdjf8",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:44:14.620Z",
+  "deal": "N:932.85.AJT9.9865 KJ64.AJ42.Q75.AK AQ7.KQ63.642.J32 T85.T97.K83.QT74",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrobvgtfovk",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:44:21.696Z",
+  "deal": "N:KT74.84.965.Q962 3.AQT9732.KQ82.J AQJ9.J6.A743.T83 8652.K5.JT.AK754",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrohc05d3zc",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:44:25.089Z",
+  "deal": "N:AQJ4.43.KT76.532 93.KQJ98.AQ82.K7 K82.AT2.943.Q964 T765.765.J5.AJT8",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrojy9vh97z",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T11:44:29.526Z",
+  "deal": "N:J653.7.T9654.Q32 K94.K94.J.AJ9854 T87.A632.K82.K76 AQ2.QJT85.AQ73.T",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhrondix0g43",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:09:54.933Z",
+  "deal": "N:K.QJ982.984.J983 J7.AK.J532.AKQT2 A532.7654.AQ.654 QT9864.T3.KT76.7",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuqi5xhn8k6",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:10:01.494Z",
+  "deal": "N:T743.Q863.A65.94 AJ96.5.KJ72.AKQJ KQ52.A42.T43.853 8.KJT97.Q98.T762",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuqn86vovhq",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.89,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:10:07.975Z",
+  "deal": "N:A872.Q542.AQ83.7 KT643.KJ98.T.AJ3 J5.A76.KJ54.KQ64 Q9.T3.9762.T9852",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuqs87j8927",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:10:11.165Z",
+  "deal": "N:AKT2.A753.9.J542 QJ7654.Q4.J3.AK6 93.K982.A65.Q973 8.JT6.KQT8742.T8",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuquotishxe",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.97,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:10:47.434Z",
+  "deal": "N:Q5.JT964.J9832.K A987.A8532.KT.Q7 KT2.KQ7.AQ76.986 J643..54.AJT5432",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhurmoamxsbh",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:10:52.969Z",
+  "deal": "N:J9.A875.QJT85.T8 K4.KQ93.A7.AJ543 7652.JT62.K3.KQ9 AQT83.4.9642.762",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhurqy1ggnka",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:10:57.049Z",
+  "deal": "N:A83.6.KQJ.Q98742 K976.KJ932.A982. QJT5.A75.64.A653 42.QT84.T753.KJT",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuru3d1mquo",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:11:00.163Z",
+  "deal": "N:73.32.T653.AJ632 KQ9652.QJT4.KJ.9 AT8.976.A72.KT54 J4.AK85.Q984.Q87",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhurwhu2gdw5",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:11:02.826Z",
+  "deal": "N:KQ98.T832.K652.3 AT6.A97.AQ987.A9 J43.QJ65.T3.KJ72 752.K4.J4.QT8654",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuryjuadvef",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:11:05.504Z",
+  "deal": "N:AQ965.653.974.73 K4.AKQJ.KJT52.92 T82.972.A86.KJT6 J73.T84.Q3.AQ854",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhus0m8tm0pv",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.98,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:11:08.285Z",
+  "deal": "N:JT63.764.93.KQ85 K.AKQT8.QJT76.JT A97.952.AK8.A962 Q8542.J3.542.743",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhus2rhx1lvj",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.98,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:11:14.563Z",
+  "deal": "N:64.JT763.Q85.942 KQJ93.KQ4.2.AT87 A75.A985.A9.K653 T82.2.KJT7643.QJ",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhus7lv81ko7",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:11:19.839Z",
+  "deal": "N:T7.Q96.QT84.8765 AKJ863.87.J3.AKJ 954.AKJT.97.9432 Q2.5432.AK652.QT",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhusbofjf02p",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:11:22.488Z",
+  "deal": "N:72.62.J9432.AKT7 K8.AKQT74.QT85.3 A943.J53.K76.J98 QJT65.98.A.Q6542",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhusdq06lhe4",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:11:26.998Z",
+  "deal": "N:J732.AQ75.94.J93 AQT64.T632.J.AQ8 85.KJ84.QT72.K76 K9.9.AK8653.T542",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhush7a16m75",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:12:12.121Z",
+  "deal": "N:QJT72.74.AKT2.Q2 AK6.KQT98532.J.A 9854.AJ6.Q6.KJT3 3..987543.987654",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhutg0pz3pli",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:12:14.329Z",
+  "deal": "N:Q3.972.AJ642.K96 JT96542.A.Q.AJ87 AK7.J854.T83.T52 8.KQT63.K975.Q43",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuthq10664n",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:12:19.304Z",
+  "deal": "N:AQ986.74.T974.T8 K2.85.A653.KQ654 J54.QT32.KJ8.A97 T73.AKJ96.Q2.J32",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhutlk8jo5ts",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:00.786Z",
+  "deal": "N:9865.QJ764.T5.K5 J74.T53.AK73.AT6 Q32.K92.Q64.J832 AKT.A8.J982.Q974",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuvrv684i35",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:03.705Z",
+  "deal": "N:962.JT.K94.J9732 AKQ7.842.JT52.Q6 J853.K93.A76.T84 T4.AQ765.Q83.AK5",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuvu492slgv",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.93,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:13.179Z",
+  "deal": "N:KT42.J6.J32.JT84 AQ86.8432.A985.Q J93.KQ9.KQ7.K752 75.AT75.T64.A963",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuw1ffxdgp7",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.98,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:18.414Z",
+  "deal": "N:J873.T9842.642.4 T6..KQT9.KQJ9873 K952.A73.A73.A62 AQ4.KQJ65.J85.T5",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuw5gumbg6l",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:24.704Z",
+  "deal": "N:KJ5.J9.Q873.K962 T83.KQT63.52.AQ7 Q962.87.AJ64.J83 A74.A542.KT9.T54",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwabk4at1x",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:27.211Z",
+  "deal": "N:A2.KQ64.K754.432 Q5.A53.A832.KJT8 KT84.J87.T96.AQ7 J9763.T92.QJ.965",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwc975guu3",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:29.790Z",
+  "deal": "N:A32.AT5.AQT654.J KJ954.92.J2.AK64 Q86.K843.K97.T83 T7.QJ76.83.Q9752",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwe8ux843t",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:35.847Z",
+  "deal": "N:QT972.6.J84.A943 K5.AK9542.96.KQ6 AJ4.QJ7.K53.J852 863.T83.AQT72.T7",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwix3xuc9j",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:40.005Z",
+  "deal": "N:KQ9.K43.Q.AT8762 AT843.QJ.AK85.53 J.AT65.J964.QJ94 7652.9872.T732.K",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwm4lx4ck3",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:43.673Z",
+  "deal": "N:J8.Q6432.872.J62 AKT952.87.KJ4.54 Q4.K95.QT93.Q873 763.AJT.A65.AKT9",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwoyhbmocc",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:46.263Z",
+  "deal": "N:K4.J9865.T73.AT3 965.742.AK98.KQ7 T87.AQT.Q62.9542 AQJ32.K3.J54.J86",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwqyet67gu",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:49.803Z",
+  "deal": "N:KJ93.A96.J7.K742 54.J83.AQT94.AJ6 AQ76.752.K52.QT8 T82.KQT4.863.953",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwtorncz63",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:53.333Z",
+  "deal": "N:9875.3.KQ62.AT94 AQ6.A964.T7.K832 KT42.KQJ2.985.J6 J3.T875.AJ43.Q75",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuwwetbah2c",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.75,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:14:59.203Z",
+  "deal": "N:T.KQ975.J974.KQT AQJ85.T42.KQT2.4 972.A863.A6.AJ98 K643.J.853.76532",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhux0xvnq04r",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:02.502Z",
+  "deal": "N:53.A62.T852.AK75 AQ.KQ874.Q943.98 642.JT5.AJ76.QJ3 KJT987.93.K.T642",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhux3hi8kt4d",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:07.923Z",
+  "deal": "N:KJ2.7643.82.Q732 AT94.Q92.KQ753.4 753.AKJ8.J96.K98 Q86.T5.AT4.AJT65",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhux7o3n0l6e",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.75,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:13.401Z",
+  "deal": "N:8532.A8.843.T986 KT4.Q5.K762.KQ42 A76.J743.A95.A75 QJ9.KT962.QJT.J3",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuxbw9u9vhf",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:17.158Z",
+  "deal": "N:873.A862.972.AK5 AKJT42.J75.Q6.98 Q.KT94.AT53.T643 965.Q3.KJ84.QJ72",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuxesmqf9m7",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.52,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:21.864Z",
+  "deal": "N:K974.632.KJ865.9 A6.AJ94.T973.QJ2 852.K875.AQ.KT87 QJT3.QT.42.A6543",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuxifcvqm1v",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:26.472Z",
+  "deal": "N:K762.T52.K92.AJ8 T.KQJ84.A84.KQ76 A83.A76.T73.T953 QJ954.93.QJ65.42",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuxlzcj3qsr",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.53,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:31.799Z",
+  "deal": "N:53.J5.832.KJT987 AJ87.QT986.A4.A4 KQ96.A7.JT75.Q63 T42.K432.KQ96.52",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuxq3b21atg",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:37.487Z",
+  "deal": "N:643.J984.KT86.73 J985.Q.AJ2.AKQ64 AT2.K765.Q73.T52 KQ7.AT32.954.J98",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuxuhbimfxk",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.54,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:41.570Z",
+  "deal": "N:Q943.9852.753.K4 K8.JT4.J982.AQJ6 T76.AK73.KQ4.752 AJ52.Q6.AT6.T983",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuxxmq3npgd",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:15:57.552Z",
+  "deal": "N:3.AQT532.65.6543 AQ64.7.A842.AT97 KJ52.J94.Q7.KQ82 T987.K86.KJT93.J",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuy9yojfijl",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:16:01.265Z",
+  "deal": "N:AK93.J9.AJ6.7632 T4.Q4.KQ9872.KQ4 8752.K863.T4.AJT QJ6.AT752.53.985",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuyctt27k5t",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:16:04.105Z",
+  "deal": "N:94.KT542.974.AQ8 AKQJ752.87.QJ3.9 8.AJ63.K865.7432 T63.Q9.AT2.KJT65",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuyf0psk23f",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:16:09.664Z",
+  "deal": "N:J943.T4.AQ5.T973 A7.AKJ875.3.AQ54 K852.Q63.T942.KJ QT6.92.KJ876.862",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuyjb4iatih",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.99,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:16:13.319Z",
+  "deal": "N:AJ96.T2.8632.742 KQT53.A74.97.Q93 74.KQ85.AJT.AJ86 82.J963.KQ54.KT5",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuym4nowulc",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:16:17.838Z",
+  "deal": "N:J98432..T875.T75 K.AQJT72.Q962.63 A765.854.A3.QJ94 QT.K963.KJ4.AK82",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuypm6v26tv",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:16:44.432Z",
+  "deal": "N:KQJ4.A8643..A985 AT93.Q9.AQ852.Q6 865.KJ7.J76.K743 72.T52.KT943.JT2",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuza4wdclvw",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.85,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:16:48.345Z",
+  "deal": "N:A96.AJ654.J52.84 KQJT74.K.763.JT3 5.QT87.AKQ9.Q962 832.932.T84.AK75",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuzd5kh4rti",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:16:55.655Z",
+  "deal": "N:6.K98.K9852.QT73 KJ5.QJ63.AQT7.AJ A973.A74.J6.9865 QT842.T52.43.K42",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuzisnrmfyx",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.54,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:17:00.357Z",
+  "deal": "N:KT4.K52.8752.K63 QJ865.AT8.KQ93.Q A93.Q76.AJ4.JT82 72.J943.T6.A9754",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuzmf9o5ff2",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:17:10.541Z",
+  "deal": "N:3.92.KJ43.AJT982 AKJ9764.Q73.Q5.4 Q82.AJ5.T872.Q73 T5.KT864.A96.K65",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuzua5egnbw",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.76,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:17:14.747Z",
+  "deal": "N:4.AQ762.A93.J943 KQ8732.3.J.KQ872 AJT.J85.QT86.AT6 965.KT94.K7542.5",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhuzxizsprpw",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.89,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:17:19.386Z",
+  "deal": "N:9643.987542.A9.4 A7.KQ.KQ532.AQ63 KQJ5.AT3.T8.KT97 T82.J6.J764.J852",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv013u2831e",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:00.070Z",
+  "deal": "N:QJT9.5.J9876.AJ6 AK.KQ8432.AT42.8 8652.A97.KQ.QT92 743.JT6.53.K7543",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv0whyy4fv7",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.83,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:05.358Z",
+  "deal": "N:AT96.KQ.74.98652 8754.AJ543.K82.A KQ3.872.AJ63.KT3 J2.T96.QT95.QJ74",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv10kue3sdp",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:09.434Z",
+  "deal": "N:QJ82.Q87.AKJ3.75 KT.KJ3.Q986.KJ82 A965.654.54.AQT4 743.AT92.T72.963",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv13q1uc7dq",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 1,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:12.488Z",
+  "deal": "N:KJ82.986.85.JT32 AQT95.Q5.KT973.8 64.AT4.AQJ2.AQ97 73.KJ732.64.K654",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv162w9dxyl",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:16.206Z",
+  "deal": "N:52.Q64.94.QJT875 AT843.T8.AKQJ7.3 K96.753.T863.AK9 QJ7.AKJ92.52.642",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv18y67ciwp",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.96,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:19.970Z",
+  "deal": "N:K732.432.75.A652 .AQJ95.KJ863.T74 A984.K76.AT4.K98 QJT65.T8.Q92.QJ3",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv1buqhgwpk",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:22.339Z",
+  "deal": "N:A8.T852.K95.9842 J4.AKQ43.AQ874.J K53.J6.T632.KQ65 QT9762.97.J.AT73",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv1dojqoi7m",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:25.734Z",
+  "deal": "N:T3.743.AQ93.KJ84 Q85.AKQ852.J72.5 AK72.T96.T65.AT2 J964.J.K84.Q9763",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv1gauqhdxw",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.84,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:42.745Z",
+  "deal": "N:J43.KQ6.76.AJT96 Q8.AJ3.QJT2.Q743 KT92.974.AK5.K52 A765.T852.9843.8",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv1tfdy4dis",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:46.938Z",
+  "deal": "N:KT94.JT54.AK2.J3 65.AK976.T76.AT7 J73.Q83.QJ8.K965 AQ82.2.9543.Q842",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv1wnuc15f9",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:50.352Z",
+  "deal": "N:Q3.Q962.J8752.J3 AKJT765.T8.4.K87 84.J753.KT93.AQ5 92.AK4.AQ6.T9642",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv1zaowogj7",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.98,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:18:53.184Z",
+  "deal": "N:T532.J7.AJ653.63 AQ876.9864.4.KQT J9.AK3.QT92.AJ52 K4.QT52.K87.9874",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv21hccjmln",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:05.863Z",
+  "deal": "N:9.QT95.AKQ862.53 AK87643.K73.J.QJ QT2.862.974.AK42 J5.AJ4.T53.T9876",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv2b9jlznip",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:10.917Z",
+  "deal": "N:KQ65.Q754.9.AQ64 JT42.AJ3.AKQ842. A987.K96.76.KT87 3.T82.JT53.J9532",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv2f5xv57ok",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "X",
+   "p": 0.82,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:33.372Z",
+  "deal": "N:7.J763.Q743.A975 KT9865.Q.A9.KT82 AJ2.K854.KT86.QJ Q43.AT92.J52.643",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv2whom8vrj",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:38.358Z",
+  "deal": "N:AJ52.Q843.K652.8 7.952.AQT94.AK92 KQ98.AT76.83.T53 T643.KJ.J7.QJ764",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv30c6abpoa",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.88,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:41.273Z",
+  "deal": "N:K543.63.J96.K742 JT.KQ7.K853.A653 AQ92.AJT9.74.QT9 876.8542.AQT2.J8",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv32l5qpw69",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 1,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:45.547Z",
+  "deal": "N:J64.J3.AQJ63.Q53 AKQT83.T862.4.A7 97.AKQ7.K87.KJ92 52.954.T952.T864",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv35vvvqmiv",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:48.115Z",
+  "deal": "N:62.Q987.QT432.A9 K.AK6.K97.KQT864 A984.T432.A85.J3 QJT753.J5.J6.752",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv37v7k6pbd",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:52.621Z",
+  "deal": "N:JT4.T4.AJT96.Q96 AK632.A6.Q5.KT75 987.KQJ8.743.AJ2 Q5.97532.K82.843",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv3bcd67lxj",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:19:55.652Z",
+  "deal": "N:97543.J93.AT.K93 Q2.K4.KQ9752.AT5 AKT.QT87.J64.742 J86.A652.83.QJ86",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv3dokh5erc",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:01.474Z",
+  "deal": "N:J8.A95.7643.9763 Q2.KJ73.AKQ85.K5 K764.T862.T.AQJ4 AT953.Q4.J92.T82",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv3i6ay8t2d",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.99,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:05.011Z",
+  "deal": "N:Q763.K9.J732.T87 AKJT9.QJ83.T.QJ4 5.A752.KQ84.AK65 842.T64.A965.932",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv3kwjv2eii",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:10.203Z",
+  "deal": "N:54.AKT64.J64.Q72 Q9.J8752.AKQ7.94 AJT2.Q.T953.KJ85 K8763.93.82.AT63",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv3owrn59ik",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:20.110Z",
+  "deal": "N:82.AQ765.9652.KT T95.KT9.AJ7.A742 A76.J832.K83.J98 KQJ43.4.QT4.Q653",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv3wjy1hws3",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.92,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:25.706Z",
+  "deal": "N:JT865..86.AJT876 K3.J.AQJT72.KQ93 AQ74.KQ83.K95.42 92.AT976542.43.5",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv40vebffao",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:30.501Z",
+  "deal": "N:54.8.AKT98432.98 32.AK9732.76.A42 KQJ7.J54.Q5.Q753 AT986.QT6.J.KJT6",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv44klpco2v",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.81,
+   "params": null
+  },
+  "auction": [
+   "1S"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:36.200Z",
+  "deal": "N:T876.6.KQJ76.J65 KQ952.A84.9.AQ94 AJ.JT73.A43.K873 43.KQ952.T852.T2",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv48ywvytj0",
+  "kind": "overcall",
+  "open": "1S",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": null,
+   "params": null
+  },
+  "auction": [
+   "1H"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:45.814Z",
+  "deal": "N:Q.A94.T943.T9762 A6.Q87532.2.AKJ8 J743.JT6.KQJ5.53 KT9852.K.A876.Q4",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv4gdyha3nv",
+  "kind": "overcall",
+  "open": "1H",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "double",
+  "ai": {
+   "call": "X",
+   "p": 0.99,
+   "params": null
+  },
+  "auction": [
+   "1D"
+  ],
+  "call": "X",
+  "created": "2026-11-15T13:20:59.943Z",
+  "deal": "N:QT73.T65.KT6.632 AJ5.K83.AQ984.A5 K98.AQJ7.73.KQT4 642.942.J52.J987",
+  "dealer": "E",
+  "decision": true,
+  "doubleShape": true,
+  "engine": "0.13.0",
+  "id": "omwhv4rafyzmm5",
+  "kind": "overcall",
+  "open": "1D",
+  "params": {},
+  "reason": "",
+  "seat": "S",
+  "type": "X",
+  "vul": "None"
+ },
+ {
+  "action": "pass",
+  "ai": {
+   "call": "P",
+   "p": 0.01,
+   "params": {
+    "compete": 3.4,
+    "game": 1,
+    "lead": 1.2,
+    "preempt": 1
+   }
+  },
+  "auction": [
+   "1C"
+  ],
+  "call": "1D",
+  "created": "2026-11-15T13:21:15.196Z",
+  "deal": "N:KT982.KJ4.9.Q954 Q43.QT52.KQT.KJ7 AJ75.93.J7532.32 6.A876.A864.AT86",
+  "dealer": "E",
+  "decision": false,
+  "doubleShape": false,
+  "engine": "0.13.0",
+  "id": "omwhv5324c8s4y",
+  "kind": "overcall",
+  "open": "1C",
+  "params": {
+   "compete": 3,
+   "game": 1,
+   "lead": 1,
+   "preempt": 1
+  },
+  "reason": "",
+  "seat": "S",
+  "type": "1D",
+  "vul": "None"
  }
 ]
