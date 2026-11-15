@@ -270,6 +270,11 @@ try {
   if (c1.call !== '2H' || g > 3) { ng++; console.log('NG 介入の候補・推定', c1.call, g); } else console.log('介入の候補・推定: OK');
   const w1 = E.chooseCall(H('853.AK52.T86542.'), ['1C'], 'E');   // 10ヘッド・アンビッドの♥4枚でゲームの可能性が高い → ウィークにしない
   if (w1.call !== 'P') { ng++; console.log('NG ウィークの判断', w1.call, w1.why); } else console.log('ウィークの判断: OK');
+  const d1 = E.chooseCall(H('K32.AJ43.Q2.K843'), ['1D'], 'E');   // ダブルの形・12.5点 → ダブル
+  const d2 = E.chooseCall(H('K32.AJ43.Q2.9843'), ['1D'], 'E');   // 9点 → パス
+  const d3 = E.chooseCall(H('AQ5.432.K2.KJ843'), ['1D'], 'E');   // ♥3枚・♠3枚 → ダブル
+  const d4 = E.chooseCall(H('AQ532.43.K2.KJ84'), ['1D'], 'E');   // ♠5枚はダブルの形ではない
+  if (d1.call !== 'X' || d2.call !== 'P' || d3.call !== 'X' || d4.call === 'X') { ng++; console.log('NG ダブル', d1.call, d2.call, d3.call, d4.call); } else console.log('ダブル: OK');
   const n1 = E.chooseCall(H('KJ4.AQ3.KJ92.Q54'), ['1C'], 'E');   // 16点・♣Qxx → 1NT
   const n2 = E.chooseCall(H('KJ4.AQ3.KJ92.Q54'), ['1D'], 'E');   // ♦KJ92 → 1NT
   const n3 = E.chooseCall(H('KQ4.AQ3.KJ9.J542'), ['1C'], 'E');  // ♣Jxxx（4枚）→ 1NT

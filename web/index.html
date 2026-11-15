@@ -124,7 +124,7 @@ textarea { width: 100%; min-height: 64px; resize: vertical; }
 .seg { display: grid; grid-template-columns: repeat(5, 36px); gap: 4px; }
 .seg button { font: inherit; font-weight: 700; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
-.yn { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.yn { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
 .yn button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .ptable { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .ptable th, .ptable td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: left; }
@@ -224,6 +224,7 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
           <option value="weak">ウィークだけ（2の代と3の代を半分ずつ）</option>
           <option value="weak2">ウィーク・2の代だけ</option>
           <option value="weak3">ウィーク・3の代だけ</option>
+          <option value="X">ダブルだけ</option>
         </select></div>
       <div class="row spread"><span id="oc-info" class="muted">問題を作っています…</span></div>
       <table class="auction"><thead><tr><th>西</th><th>北</th><th>東</th><th>南</th></tr></thead><tbody id="oc-auction"></tbody></table>
@@ -232,10 +233,10 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
       <div id="oc-cand" class="notice"></div>
     </div>
     <div class="card" id="oc-answer">
-      <span class="label">4つのパラメータを1〜5で評価</span>
+      <span class="label" id="oc-params-label">4つのパラメータを1〜5で評価</span>
       <div id="oc-params" style="display:grid;gap:8px"></div>
-      <span class="label">介入する？</span>
-      <div class="yn"><button class="btn" data-yn="1" aria-pressed="false">介入する</button><button class="btn" data-yn="0" aria-pressed="false">介入しない（パス）</button></div>
+      <span class="label">どうする？</span>
+      <div class="yn" id="oc-yn"></div>
       <textarea id="oc-reason" placeholder="理由（任意）"></textarea>
       <button id="oc-submit" class="btn primary block" disabled>評価と判断を入れてください</button>
     </div>

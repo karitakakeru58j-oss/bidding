@@ -218,7 +218,7 @@
       const mean = (sel) => { const ii = idx.filter(i => PY[i] === sel); return Object.fromEntries(PARAMS.map(k => [k, ii.length ? ii.reduce((t, i) => t + fixed[i][k], 0) / ii.length : null])); };
       byType[t].meanYes = mean(1); byType[t].meanNo = mean(0);
     }
-    MODEL = { n: recs.length, corr, pooled, byType };
+    MODEL = { n: recs.length, corr, pooled, byType, dbl: trainDouble(records) };
     return MODEL;
   }
 
@@ -235,6 +235,32 @@
     return sigmoid(px(params, type === 'weak' && m4).reduce((t, xi, i) => t + xi * w[i], 0));
   }
 
+  // ------------------------------------------------------------------
+  // ダブル（テイクアウト）
+  //   形：敵のスートが3枚以下で、敵のスート以外のメジャーがすべて3枚か4枚
+  //   強さ：補正込みの点数で「ダブルする確率」を学ぶ（最初は11.5点で半々）
+  // ------------------------------------------------------------------
+  function doubleShape(hand, open) {
+    if (!/^1[CDHS]$/.test(open)) return false;
+    const O = open[1];
+    return hand[O].length <= 3 && ['H', 'S'].filter(M => M !== O).every(M => hand[M].length >= 3 && hand[M].length <= 4);
+  }
+  const DBL_PRIOR = [0, 1.2]; // [切片, 傾き]：sigmoid(傾き×(点数−11.5)＋切片)
+  let DBL = DBL_PRIOR.slice();
+  const dblX = adj => [1, adj - 11.5];
+  function trainDouble(records) {
+    // ダブルの形の手で、あなたが「ダブル」を選んだか（ダブルの問題・オーバーコールの問題の両方）
+    const rows = (records || []).filter(r => r && r.deal && r.open && (r.type === 'X' || r.action)).map(r => {
+      const hand = E.pbnToDeal(r.deal)[r.seat || 'S'];
+      return { hand, r };
+    }).filter(o => doubleShape(o.hand, o.r.open));
+    DBL = rows.length ? logistic(rows.map(o => dblX(evaluate(o.hand).adj)), rows.map(o => (o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)) ? 1 : 0), DBL_PRIOR, 1) : DBL_PRIOR.slice();
+    return { n: rows.length, yes: rows.filter(o => o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)).length, w: DBL.slice(),
+      // 半々になる点数
+      half: DBL[1] > 0.05 ? 11.5 - DBL[0] / DBL[1] : null };
+  }
+  const doubleProb = adj => sigmoid(dblX(adj).reduce((t, x, i) => t + x * DBL[i], 0));
+
   // 1NTオーバーコール（ルール）：1NTオープンの形・補正込み16点以上（19点未満）・オープンのスートに止め
   function ntOvercall(hand, open) {
     const h = evaluate(hand), O = open[1], x = hand[O];
@@ -245,6 +271,11 @@
   function decide(hand, open) {
     if (/^1[CDHS]$/.test(open) && ntOvercall(hand, open))
       return { call: '1N', why: `1NTオープンの形で補正込み16点以上、${JA_SUIT[open[1]]}が止まっているので1NTオーバーコール`, cand: { type: '1N', call: '1N' } };
+    // ダブルの形なら、点数でダブルするかを決める（1♦や2mの候補よりダブルを優先）
+    if (doubleShape(hand, open)) {
+      const adj = evaluate(hand).adj, pd = doubleProb(adj);
+      if (pd >= 0.5) return { call: 'X', why: `${JA_SUIT[open[1]]}が3枚以下で、ほかのメジャーが3〜4枚なのでダブルの形。補正込み${Math.round(adj * 10) / 10}点でダブルする確率${Math.round(pd * 100)}%なのでダブル`, cand: { type: 'X', call: 'X' }, p: pd };
+    }
     const cand = candidate(hand, open);
     if (!cand) return { call: 'P', why: '介入し得る形・強さではないのでパス', cand: null };
     const params = estimate(hand, open, cand);
@@ -266,7 +297,7 @@
     });
   }
 
-  const api = { unbidMajor4, ntOvercall, preemptOf, RATED, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
+  const api = { doubleShape, doubleProb, get doubleModel() { return MODEL ? MODEL.dbl : trainDouble([]); }, unbidMajor4, ntOvercall, preemptOf, RATED, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
   E.overcall = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

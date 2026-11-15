@@ -85,6 +85,7 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function callHtml(c) {
     if (c === 'P') return 'パス';
+    if (c === 'X') return 'ダブル';
     if (!E.isBid(c)) return esc(c);
     const s = c[1];
     if (s === 'N') return c[0] + 'NT';
@@ -350,8 +351,10 @@
         tag('Dealer', r.dealer), tag('Vulnerable', r.vul || 'None'), tag('Deal', r.deal),
         tag('Scoring', ''), tag('Declarer', ''), tag('Contract', ''), tag('Result', ''), tag('Auction', r.dealer));
       out.push(r.auction.map(E.callPbn).join(' '), '*');
+      const isX = r.type === 'X';
       out.push(tag('QuizSeat', 'S'), tag('OvercallType', r.type), tag('OvercallBid', E.callPbn(r.call)), tag('OvercallDecision', r.decision ? 'yes' : 'no'),
-        tag('LeadDirecting', r.params.lead), tag('GameChance', r.params.game), tag('Competing', r.params.compete), tag('Preemptive', OC.preemptOf(r.call)),
+        tag('OvercallAction', r.action || (r.decision ? (isX ? 'double' : 'overcall') : 'pass')),
+        tag('LeadDirecting', isX ? '' : r.params.lead), tag('GameChance', isX ? '' : r.params.game), tag('Competing', isX ? '' : r.params.compete), tag('Preemptive', isX ? '' : OC.preemptOf(r.call)),
         tag('AnswerReason', r.reason || ''), tag('AIBid', E.callPbn(r.ai && r.ai.call || '')), tag('Created', r.created || ''), tag('QuizId', r.id), tag('EngineVersion', r.engine || ''), '');
     });
     return out.join('\n');
@@ -407,10 +410,11 @@
 
   // 出題：東がオープンし、南（あなた）がすぐ次の手番。回答の少ない種類を優先して出す
   function makeOcQuiz() {
-    const counts = Object.fromEntries(OC.TYPES.map(t => [t, 0]));
+    const ALL = OC.TYPES.concat(['X']);
+    const counts = Object.fromEntries(ALL.map(t => [t, 0]));
     for (const r of ocStore.items) if (counts[r.type] != null) counts[r.type]++;
     const min = Math.min(...Object.values(counts));
-    const want = OC.TYPES.filter(t => counts[t] === min);
+    const want = ALL.filter(t => counts[t] === min);
     const filter = $('oc-filter').value;
     let target = filter === 'auto' ? want[Math.floor(Math.random() * want.length)] : filter;
     // ウィークの代：weak2／weak3を選んだときはその代、weak（両方）なら回答の少ない方
@@ -429,9 +433,12 @@
       const open = E.chooseCall(hands.E, [], 'N').call; // 東の手で1番手のオープンを決める
       if (!/^1[CDHS]$/.test(open)) continue;
       if (OC.ntOvercall(hands.S, open)) continue; // 1NTオーバーコールはルールで決めるので出題しない
-      const cand = OC.candidate(hands.S, open);
+      let cand = OC.candidate(hands.S, open);
+      const dbl = OC.doubleShape(hands.S, open);
+      // ダブルだけの問題：オーバーコールの候補がなく、ダブルの形で8〜17点の手
+      if (!cand && dbl) { const a = E.evaluate(hands.S).adj; if (a >= 8 && a < 18) cand = { type: 'X', call: 'X' }; }
       if (!cand) continue;
-      const q = { hands, dealer: 'E', auction: [open], open, cand };
+      const q = { hands, dealer: 'E', auction: [open], open, cand, dbl };
       if (cand.type === target && (!want4D || hands.S.D.length === 4) && (!level || cand.call[0] === level)) return q;
       if (fixed && cand.type !== target) continue; // 種類を選んだときはほかの種類を出さない
       if (!fallback) fallback = q;
@@ -441,7 +448,7 @@
   let oq = null, oAns = null;
   function ocNew() {
     oq = makeOcQuiz();
-    oAns = { params: {}, decision: null };
+    oAns = { params: {}, action: null };
     $('oc-reason').value = ''; $('oc-result').hidden = true; $('oc-answer').hidden = false;
     if (!oq) { $('oc-info').textContent = '問題を作れませんでした。もう一度開いてください。'; return; }
     $('oc-info').textContent = `介入の第${ocStore.items.length + 1}問 ・ 東のオープンの直後 ・ バル なし`;
@@ -449,25 +456,34 @@
     const ev = E.evaluate(oq.hands.S);
     $('oc-hand').innerHTML = handHtml(oq.hands.S);
     $('oc-meta').textContent = `${ev.rawHcp}点（HCP）・補正込み${Math.round(ev.adj * 10) / 10}点 ・ ${E.SUITS.map(s => ev.len[s]).join('-')}`;
-    $('oc-cand').innerHTML = `候補：<b>${callHtml(oq.cand.call)}</b>（${esc(OC.TYPE_JA[oq.cand.type])}）`;
+    $('oc-cand').innerHTML = oq.cand.type === 'X' ? '候補：<b>ダブル</b>（ダブルの形：敵のスートが3枚以下、ほかのメジャーが3〜4枚）'
+      : `候補：<b>${callHtml(oq.cand.call)}</b>（${esc(OC.TYPE_JA[oq.cand.type])}）${oq.dbl ? '・ダブルの形でもある' : ''}`;
     renderOcInputs();
   }
   function renderOcInputs() {
+    const isX = oq.cand.type === 'X';
+    $('oc-params-label').hidden = isX; $('oc-params').hidden = isX;
+    // 選択肢：オーバーコール（候補がオーバーコールのとき）、ダブル（ダブルの形のとき）、パス
+    const acts = [];
+    if (!isX) acts.push(['overcall', `${E.callText(oq.cand.call)}（オーバーコール）`]);
+    if (isX || oq.dbl) acts.push(['double', 'ダブル']);
+    acts.push(['pass', 'パス']);
+    $('oc-yn').innerHTML = acts.map(([a, t]) => `<button class="btn" data-act="${a}" aria-pressed="${oAns.action === a}">${esc(t)}</button>`).join('');
+    if (isX) { const ready = !!oAns.action; $('oc-submit').disabled = !ready; $('oc-submit').textContent = ready ? `${oAns.action === 'double' ? 'ダブル' : 'パス'}で決定` : '判断を入れてください'; return; }
     $('oc-params').innerHTML = OC.RATED.map(k => `<div class="prow"><span>${esc(OC.PARAM_JA[k])}</span><div class="seg" data-param="${k}">${
       [1, 2, 3, 4, 5].map(v => `<button aria-pressed="${oAns.params[k] === v}" data-v="${v}" aria-label="${esc(OC.PARAM_JA[k])} ${v}">${v}</button>`).join('')}</div></div>`).join('')
       + `<div class="prow"><span>プリエンプト性 <span class="muted">（${esc(E.callText(oq.cand.call))}で決まる）</span></span><b style="padding-right:8px">${OC.preemptOf(oq.cand.call)}</b></div>`;
-    for (const b of document.querySelectorAll('.yn button')) b.setAttribute('aria-pressed', String(oAns.decision === (b.dataset.yn === '1')));
-    const ready = OC.RATED.every(k => oAns.params[k]) && oAns.decision !== null;
+    const ready = OC.RATED.every(k => oAns.params[k]) && !!oAns.action;
     $('oc-submit').disabled = !ready;
-    $('oc-submit').textContent = ready ? (oAns.decision ? `介入する（${E.callText(oq.cand.call)}）で決定` : '介入しない（パス）で決定') : '評価と判断を入れてください';
+    $('oc-submit').textContent = ready ? ({ overcall: `${E.callText(oq.cand.call)}で決定`, double: 'ダブルで決定', pass: 'パスで決定' })[oAns.action] : '評価と判断を入れてください';
   }
   $('oc-params').addEventListener('click', e => {
     const b = e.target.closest('button[data-v]'); if (!b) return;
     oAns.params[b.closest('.seg').dataset.param] = Number(b.dataset.v); renderOcInputs();
   });
-  document.querySelector('.yn').addEventListener('click', e => {
-    const b = e.target.closest('button[data-yn]'); if (!b) return;
-    oAns.decision = b.dataset.yn === '1'; renderOcInputs();
+  $('oc-yn').addEventListener('click', e => {
+    const b = e.target.closest('button[data-act]'); if (!b) return;
+    oAns.action = b.dataset.act; renderOcInputs();
   });
   $('oc-submit').addEventListener('click', async () => {
     if (!oq) return;
@@ -475,16 +491,19 @@
     const doc = {
       id: 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), created: new Date().toISOString(), engine: E.ENGINE_VERSION,
       kind: 'overcall', dealer: oq.dealer, vul: 'None', deal: E.dealToPbn(oq.hands, 'N'), auction: oq.auction.slice(), seat: 'S',
-      open: oq.open, type: oq.cand.type, call: oq.cand.call, params: { ...oAns.params, preempt: OC.preemptOf(oq.cand.call) }, decision: oAns.decision,
+      open: oq.open, type: oq.cand.type, call: oq.cand.call,
+      params: oq.cand.type === 'X' ? {} : { ...oAns.params, preempt: OC.preemptOf(oq.cand.call) },
+      // decision：その候補（オーバーコール、ダブルの問題ならダブル）をしたか。action：実際に選んだもの
+      decision: oq.cand.type === 'X' ? oAns.action === 'double' : oAns.action === 'overcall', action: oAns.action, doubleShape: !!oq.dbl,
       reason: $('oc-reason').value.trim(),
       ai: { call: ai.call, params: ai.params ? Object.fromEntries(OC.PARAMS.map(k => [k, Math.round(ai.params[k] * 10) / 10])) : null, p: ai.p != null ? Math.round(ai.p * 100) / 100 : null },
     };
     $('oc-submit').disabled = true;
     try { await ocStore.add(doc); } catch (err) { showSaveError(err); $('oc-submit').disabled = false; return; }
-    const yourCall = doc.decision ? doc.call : 'P', same = yourCall === ai.call;
+    const yourCall = doc.action === 'double' ? 'X' : doc.action === 'overcall' ? doc.call : 'P', same = yourCall === ai.call;
     let html = `<div class="result ${same ? 'same' : 'diff'}"><div class="row"><span class="pill ${same ? 'same' : 'diff'}">${same ? 'AIと同じ判断' : 'AIと違う判断'}</span></div>`;
-    html += `<div class="compare"><div><div class="label">あなた</div><div class="bigcall">${callHtml(yourCall)}</div></div><div><div class="label">AI（介入する確率${Math.round((ai.p || 0) * 100)}%）</div><div class="bigcall">${callHtml(ai.call)}</div></div></div>`;
-    html += '<table class="ptable"><tr><th>パラメータ</th><th>あなた</th><th>AIの推定</th></tr>' + OC.PARAMS.map(k =>
+    html += `<div class="compare"><div><div class="label">あなた</div><div class="bigcall">${callHtml(yourCall)}</div></div><div><div class="label">AI${ai.p != null ? `（${ai.call === 'X' || (ai.cand && ai.cand.type === 'X') ? 'ダブル' : '介入'}する確率${Math.round(ai.p * 100)}%）` : ''}</div><div class="bigcall">${callHtml(ai.call)}</div></div></div>`;
+    if (doc.type !== 'X') html += '<table class="ptable"><tr><th>パラメータ</th><th>あなた</th><th>AIの推定</th></tr>' + OC.PARAMS.map(k =>
       `<tr><td>${esc(OC.PARAM_JA[k])}${k === 'preempt' ? '（ビッドで決まる）' : ''}</td><td class="num">${doc.params[k]}</td><td class="num">${ai.params ? (k === 'preempt' ? ai.params[k] : ai.params[k].toFixed(1)) : '–'}</td></tr>`).join('') + '</table>';
     html += '<p class="muted" style="margin:0">この回答はすぐ学習に使われ、下の分析とAIの判断に反映されます。</p></div>';
     $('oc-res').innerHTML = html; $('oc-answer').hidden = true; $('oc-result').hidden = false;
@@ -495,6 +514,7 @@
 
   function renderOcAnalysis() {
     const rows = OC.analysis();
+    const dm = OC.doubleModel;
     $('oc-count').textContent = `回答 ${ocStore.items.length}件`;
     $('oc-analysis').innerHTML = rows.map(r => {
       const maxW = Math.max(0.5, ...OC.PARAMS.map(k => Math.abs(r.weights[k])));
@@ -507,15 +527,16 @@
         <div class="muted">重視：${r.order.map(k => esc(OC.PARAM_JA[k])).join(' ＞ ')}${r.n < 5 ? '（回答が少ないので暫定）' : ''}</div>
         <table class="ptable"><tr><th>パラメータ</th><th>重み</th><th>するの平均</th><th>しないの平均</th></tr>${tbl}</table>${
         r.majorGame != null ? `<div class="muted">アンビッドのメジャー4枚（ゲームの可能性3以上で効く）の重み：${r.majorGame.toFixed(2)}（マイナスほど、しない寄り）</div>` : ''}</div>`;
-    }).join('');
+    }).join('') + `<div class="octype"><div class="row spread"><b>ダブル</b><span class="muted">ダブルの形の手 ${dm.n}件（ダブル${dm.yes}・ほか${dm.n - dm.yes}）</span></div>
+      <div class="muted">形：敵のスートが3枚以下で、ほかのメジャーが3〜4枚。強さ：補正込み${dm.half != null ? (Math.round(dm.half * 10) / 10) : '–'}点でダブルする確率が半々${dm.n < 5 ? '（回答が少ないので暫定）' : ''}</div></div>`;
     const recent = ocStore.items.slice().reverse().slice(0, 30);
     $('oc-records').innerHTML = recent.length ? recent.map(r => {
       const h = E.pbnToDeal(r.deal).S;
       return `<div class="rec" style="border-bottom:1px solid var(--line);padding:8px 0;display:grid;gap:4px">
-        <div class="row spread"><span>(${callHtml(r.open)}) → ${r.decision ? callHtml(r.call) : 'パス'} <span class="muted">${esc(OC.TYPE_JA[r.type])}</span></span>
+        <div class="row spread"><span>(${callHtml(r.open)}) → ${r.action === 'double' || (r.type === 'X' && r.decision) ? 'ダブル' : r.decision ? callHtml(r.call) : 'パス'} <span class="muted">${esc(r.type === 'X' ? 'ダブルの問題' : OC.TYPE_JA[r.type])}</span></span>
         <button class="btn small" data-ocdel="${esc(r.id)}">消す</button></div>
         <div class="mono">${handShort(h)}</div>
-        <div class="muted">${OC.PARAMS.map(k => esc(OC.PARAM_JA[k]) + (k === 'preempt' ? OC.preemptOf(r.call) : r.params[k])).join('・')}${r.reason ? '　「' + esc(r.reason) + '」' : ''}</div></div>`;
+        <div class="muted">${r.type === 'X' ? '' : OC.PARAMS.map(k => esc(OC.PARAM_JA[k]) + (k === 'preempt' ? OC.preemptOf(r.call) : r.params[k])).join('・')}${r.reason ? '　「' + esc(r.reason) + '」' : ''}</div></div>`;
     }).join('') : '<p class="muted" style="margin:0">まだ記録がありません。</p>';
   }
   $('oc-records').addEventListener('click', async e => {
