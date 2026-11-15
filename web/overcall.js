@@ -246,21 +246,28 @@
     const O = open[1];
     return hand[O].length <= 3 && ['H', 'S'].filter(M => M !== O).every(M => hand[M].length >= 3 && hand[M].length <= 4);
   }
-  const DBL_PRIOR = [0, 1.2, -1]; // [切片, 点数, 敵のスートの枚数]：sigmoid(切片＋a×(点数−11.5)＋b×(枚数−3))
+  // 敵のスートの持ち方：A以外のアナー（K・Q・J、ほかのアナーと一緒の10）が多いとダブルしない寄り
+  //   KQx、AJx、AQ10などは減点、Axxは減点なし
+  function oppHonors(hand, open) {
+    const x = hand[open[1]];
+    return [...x].filter(c => 'KQJ'.includes(c)).length + (x.includes('T') && /[AKQJ]/.test(x) ? 1 : 0);
+  }
+  const DBL_PRIOR = [0, 1.2, -1, -1]; // [切片, 点数, 敵のスートの枚数, 敵のスートのA以外のアナー]
   let DBL = DBL_PRIOR.slice();
-  const dblX = (adj, lenO) => [1, adj - 11.5, lenO - 3];
+  const dblX = (adj, lenO, hon) => [1, adj - 11.5, lenO - 3, hon];
   function trainDouble(records) {
     // ダブルの形の手で、あなたが「ダブル」を選んだか（ダブルの問題・オーバーコールの問題の両方）
     const rows = (records || []).filter(r => r && r.deal && r.open && (r.type === 'X' || r.action)).map(r => {
       const hand = E.pbnToDeal(r.deal)[r.seat || 'S'];
       return { hand, r };
     }).filter(o => doubleShape(o.hand, o.r.open));
-    DBL = rows.length ? logistic(rows.map(o => dblX(evaluate(o.hand).adj, o.hand[o.r.open[1]].length)), rows.map(o => (o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)) ? 1 : 0), DBL_PRIOR, 1) : DBL_PRIOR.slice();
+    DBL = rows.length ? logistic(rows.map(o => dblX(evaluate(o.hand).adj, o.hand[o.r.open[1]].length, oppHonors(o.hand, o.r.open))), rows.map(o => (o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)) ? 1 : 0), DBL_PRIOR, 1) : DBL_PRIOR.slice();
     return { n: rows.length, yes: rows.filter(o => o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)).length, w: DBL.slice(),
-      // 半々になる点数（敵のスートが1・2・3枚のとき）
+      // 半々になる点数（敵のスートが1・2・3枚で、A以外のアナーがないとき）
+      honW: DBL[3],
       half: DBL[1] > 0.05 ? Object.fromEntries([1, 2, 3].map(n => [n, 11.5 - (DBL[0] + DBL[2] * (n - 3)) / DBL[1]])) : null };
   }
-  const doubleProb = (adj, lenO) => sigmoid(dblX(adj, lenO).reduce((t, x, i) => t + x * DBL[i], 0));
+  const doubleProb = (adj, lenO, hon = 0) => sigmoid(dblX(adj, lenO, hon).reduce((t, x, i) => t + x * DBL[i], 0));
 
   // 1NTオーバーコール（ルール）：1NTオープンの形・補正込み16点以上（19点未満）・オープンのスートに止め
   function ntOvercall(hand, open) {
@@ -274,8 +281,9 @@
       return { call: '1N', why: `1NTオープンの形で補正込み16点以上、${JA_SUIT[open[1]]}が止まっているので1NTオーバーコール`, cand: { type: '1N', call: '1N' } };
     // ダブルの形なら、点数でダブルするかを決める（1♦や2mの候補よりダブルを優先）
     if (doubleShape(hand, open)) {
-      const adj = evaluate(hand).adj, pd = doubleProb(adj, hand[open[1]].length);
-      if (pd >= 0.5) return { call: 'X', why: `${JA_SUIT[open[1]]}が3枚以下で、ほかのメジャーが3〜4枚なのでダブルの形。補正込み${Math.round(adj * 10) / 10}点・${JA_SUIT[open[1]]}${hand[open[1]].length}枚でダブルする確率${Math.round(pd * 100)}%なのでダブル`, cand: { type: 'X', call: 'X' }, p: pd };
+      const hon = oppHonors(hand, open);
+      const adj = evaluate(hand).adj, pd = doubleProb(adj, hand[open[1]].length, hon);
+      if (pd >= 0.5) return { call: 'X', why: `${JA_SUIT[open[1]]}が3枚以下で、ほかのメジャーが3〜4枚なのでダブルの形。補正込み${Math.round(adj * 10) / 10}点・${JA_SUIT[open[1]]}${hand[open[1]].length}枚${hon ? `（A以外のアナー${hon}枚）` : ''}でダブルする確率${Math.round(pd * 100)}%なのでダブル`, cand: { type: 'X', call: 'X' }, p: pd };
     }
     const cand = candidate(hand, open);
     if (!cand) return { call: 'P', why: '介入し得る形・強さではないのでパス', cand: null };
@@ -298,7 +306,7 @@
     });
   }
 
-  const api = { doubleShape, doubleProb, get doubleModel() { return MODEL ? MODEL.dbl : trainDouble([]); }, unbidMajor4, ntOvercall, preemptOf, RATED, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
+  const api = { oppHonors, doubleShape, doubleProb, get doubleModel() { return MODEL ? MODEL.dbl : trainDouble([]); }, unbidMajor4, ntOvercall, preemptOf, RATED, TYPES, TYPE_JA, PARAMS, PARAM_JA, candidate, features, heuristic, estimate, probability, decide, train, analysis, get model() { return MODEL; } };
   E.overcall = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

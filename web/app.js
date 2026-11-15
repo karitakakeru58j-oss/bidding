@@ -528,7 +528,7 @@
         <table class="ptable"><tr><th>パラメータ</th><th>重み</th><th>するの平均</th><th>しないの平均</th></tr>${tbl}</table>${
         r.majorGame != null ? `<div class="muted">アンビッドのメジャー4枚（ゲームの可能性3以上で効く）の重み：${r.majorGame.toFixed(2)}（マイナスほど、しない寄り）</div>` : ''}</div>`;
     }).join('') + `<div class="octype"><div class="row spread"><b>ダブル</b><span class="muted">ダブルの形の手 ${dm.n}件（ダブル${dm.yes}・ほか${dm.n - dm.yes}）</span></div>
-      <div class="muted">形：敵のスートが3枚以下で、ほかのメジャーが3〜4枚。ダブルする確率が半々になる点数（補正込み）：${dm.half ? [3, 2, 1].map(n => `敵のスート${n}枚なら${Math.round(dm.half[n] * 10) / 10}点`).join('、') : '–'}${dm.n < 5 ? '（回答が少ないので暫定）' : ''}</div></div>`;
+      <div class="muted">形：敵のスートが3枚以下で、ほかのメジャーが3〜4枚。ダブルする確率が半々になる点数（補正込み）：${dm.half ? [3, 2, 1].map(n => `敵のスート${n}枚なら${Math.round(dm.half[n] * 10) / 10}点`).join('、') : '–'}。敵のスートのA以外のアナー（KQx・AJx・AQ10など）1枚ごとに、半々の点数が${dm.honW != null && dm.w[1] > 0.05 ? (Math.round(-dm.honW / dm.w[1] * 10) / 10) : '–'}点上がる${dm.n < 5 ? '（回答が少ないので暫定）' : ''}</div></div>`;
     const recent = ocStore.items.slice().reverse().slice(0, 30);
     $('oc-records').innerHTML = recent.length ? recent.map(r => {
       const h = E.pbnToDeal(r.deal).S;
