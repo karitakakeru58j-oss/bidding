@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.21.0';
+  const ENGINE_VERSION = '0.21.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -998,7 +998,9 @@
       const R = (call, why) => call && ok(call, seq, opp) ? { call, why } : null;
       let r;
       // ダブル：敵のスートが2枚以下（4の代以上は枚数に関係なく17点以上）
-      const dblOk = lv >= 4 ? v >= 17 : lenY <= 2 && (lv === 1 || (lv === 2 && v - lenY >= 11) || (lv === 3 && v - lenY >= 13));
+      // アンビッドのメジャーが3枚以上の手に限る（5134で1♠-(2♣)-P-P は16点でもパス）
+      const uOk = unbid(X, Y).every(M => h.len[M] >= 3);
+      const dblOk = uOk && (lv >= 4 ? v >= 17 : lenY <= 2 && (lv === 1 || (lv === 2 && v - lenY >= 11) || (lv === 3 && v - lenY >= 13)));
       const dblWhy = lv >= 4 ? `4の代以上のオーバーコールなので、17点以上（${fmt(v)}点）でダブル` : lv === 1 ? `${T(Y)}が${lenY}枚（2枚以下）。1の代のオーバーコールなので強さにかかわらずダブル` : `${T(Y)}が${lenY}枚で、点数−${T(Y)}の枚数＝${fmt(v - lenY)}（${lv === 2 ? 11 : 13}以上）なのでダブル`;
       // NT：18〜19のバランスハンドとストッパー（ノンジャンプ）
       const cn = cheap('N', seq, opp);
@@ -1006,7 +1008,12 @@
       // ニュースート：5-5・6-4（強さの下限なし、17点まで）。それより強ければダブルしてから自分のスートに戻す
       const Z = twoSuit(h, X, Y);
       if (Z && v < 17.5) { const c = cheap(Z, seq, opp); if (c && rankOf(c) < rankOf(gameCall(Z)) && (r = R(c, `${T(X)}${h.len[X]}枚・${T(Z)}${h.len[Z]}枚の2スーター（17点まで）なのでニュースートの${callText(c)}`))) return r; }
-      if (Z && v >= 17.5 && (r = R('X', `${T(X)}と${T(Z)}の2スーターで17点より強いので、まずダブル（あとで自分のスートに戻して強さを示す）`))) return r;
+      if (Z && v >= 17.5 && (r = R('X', `${T(X)}と${T(Z)}の2スーターで17点より強いので、まずダブル（あとで${T(Z)}をビッドして強さを示す）`))) return r;
+      // 5-4：ダブルに向かない手で、2の代以下でビッドできるなら4枚のニュースート（5242で1♠-(2♣)-P-P に2♦）
+      if ((!uOk || (lenY >= 3 && lv < 4)) && h.len[X] >= 5 && v < 17.5) { // 形がダブルに向かない（弱いだけならパス）
+        const Z4 = SUITS.filter(s => s !== X && s !== Y && h.len[s] >= 4 && levelOf(cheap(s, seq, opp)) <= 2).sort((a, b) => h.len[b] - h.len[a])[0];
+        if (Z4 && (r = R(cheap(Z4, seq, opp), `${T(X)}${h.len[X]}枚・${T(Z4)}${h.len[Z4]}枚。ダブルに向かない（アンビッドのメジャーが3枚未満、または敵のスートが3枚以上）ので、2の代以下でビッドできる${callText(cheap(Z4, seq, opp))}`))) return r;
+      }
       // オープンしたスートのリビッド（6枚以上・代に応じた強さ、ジャンプで招待も可）。ダブルより優先
       if (h.len[X] >= 6) {
         const c = cheap(X, seq, opp), L = levelOf(c), j = jump(X, seq, opp, 1);
@@ -1015,7 +1022,7 @@
         if (v >= need && (r = R(c, `${T(X)}6枚以上で${L}の代にリビッドできる強さ（${fmt(v)}点）なので${callText(c)}`))) return r;
       }
       if (dblOk && (r = R('X', dblWhy))) return r;
-      return { call: 'P', why: lenY >= 3 && lv < 4 ? `${T(Y)}が${lenY}枚あり、リオープンする形ではないのでパス` : 'リオープンする強さ・形ではないのでパス' };
+      return { call: 'P', why: !uOk ? `アンビッドのメジャーが3枚未満でダブルできず、ほかにビッドできるものもないのでパス（仕方ない）` : lenY >= 3 && lv < 4 ? `${T(Y)}が${lenY}枚あり、リオープンする形ではないのでパス` : 'リオープンする強さ・形ではないのでパス' };
     }
     // リオープンのダブルへのレスポンダー
     function afterReopenX(h, seq, opp) {
@@ -1039,8 +1046,9 @@
       const R = (call, why) => call && ok(call, seq, opp) ? { call, why } : null;
       let r;
       if (seq[2] === 'X') {
-        // 17点より強い2スーター：自分のスートに戻して強さを示す
-        if (twoSuit(h, X, Y) && v >= 17.5 && r3[1] !== X && (r = R(cheap(X, seq, opp), `ダブルの後に自分の${T(X)}に戻す：17点より強い2スーターを示す`))) return r;
+        // 17点より強い2スーター：ダブルの後に2つ目のスートをビッドして強さを示す
+        const Z2 = twoSuit(h, X, Y);
+        if (Z2 && v >= 17.5 && r3[1] !== Z2 && (r = R(cheap(Z2, seq, opp), `ダブルの後に${T(Z2)}をビッド：${T(X)}と${T(Z2)}の17点より強い2スーターを示す`))) return r;
         if (isBid(r3) && r3[1] !== 'N' && h.len[r3[1]] >= 4) {
           const s = r3[1], dp = h.dp(s, 4);
           if (dp >= 19 && (r = R(gameCall(s), `パートナーの${T(s)}にフィット。強い（ダミーポイント${fmt(dp)}点）のでゲーム`))) return r;
