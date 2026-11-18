@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.17.1';
+  const ENGINE_VERSION = '0.18.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -256,6 +256,8 @@
     return pos < 2 && h.adj >= 11 && !/[QJ]/.test(honors) && (honors.match(/A/g) || []).length >= 2;
   };
   // ウィーク2のスートの質：トップ3枚中2枚、またはトップ3枚中1枚＋10以上の札が3枚
+  // 7枚以上のプリエンプトのスートの内容（点数が5点未満のとき）：AKQのうち2枚以上、またはAKQの1枚とAKQJ10の2枚以上（QT87642など）
+  const goodPre = (h, s) => h.top3(s) >= 2 || (h.top3(s) >= 1 && h.top5(s) >= 2);
   const goodWeak = (h, s) => h.top3(s) >= 2 || (h.top3(s) >= 1 && [...h.hand[s]].filter(x => 'AKQJT9'.includes(x)).length >= 3)
     || (h.sHcp[s] >= 3 && h.adjNoLen < 7); // メインスートに3点以上で手が6点以下なら積極的に
   const sideAce = (h, s) => SUITS.some(o => o !== s && h.hand[o].includes('A'));
@@ -294,16 +296,17 @@
       : h.pattern === '4441' ? '15〜17点で、シングルトンがA・K・Qなので1NTオープン'
       : '15〜17点の5431。シングルトンがA・K・Qで、5枚スートの内容が悪いかパートナーがパスしている（そのスートのスラムを逃す心配が小さい）ので1NTオープン');
   for (const s of ['S', 'H', 'D']) {
-    R('', '2' + s, (h, c) => h.len[s] === 6 && h.adjNoLen >= 3 && h.adjNoLen < 11 && !opens(h, c) && goodWeak(h, s) && !(early(c) && sideAce(h, s)) &&
+    // プリエンプトに点数の下限はない（内容が十分なら2、3点でもビッドする）
+    R('', '2' + s, (h, c) => h.len[s] === 6 && h.adjNoLen < 11 && !opens(h, c) && goodWeak(h, s) && !(early(c) && sideAce(h, s)) &&
       (s === 'D' || h.len[s === 'S' ? 'H' : 'S'] < 4),
-      { hcp: [3, 10.99], [s]: [6, 6] }, `${JA_SUIT[s]}6枚でオープンの強さがなく、スートの内容が十分なのでウィーク2${SYM[s]}`);
+      { hcp: [0, 10.99], [s]: [6, 6] }, `${JA_SUIT[s]}6枚でオープンの強さがなく、スートの内容が十分なのでウィーク2${SYM[s]}`);
   }
   for (const s of ['S', 'H', 'D', 'C']) {
     // 7-4は、スートの内容が十分（AKQのうち2枚以上）なときだけ4の代。7枚は3の代で普通の長さなので、7枚目は加点しない
-    if (isMaj(s)) R('', '4' + s, (h, c) => h.len[s] >= 7 && between(h.adjNoLen, 5, 10) && !opens(h, c) && h.longest() === s && (h.len[s] >= 8 || (h.twoLongest >= 11 && h.top3(s) >= 2)),
-      { hcp: [5, 10], [s]: [7, 13] }, h => h.len[s] >= 8 ? `${JA_SUIT[s]}8枚以上なので4の代のプリエンプト` : `${JA_SUIT[s]}7枚で7-4の形、スートの内容が十分（AKQのうち2枚以上）なので4の代のプリエンプト`);
-    R('', '3' + s, (h, c) => h.len[s] >= 7 && between(h.adjNoLen, 5, 10) && !opens(h, c) && h.longest() === s,
-      { hcp: [5, 10], [s]: [7, 13] }, `${JA_SUIT[s]}7枚以上・5〜10点なので3レベルのプリエンプト`);
+    if (isMaj(s)) R('', '4' + s, (h, c) => h.len[s] >= 7 && h.adjNoLen < 11 && (h.adjNoLen >= 5 || goodPre(h, s)) && !opens(h, c) && h.longest() === s && (h.len[s] >= 8 || (h.twoLongest >= 11 && h.top3(s) >= 2)),
+      { hcp: [0, 10.99], [s]: [7, 13] }, h => h.len[s] >= 8 ? `${JA_SUIT[s]}8枚以上なので4の代のプリエンプト` : `${JA_SUIT[s]}7枚で7-4の形、スートの内容が十分（AKQのうち2枚以上）なので4の代のプリエンプト`);
+    R('', '3' + s, (h, c) => h.len[s] >= 7 && h.adjNoLen < 11 && (h.adjNoLen >= 5 || goodPre(h, s)) && !opens(h, c) && h.longest() === s,
+      { hcp: [0, 10.99], [s]: [7, 13] }, h => h.adjNoLen >= 5 ? `${JA_SUIT[s]}7枚以上・5〜10点なので3レベルのプリエンプト` : `${JA_SUIT[s]}7枚以上で、点数は少ないがスートの内容が十分なので3レベルのプリエンプト`);
   }
   R('', '1S', (h, c) => opens(h, c) && h.len.S >= 5 && h.len.S >= h.len.H, { hcp: [11.5, 21], S: [5, 13] }, 'スペード5枚以上でオープニングの強さがあるので1♠（5枚メジャー）');
   R('', '1H', (h, c) => opens(h, c) && h.len.H >= 5, { hcp: [11.5, 21], H: [5, 13], S: [0, 5] }, 'ハート5枚以上でオープニングの強さがあるので1♥（5枚メジャー）');
@@ -909,6 +912,55 @@
   R('1M 2M', 'P', () => true, { hcp: [11, 14] }, '最低点なのでパス');
   R('1M 2M 3M', '4M', (h, c) => supDp(h, c) >= 8, null, '6〜10点の上の方（ダミーポイント）なので招待を受けて4メジャー');
   R('1M 2M 3M', 'P', () => true, null, '6〜10点の下の方なので招待を断ってパス');
+  // 4枚サポートのレイズ（スプリンター以外）の後のオープナーのニュースート
+  //   GFでないレイズ（2NT・3♣・3♦・3♥・3M など）：3Mより低いニュースート＝リインビテーション（ゲームするか微妙な手）
+  //                                           3Mより高いニュースート＝ショート（スラムトライ）
+  //   GFのレイズ（1♥-2♠・1♠-2NT・1♥-3♠・1♠-3NT）：ノンジャンプのニュースート＝ショート
+  const RAISE_INFO = M => {
+    const L = LADDER[M];
+    return { [L.weak]: { g: 19, lo: 3, hi: 6.5 }, [L.s68]: { g: 17, lo: 6.5, hi: 9 }, [L.r910]: { g: 15, lo: 9, hi: 11 }, [L.r1112]: { g: 14, lo: 11, hi: 12.5 } };
+  };
+  const GF_RAISE = M => [LADDER[M].gf, LADDER[M].s1215];
+  // 3Mより上で、そのスートを示す一番安いビッド（4Mより下）
+  const shortCallAbove = (X, M) => { for (const lv of [3, 4]) { const c = lv + X; if (rankOf(c) > rankOf('3' + M) && rankOf(c) < rankOf('4' + M)) return c; } return null; };
+  RD(seq => seq.length === 2 && /^1[HS]$/.test(seq[0]) && RAISE_INFO(seq[0][1])[seq[1]] ? { M: seq[0][1], info: RAISE_INFO(seq[0][1])[seq[1]] } : null, (h, c) => {
+    const { M, info } = c.b, dp = h.dp(M, 4);
+    // ショート（スラムトライ）：パートナーの上限と合わせて32点以上になりうる
+    const shorts = SUITS.filter(x => x !== M && h.len[x] <= 1).sort((a, b) => h.len[a] - h.len[b]);
+    if (shorts.length && dp + info.hi >= 32) {
+      const call = shortCallAbove(shorts[0], M);
+      if (call && legal(call, c.seq)) return { call, why: `パートナーの上限と合わせてスラムの可能性がある（ダミーポイント${fmt(dp)}点）。${JA_SUIT[shorts[0]]}が${h.len[shorts[0]] ? 'シングルトン' : 'ボイド'}なので、3${SYM[M]}より上の${callText(call)}でショートを示す（スラムトライ）` };
+    }
+    // リインビテーション：ゲームするか微妙（ゲームの目安の1.5点下まで）
+    if (dp >= info.g - 1.5 && dp < info.g) {
+      const call = SUITS.slice().reverse().filter(x => x !== M).map(x => cheapest(x, c.seq)).filter(x => x && rankOf(x) < rankOf('3' + M)).sort((a, b) => rankOf(a) - rankOf(b))[0];
+      if (call) return { call, why: `ゲームするか微妙な強さ（ダミーポイント${fmt(dp)}点）なので、3${SYM[M]}より低い${callText(call)}でリインビテーション` };
+    }
+    return null;
+  }, (call, b, before) => {
+    if (!isBid(call) || call[1] === 'N' || call[1] === b.M) return null;
+    if (rankOf(call) < rankOf('3' + b.M)) return { shows: {}, force: 1 };
+    if (rankOf(call) < rankOf('4' + b.M)) return { shows: { [call[1]]: [0, 1], agree: b.M, ctrl: [call[1]], interest: true }, force: 'GF' };
+    return null;
+  });
+  // リインビテーションへのレスポンダー：示した範囲の上半分ならゲーム、下半分なら3M
+  RD(seq => seq.length === 3 && /^1[HS]$/.test(seq[0]) && RAISE_INFO(seq[0][1])[seq[1]] && isBid(seq[2]) && seq[2][1] !== 'N' && seq[2][1] !== seq[0][1] && rankOf(seq[2]) < rankOf('3' + seq[0][1])
+    ? { M: seq[0][1], info: RAISE_INFO(seq[0][1])[seq[1]] } : null, (h, c) => {
+    const { M, info } = c.b, dp = h.dp(M, 5), mid = (info.lo + info.hi) / 2;
+    if (dp >= mid) return { call: '4' + M, why: `オープナーのリインビテーション。こちらは示した範囲（${info.lo}〜${fmt(info.hi)}点）の上半分（ダミーポイント${fmt(dp)}点）なので4${SYM[M]}` };
+    return { call: '3' + M, why: `オープナーのリインビテーション。こちらは示した範囲（${info.lo}〜${fmt(info.hi)}点）の下半分（ダミーポイント${fmt(dp)}点）なので3${SYM[M]}` };
+  }, () => null);
+  // GFのレイズの後：ショートがあればノンジャンプのニュースートで示す
+  RD(seq => seq.length === 2 && /^1[HS]$/.test(seq[0]) && GF_RAISE(seq[0][1]).includes(seq[1]) ? { M: seq[0][1] } : null, (h, c) => {
+    const { M } = c.b;
+    const shorts = SUITS.filter(x => x !== M && h.len[x] <= 1).sort((a, b) => h.len[a] - h.len[b]);
+    if (!shorts.length || motivation(h, M, c) < 1) return null;
+    const call = cheapest(shorts[0], c.seq);
+    if (!call || rankOf(call) >= rankOf('4' + M)) return null;
+    return { call, why: `GFのレイズに対して、${JA_SUIT[shorts[0]]}が${h.len[shorts[0]] ? 'シングルトン' : 'ボイド'}なので、ノンジャンプの${callText(call)}でショートを示す` };
+  }, () => null);
+  RULES[RULES.length - 1].pre = true; // スラムの仕組みより先に見る
+
   // 4枚サポートのレイズへのオープナー（暫定）
   for (const M of ['H', 'S']) {
     const L = LADDER[M], o = '1' + M, sym = SYM[M];
@@ -1820,7 +1872,14 @@
     const slam = freshSlam();
     for (let i = 0; i < seq.length; i++) {
       const me = i % 2;
-      if (slam.active) { slamInterpret(slam, seq.slice(0, i), seq[i], me); forcing = false; continue; }
+      if (slam.active) {
+        // 1M-GFのレイズ-ノンジャンプのニュースート＝ショート
+        if (i === 2 && /^1[HS]$/.test(seq[0]) && GF_RAISE(seq[0][1]).includes(seq[1]) && isBid(seq[2]) && seq[2][1] !== 'N' && seq[2][1] !== seq[0][1] && seq[2] === cheapest(seq[2][1], seq.slice(0, 2))) {
+          know[me][seq[2][1]] = [know[me][seq[2][1]][0], 1];
+          slam.splShort = seq[2][1]; slam.splBy = me;
+        }
+        slamInterpret(slam, seq.slice(0, i), seq[i], me); forcing = false; continue;
+      }
       const r = interpret(seq.slice(0, i), seq[i], { self: know[me], partner: know[1 - me], gf });
       // ルールにない4NT：直前のパートナーのスートのビッド（3の代以上）を切り札にしたRKCB
       if (seq[i] === '4N' && !r.rule && i >= 1 && isBid(seq[i - 1]) && seq[i - 1][1] !== 'N' && levelOf(seq[i - 1]) >= 3) {
@@ -1838,7 +1897,7 @@
         Object.assign(slam, { T: sh.agree, active: true, agreeIdx: i });
         if (sh.rk) slam.rk = { asker: me };
         if (sh.interest) slam.interest[me]++;
-        if (sh.ctrl) { slam.ctrl[me].push(...sh.ctrl); if (!sh.cue) slam.splShort = sh.ctrl[0]; } // cue＝A・Kのコントロール（ショートではない）
+        if (sh.ctrl) { slam.ctrl[me].push(...sh.ctrl); if (!sh.cue) { slam.splShort = sh.ctrl[0]; slam.splBy = me; } } // cue＝A・Kのコントロール（ショートではない）
         // 示したやる気：3Mなど＝1、スラムトライのスプリンター・コントロール＝それまでに示したやる気+2
         if (sh.interest) slam.shown[me] = sh.ctrl ? slam.shown[me] + 2 : Math.max(slam.shown[me], 1);
       }
@@ -1990,6 +2049,8 @@
       }
     }
     if (lb && levelOf(lb) >= 6) return P('スラムに決まったのでパス');
+    // 自分がスラムトライ（ショート・コントロール）をした後、パートナーがゲームで止めたら従う（合計33点以上確実なら3回目以降の見直しで続ける）
+    if (seq[seq.length - 1] === G && st.interest[me] > 0) return P(`スラムトライに対してパートナーが${callText(G)}で止めたのでパス`);
     // マイナーのスプリンターに対して、ショートのスートに点が多いなら3NT
     if (!isMaj(T) && st.splShort && seq.length === st.agreeIdx + 1 && h.sHcp[st.splShort] >= 3 && h.stopper(st.splShort) && legal('3N', seq))
       return { call: '3N', why: `パートナーのショートの${JA_SUIT[st.splShort]}に点がある（無駄になりやすい）のでノートランプを選ぶ` };
@@ -2173,7 +2234,9 @@
     }
     const pMin = p.hcp[0];
     // フィットの強さ：ダミーポイント（パートナーのスートのショートは加点しない）
-    const myFit = fit ? Math.max(h.adj, strengthFor(h, fit, ctx)) : h.adj;
+    // 自分がショートを示した後にパートナーがゲームで止めたら、ショートの点は数えない（パートナーの点が無駄になっている）
+    const declined = st.active && st.splBy === seq.length % 2 && seq[seq.length - 1] === gameCall(st.T);
+    const myFit = fit && !declined ? Math.max(h.adj, strengthFor(h, fit, ctx)) : h.adj;
     const totFit = myFit + pMin, totNT = h.adj + pMin;
     const call = res.call;
     // 止まろうとしている：パス、または切り札（フィット）のゲーム〜5の代・3NT・5m
@@ -2238,6 +2301,14 @@
       let x = null;
       try { x = NT1.pick(h, seq.slice(1), ctx, seq); } catch (e) { x = null; }
       if (x && x.call && legal(x.call, seq)) res = { call: x.call, why: x.why, source: 'rule', ruleId: 'nt1' };
+    }
+    if (!res && ctx.slam.active) for (const r of RULES) {
+      if (!r.pre) continue;
+      const b = matchRule(r, seq);
+      if (!b) continue;
+      let x = null;
+      try { x = r.pick(h, { b, ...ctx, seq }); } catch (e) { x = null; }
+      if (x && x.call && legal(x.call, seq)) { res = { call: x.call, why: x.why, source: 'rule', ruleId: r.id }; break; }
     }
     if (!res && ctx.slam.active) {
       const s = slamDecide(h, seq, ctx);

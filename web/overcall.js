@@ -46,8 +46,8 @@
     // ウィーク（ジャンプ）：6枚以上・弱い
     // ただしAKQのうち2枚以上のスートで、ボイドか5-5以上の手はゲームの可能性が高すぎるので普通のオーバーコール
     const strongShape = h.top3(s) >= 2 && (SUITS.some(t => h.len[t] === 0) || SUITS.filter(t => t !== s).some(t => h.len[t] >= 5));
-    // ウィークは2〜9点（HCP）。10点以上はジャンプせず普通にオーバーコールする
-    if (h.len[s] >= 6 && h.rawHcp >= 2 && h.rawHcp <= 9 && !strongShape) {
+    // ウィークは9点以下（HCP。プリエンプトに点数の下限はない）。10点以上はジャンプせず普通にオーバーコールする
+    if (h.len[s] >= 6 && h.rawHcp <= 9 && !strongShape) {
       // 6枚は2の代か3の代（1段ジャンプ）、7枚以上は3の代
       const c1 = cheapest(s, open);
       const jump = (h.len[s] >= 7 ? 3 : Number(c1[0]) + 1) + s;
