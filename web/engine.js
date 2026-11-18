@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.16.0';
+  const ENGINE_VERSION = '0.17.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -386,8 +386,9 @@
           if (C >= 4 && D >= 4 && v >= 14) return R_('2S', 'マイナーの4-4以上でスラムトライ（14点以上）なので2♠（マイナーステイマン）');
           if (C >= 5 && D >= 5 && v < 10) return R_('2S', 'マイナーの5-5以上で弱いので2♠（マイナーステイマン）から、マイナーでサインオフ');
           const m5 = longMinor(h, 5);
-          if (m5 && v >= 13 && (h.len[m5] >= 6 || shortOf(h, [m5])))
-            return R_(m5 === 'C' ? '3H' : '3S', `${JA_SUIT[m5]}5枚以上でスラムトライ（13点以上）なので${m5 === 'C' ? '3♥' : '3♠'}（${JA_SUIT[m5]}のスラムトライ）`);
+          // 6枚以上かショートがあれば13点以上、5枚のバランスハンド（KQ2.A2.KQJ32.K32など）は15点以上
+          if (m5 && v >= (h.len[m5] >= 6 || shortOf(h, [m5]) ? 13 : 15))
+            return R_(m5 === 'C' ? '3H' : '3S', `${JA_SUIT[m5]}5枚以上でスラムトライ（${h.len[m5] >= 6 || shortOf(h, [m5]) ? '13' : '5枚のバランスハンドは15'}点以上）なので${m5 === 'C' ? '3♥' : '3♠'}（${JA_SUIT[m5]}のスラムトライ）`);
           const m = longMinor(h, 6);
           if (m) {
             const { t, suit } = minorTricks(h, m);
@@ -449,7 +450,14 @@
         if (k === '2H 2S' && kd === '55' && v >= 12) return R_('3H', '5-5のメジャーでスラムトライなので3♥');
         if ((k === '2D 2H' || k === '2H 2S') && m5m4(h)) { const m = longMinor(h, 4); return R_('3' + m, `${JA_SUIT[m5m4(h)]}5枚以上・${JA_SUIT[m]}4枚以上のGFなので3${SYM[m]}`); }
         if (k === '2N 3C') return R_('P', 'クラブでサインオフするのでパス');
-        if (k === '3C 3N' || k === '3D 3N' || k === '3H 3N' || k === '3S 3N') return R_('P', '3NTに決まったのでパス');
+        if (k === '3H 3N' || k === '3S 3N') {
+          // パートナーは興味なし（またはサポートなし）。それでも十分強ければ続ける
+          const m = k[1] === 'H' ? 'C' : 'D';
+          if (v + 15 >= 33) return R_('6N', `パートナーの興味はないが、自分${fmt(v)}点＋15点以上で合計33点以上あるので6NT`);
+          if (v + 17 >= 33) return R_('4N', `パートナーの興味はないが、合計33点あるか分からない（${fmt(v)}点＋15〜17点）ので4NT（クオンティタティブ）`);
+          return R_('P', '3NTに決まったのでパス');
+        }
+        if (k === '3C 3N' || k === '3D 3N') return R_('P', '3NTに決まったのでパス');
         if (/^2S (2N|3C|3D)$/.test(k)) {
           const ans = s[1], C = h.len.C, D = h.len.D;
           if (C >= 4 && D >= 4 && v >= 14) {
@@ -572,6 +580,7 @@
         }
         if (k === '2S 2N 4N') return h.adj >= 17 ? R_('6N', '最高点なのでスラムへの招待を受けて6NT') : R_('P', '最高点ではないのでパス');
         if (k === '2S 2N 5N') return h.adj >= 17 ? R_('7N', '最高点なので7NT') : R_('6N', '最高点ではないので6NT');
+        if (k === '3H 3N 4N' || k === '3S 3N 4N') return h.adj >= 17 ? R_('6N', '最高点なのでスラムへの招待を受けて6NT') : R_('P', '最高点ではないのでパス');
       }
       // ---------- レスポンダーの3回目 ----------
       if (n === 4) {
@@ -1805,6 +1814,12 @@
       const me = i % 2;
       if (slam.active) { slamInterpret(slam, seq.slice(0, i), seq[i], me); forcing = false; continue; }
       const r = interpret(seq.slice(0, i), seq[i], { self: know[me], partner: know[1 - me], gf });
+      // ルールにない4NT：直前のパートナーのスートのビッド（3の代以上）を切り札にしたRKCB
+      if (seq[i] === '4N' && !r.rule && i >= 1 && isBid(seq[i - 1]) && seq[i - 1][1] !== 'N' && levelOf(seq[i - 1]) >= 3) {
+        Object.assign(slam, { T: seq[i - 1][1], active: true, agreeIdx: i, rk: { asker: me } });
+        gf = true; forcing = false;
+        continue;
+      }
       merge(know[me], r.shows);
       const passedResp = respPassed && i === 1 && isBid(seq[i]) && levelOf(seq[i]) <= 2; // パス済みの2のレベル以下の応答はフォーシングでない
       if (passedResp) know[1].hcp = [Math.min(know[1].hcp[0], 9.5), 11.49];
@@ -2133,6 +2148,47 @@
   //   examples : あなたの回答例（省略可）
   // 戻り値 {call, why, source:'rule'|'fallback'|'example', ruleId, ruleCall, ruleWhy, example}
   // ------------------------------------------------------------------
+  // 3回目以降のビッドの見直し（一般原則）：
+  //   自分の点数＋パートナーの下限でゲームが確定しているのにゲーム未満で止まろうとしたら、ゲームへ
+  //   合計33点以上でスラムがほぼ確定なのに、ゲームで止まろうとしたら（パートナーがゲームで止めても）、RKCB（4NT）か6へ
+  function guard(h, seq, ctx, res) {
+    if (seq.length < 4) return null;
+    const lb = lastBid(seq);
+    if (!lb || levelOf(lb) >= 6) return null;
+    const st = ctx.slam, p = ctx.partner;
+    if (st.rk || st.ntSign) return null;
+    // フィット：自分の枚数＋パートナーが示した枚数で8枚以上（パートナーが今ビッドしたスートに自分が6枚以上も）
+    let fit = st.active ? st.T : null;
+    if (!fit) for (const s of ['S', 'H', 'D', 'C']) {
+      const ok = h.len[s] + p[s][0] >= 8 || (lb[1] === s && h.len[s] >= 6);
+      if (ok && (!fit || (isMaj(s) && !isMaj(fit)))) fit = s;
+    }
+    const pMin = p.hcp[0];
+    // フィットの強さ：ダミーポイント（パートナーのスートのショートは加点しない）
+    const myFit = fit ? Math.max(h.adj, strengthFor(h, fit, ctx)) : h.adj;
+    const totFit = myFit + pMin, totNT = h.adj + pMin;
+    const call = res.call;
+    // 止まろうとしている：パス、または切り札（フィット）のゲーム〜5の代・3NT・5m
+    const stops = call === 'P' || (isBid(call) && levelOf(call) < 6 && call !== '4N' && levelOf(call) >= gameLevel(strainOf(call)) && (call[1] === fit || call[1] === 'N' || !st.active));
+    const txt = (t, m) => `自分${fmt(m)}点＋パートナーの下限${fmt(pMin)}点＝${fmt(t)}点`;
+    // スラム（合計33点以上）
+    if (stops) {
+      if (fit && totFit >= 33) {
+        const rk = legal('4N', seq) && (st.active || (lb[1] === fit && levelOf(lb) >= 3));
+        if (rk) return { call: '4N', why: `${txt(totFit, myFit)}でスラムがほぼ確定なので、${JA_SUIT[fit]}を切り札に4NT（RKCB）` };
+        if (isMaj(fit) && legal('6' + fit, seq)) return { call: '6' + fit, why: `${txt(totFit, myFit)}でスラムがほぼ確定なので6${SYM[fit]}` };
+      }
+      if (totNT >= 33 && (!fit || !isMaj(fit)) && legal('6N', seq)) return { call: '6N', why: `${txt(totNT, h.adj)}でスラムがほぼ確定なので6NT` };
+    }
+    // ゲーム：メジャーのフィット25点以上→4M、NT（ダミーポイントなし）25点以上→3NT、マイナーのフィット28点以上→5m
+    if (call === 'P' && levelOf(lb) < gameLevel(strainOf(lb))) {
+      if (fit && isMaj(fit) && totFit >= 25 && legal('4' + fit, seq)) return { call: '4' + fit, why: `${txt(totFit, myFit)}でゲームが確定しているので4${SYM[fit]}` };
+      if (totNT >= 25 && legal('3N', seq)) return { call: '3N', why: `${txt(totNT, h.adj)}でゲームが確定しているので3NT` };
+      if (fit && !isMaj(fit) && totFit >= 28 && legal('5' + fit, seq)) return { call: '5' + fit, why: `${txt(totFit, myFit)}でゲームが確定しているので5${SYM[fit]}` };
+    }
+    return null;
+  }
+
   function chooseCall(hand, auction, dealer, examples) {
     const h = evaluate(hand);
     const { seq, seqSeats, passedSeats } = analyze(auction, dealer);
@@ -2199,6 +2255,7 @@
       const f = fallback(h, seq, ctx);
       res = { call: f.call, why: '【汎用判断】' + f.why, source: 'fallback', ruleId: null };
     }
+    { const g = guard(h, seq, ctx, res); if (g) res = { call: g.call, why: g.why, source: 'rule', ruleId: 'guard', ruleCall: res.call, ruleWhy: res.why }; }
     if (ntOC) res.why += '（1NTオーバーコールは16〜18点なので、1NTオープンの仕組みを点数を1点ずらして使う）';
     // あなたの回答例
     const key = seqKeyOf(seq, passedBeforeMe);

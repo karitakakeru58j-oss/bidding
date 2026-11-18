@@ -1298,36 +1298,6 @@ Pass Pass
 [Event "Bidding quiz"]
 [Site ""]
 [Date "2026.11.10"]
-[Board "45"]
-[West "Pass"]
-[North "AI"]
-[East "Pass"]
-[South "You"]
-[Dealer "N"]
-[Vulnerable "None"]
-[Deal "N:J92.A96.Q743.Q54 5.QT752.A8.AK863 AKT8.KJ8.KJ52.97 Q7643.43.T96.JT2"]
-[Scoring ""]
-[Declarer ""]
-[Contract ""]
-[Result ""]
-[Auction "N"]
-Pass Pass 1NT Pass
-2NT Pass
-*
-[QuizSeat "S"]
-[Answer "Pass"]
-[AnswerReason ""]
-[AIBid "Pass"]
-[AIReason "最低点なので招待を断ってパス"]
-[AISource "rule"]
-[AuctionDoubt "no"]
-[Created "2026-11-10T14:46:32.733Z"]
-[QuizId "amwaszifxyt1ny"]
-[EngineVersion "0.4.0"]
-
-[Event "Bidding quiz"]
-[Site ""]
-[Date "2026.11.10"]
 [Board "46"]
 [West "Pass"]
 [North "AI"]
@@ -2027,8 +1997,8 @@ Pass Pass 1C Pass
 1NT Pass
 *
 [QuizSeat "S"]
-[Answer "Pass"]
-[AnswerReason "現状はパス。"]
+[Answer "2S"]
+[AnswerReason "♦6枚以上で招待に満たないので2♠（マイナーステイマン）から3♦でサインオフ（パスから訂正）"]
 [AIBid "Pass"]
 [AIReason "ゲームの可能性が低いのでパス（1NTは15〜17点）"]
 [AISource "rule"]
@@ -5149,8 +5119,8 @@ Pass Pass 1C Pass
 1NT Pass
 *
 [QuizSeat "S"]
-[Answer "Pass"]
-[AnswerReason ""]
+[Answer "3D"]
+[AnswerReason "♦6枚以上を示しながら3♦でインビテーション（パスから訂正）"]
 [AIBid "Pass"]
 [AIReason "ゲームの可能性が低いのでパス（1NTは15〜17点）"]
 [AISource "rule"]
@@ -9527,8 +9497,8 @@ Pass
 Pass Pass 1NT Pass
 *
 [QuizSeat "S"]
-[Answer "2NT"]
-[AnswerReason ""]
+[Answer "2C"]
+[AnswerReason "4枚メジャーのないインビはステイマンから2NT（1NT-2NTは♣のリレー。2NTから訂正）"]
 [AIBid "2NT"]
 [AIReason "4枚メジャーがなく8〜9点なので2NTで招待（1NTは15〜17点）"]
 [AISource "rule"]

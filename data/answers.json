@@ -917,29 +917,6 @@
   "aiSource": "rule"
  },
  {
-  "id": "amwaszifxyt1ny",
-  "created": "2026-11-10T14:46:32.733Z",
-  "engine": "0.4.0",
-  "dealer": "N",
-  "vul": "None",
-  "deal": "N:J92.A96.Q743.Q54 5.QT752.A8.AK863 AKT8.KJ8.KJ52.97 Q7643.43.T96.JT2",
-  "auction": [
-   "P",
-   "P",
-   "1N",
-   "P",
-   "2N",
-   "P"
-  ],
-  "seat": "S",
-  "userCall": "P",
-  "reason": "",
-  "doubt": false,
-  "aiCall": "P",
-  "aiWhy": "最低点なので招待を断ってパス",
-  "aiSource": "rule"
- },
- {
   "id": "amwaszo5ze3pvm",
   "created": "2026-11-10T14:46:40.151Z",
   "engine": "0.4.0",
@@ -1456,8 +1433,8 @@
    "P"
   ],
   "seat": "S",
-  "userCall": "P",
-  "reason": "現状はパス。",
+  "userCall": "2S",
+  "reason": "♦6枚以上で招待に満たないので2♠（マイナーステイマン）から3♦でサインオフ（パスから訂正）",
   "doubt": false,
   "aiCall": "P",
   "aiWhy": "ゲームの可能性が低いのでパス（1NTは15〜17点）",
@@ -3724,8 +3701,8 @@
    "P"
   ],
   "seat": "S",
-  "userCall": "P",
-  "reason": "",
+  "userCall": "3D",
+  "reason": "♦6枚以上を示しながら3♦でインビテーション（パスから訂正）",
   "doubt": false,
   "aiCall": "P",
   "aiWhy": "ゲームの可能性が低いのでパス（1NTは15〜17点）",
@@ -6971,8 +6948,8 @@
    "P"
   ],
   "seat": "S",
-  "userCall": "2N",
-  "reason": "",
+  "userCall": "2C",
+  "reason": "4枚メジャーのないインビはステイマンから2NT（1NT-2NTは♣のリレー。2NTから訂正）",
   "doubt": false,
   "aiCall": "2N",
   "aiWhy": "4枚メジャーがなく8〜9点なので2NTで招待（1NTは15〜17点）",
