@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.20.1';
+  const ENGINE_VERSION = '0.20.2';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -919,6 +919,7 @@
           return R(cheap(X, seq, opp), `${T(Y)}のストッパーがないので${T(X)}をリビッド`) || P('パス');
         }
         if (v >= 15 && stop && (r = R('3N', `${T(Y)}のストッパーがあり強い（${fmt(v)}点）ので3NT`))) return r;
+        if (v >= 18 && !stop && h.len[X] < 6 && (r = R(cheap(Y, seq, opp), `18点以上の強い手だが${T(Y)}のストッパーがないので、キュービッド（${callText(cheap(Y, seq, opp))}。GF、ストッパーを探す）`))) return r;
         if (v >= 18 && h.len[X] >= 6 && (r = R(maj ? '4' + X : '5' + X, `${T(X)}6枚以上で18点以上なのでゲーム`))) return r;
         if (h.len[X] >= 6 && (r = R(v >= 15.5 ? jump(X, seq, opp, 1) : cheap(X, seq, opp), `${T(X)}6枚以上なので${T(X)}をリビッド`))) return r;
         const s2 = SUITS.filter(s => s !== X && s !== Y && !U.includes(s) && h.len[s] >= 4).map(s => cheap(s, seq, opp)).filter(c => c && levelOf(c) <= 2)[0];
@@ -1108,6 +1109,7 @@
         // キュービッド（1M）の後の、3Mより高いニュースート＝コントロール紹介
         if (maj && r1[1] === Y && r1 === cheap(Y, [before[0]], opp) && isBid(call) && call[1] !== 'N' && call[1] !== X && rankOf(call) > rankOf('3' + X) && rankOf(call) < rankOf('4' + X))
           return { shows: { agree: X, interest: true, ctrl: [call[1]], cue: true }, force: 'GF' };
+        if (isBid(call) && call[1] === Y && !(r1[1] === Y)) return { shows: { hcp: [18, 37] }, force: 'GF' }; // オープナーのキュービッド＝GFの強い手
         if (r1 === 'X' && isBid(call) && U.includes(call[1])) {
           const jumped = call !== cheap(call[1], before, opp);
           return { shows: { [call[1]]: [4, 5], hcp: levelOf(call) >= 4 ? [18, 21] : jumped ? [15, 17.99] : [11.5, 14.99] } };
@@ -2774,6 +2776,17 @@
     let res = null;
     // 1m-(1x)-1M のように1の代のニュースートで応答した後は、フリーランの1Mレスポンスと同じ（NTは敵のスートのストッパーが必要）
     const compFree = compOpp && seq.length >= 2 && isBid(seq[1]) && levelOf(seq[1]) === 1 && seq[1][1] !== 'N' && seq[1][1] !== compOpp.s;
+    // パートナーが2回目以降に敵のスートをビッド（キュービッド＝GFの強い手で、ストッパーを探している）
+    if (compOpp && seq.length >= 3 && isBid(seq[seq.length - 1]) && seq[seq.length - 1][1] === compOpp.s && !ctx.slam.active) {
+      const Y = compOpp.s, mine = seq.filter((c, i) => i % 2 === seq.length % 2 && isBid(c) && c[1] !== 'N' && c[1] !== Y).map(c => c[1]);
+      const pSuit = seq.filter((c, i) => i % 2 !== seq.length % 2 && isBid(c) && c[1] !== 'N' && c[1] !== Y).map(c => c[1])[0];
+      const okC = c => c && COMP.ok(c, seq, compOpp);
+      let call = null, why = '';
+      if (h.stopper(Y) && okC('3N')) { call = '3N'; why = `パートナーのキュービッド（GF・ストッパーを探している）。${JA_SUIT[Y]}のストッパーがあるので3NT`; }
+      else if (pSuit && h.len[pSuit] >= (isMaj(pSuit) ? 3 : 4)) { call = isMaj(pSuit) ? '4' + pSuit : cheapest(pSuit, seq); why = `パートナーのキュービッド。${JA_SUIT[Y]}のストッパーはないが、${JA_SUIT[pSuit]}にフィットするので${callText(isMaj(pSuit) ? '4' + pSuit : cheapest(pSuit, seq))}`; }
+      else { const my = mine.sort((a, b) => h.len[b] - h.len[a])[0] || SUITS.filter(s => s !== Y).sort((a, b) => h.len[b] - h.len[a])[0]; call = cheapest(my, seq); why = `パートナーのキュービッド。${JA_SUIT[Y]}のストッパーがないので、${JA_SUIT[my]}を示す`; }
+      if (okC(call)) return { call, why, source: 'rule', ruleId: 'comp' };
+    }
     if (compFree) {
       const oppBid = compOpp;
       compOpp = null;
@@ -2781,6 +2794,7 @@
       const Y = oppBid.s;
       if (r0 && /^[12]N$/.test(r0.call) && !h.stopper(Y)) {
         const X = seq[seq.length % 2 === 0 ? 0 : 1][1];
+        if (h.adj >= 18) { const cq = cheapest(Y, seq); if (cq) return { call: cq, why: `18点以上の強い手だが${JA_SUIT[Y]}のストッパーがないので、キュービッド（${callText(cq)}。GF、ストッパーを探す。ルールでは${callText(r0.call)}）`, source: 'rule', ruleId: 'comp' }; }
         const alt = cheapest(X, seq);
         return { call: alt, why: `${JA_SUIT[Y]}のストッパーがないのでNTではなく${callText(alt)}（ルールでは${callText(r0.call)}）`, source: 'rule', ruleId: 'comp' };
       }
