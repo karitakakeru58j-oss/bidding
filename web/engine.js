@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.20.0';
+  const ENGINE_VERSION = '0.20.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -784,19 +784,36 @@
       const shortS = SUITS.filter(s => s !== X && h.len[s] <= 1).sort((a, b) => h.len[a] - h.len[b])[0] || null;
       const spl = s => s === Y ? jump(s, seq, opp, 1) : jump(s, seq, opp, 2);
       const cue0 = cheap(Y, seq, opp);
-      // 1Mのキュービッドは4Mより下のときだけ（それより上ならゲームを直接ビッドする）
-      const cue = maj && cue0 && rankOf(cue0) > rankOf('4' + X) ? '4' + X : cue0;
+      // オープンしたスートの3の代を超えるキュービッドはスラムトライ（インビの手はゲームかダブル）
+      const cueHigh = !!cue0 && rankOf(cue0) > rankOf('3' + X);
+      const cueSlamOk = cueHigh && rankOf(cue0) < rankOf(gameCall(X));
+      const solidStop = /A/.test(h.hand[Y]) || (/K/.test(h.hand[Y]) && h.len[Y] >= 2) || (/QJ/.test(h.hand[Y]) && h.len[Y] >= 3);
+      // インビ以上の手：3の代以下ならキュービッド。それより上なら、スラムトライの強さ（16点以上）でキュービッド、
+      // インビ〜ゲームの手は、サポートがあればゲーム、なければストッパーがしっかりあれば3NT、なければダブル
+      const invOrCue = (pts, sup, label) => {
+        if (!cueHigh) return R(cue0, `${label}なのでキュービッド（${callText(cue0)}）`);
+        if (pts >= 16 && cueSlamOk) return R(cue0, `${label}でスラムトライの強さ（${fmt(pts)}点）。3の代を超えるキュービッド（${callText(cue0)}）はスラムトライ`);
+        if (sup) return R(gameCall(X), `${label}。キュービッドは3の代を超える（スラムトライになる）ので、ゲームを直接ビッド`);
+        if (solidStop) return R('3N', `${label}。キュービッドは3の代を超えるので、${T(Y)}のストッパーがしっかりあるので3NT`);
+        return R('X', `${label}。キュービッドは3の代を超え、${T(Y)}のストッパーもないので、パスしたくないのでダブル`);
+      };
+      const cue = cue0;
       let r;
       // スプリンター（ダブルジャンプシフト・ジャンプキュービッド）
       if (shortS && ((maj && h.len[X] >= 4 && (d => d >= 12.5 && d < 16)(h.dp(X, 5))) || (!maj && h.len[X] >= 6 && h.dp(X, 4) >= 16))) {
         const c = spl(shortS);
-        if (c && rankOf(c) < rankOf(gameCall(X)) && (r = R(c, `${T(X)}に${maj ? '4' : '6'}枚以上のサポートがあり、${T(shortS)}が${h.len[shortS] ? 'シングルトン' : 'ボイド'}なので${shortS === Y ? 'ジャンプキュービッド' : 'ダブルジャンプシフト'}の${callText(c)}（スプリンター）`))) return r;
+        if (c && levelOf(c) <= 4 && rankOf(c) < rankOf(gameCall(X)) && (r = R(c, `${T(X)}に${maj ? '4' : '6'}枚以上のサポートがあり、${T(shortS)}が${h.len[shortS] ? 'シングルトン' : 'ボイド'}なので${shortS === Y ? 'ジャンプキュービッド' : 'ダブルジャンプシフト'}の${callText(c)}（スプリンター）`))) return r;
+      }
+      // 競り合いでのゲームのビッドは、それをプレイしたいという意味（1♣-(3♥)-4♠＝♠7枚以上くらいで4♠をプレイしたい）
+      {
+        const L = SUITS.filter(s => s !== X && s !== Y && isMaj(s) && (h.len[s] >= 7 || (h.len[s] >= 6 && v >= 11))).sort((a, b) => h.len[b] - h.len[a])[0];
+        if (L && !(maj && h.len[X] >= 3) && rankOf(cheap(L, seq, opp)) <= rankOf('4' + L) && v >= 7 && (r = R('4' + L, `${T(L)}${h.len[L]}枚で、4${SYM[L]}をプレイしたい（競り合いでのゲームのビッドはそれをプレイしたいという意味）`))) return r;
       }
       // 1Mオープン：サポート
       if (maj && h.len[X] >= 3) {
         const dp = h.dp(X, 5);
         if (h.len[X] >= 4) {
-          if (dp >= 11 && (r = R(cue, `${T(X)}に4枚以上のサポートがあり、11点以上（ダミーポイント${fmt(dp)}点）なのでキュービッド（${callText(cue)}）`))) return r;
+          if (dp >= 11 && (r = invOrCue(dp, true, `${T(X)}に4枚以上のサポートがあり、11点以上（ダミーポイント${fmt(dp)}点）`))) return r;
           if (dp >= 7) {
             const fj = SUITS.filter(s => s !== X && s !== Y).map(s => jump(s, seq, opp, 1)).filter(c => c && rankOf(c) <= rankOf('3' + X)).sort((a, b) => rankOf(a) - rankOf(b))[0];
             if (fj && (r = R(fj, `${T(X)}に4枚以上のサポートがあり、ダミーポイント${fmt(dp)}点（7〜10点）なので、3${SYM[X]}以下のジャンプしたニュースート（${callText(fj)}）`))) return r;
@@ -804,7 +821,7 @@
           }
           if (dp >= 3 && (r = R('3' + X, `${T(X)}に4枚以上のサポートがあり、6点まで（ダミーポイント${fmt(dp)}点）なので3${SYM[X]}（プリエンプティブ・レイズ）`))) return r;
         } else {
-          if (dp >= 10.5 && (r = R(cue, `${T(X)}に3枚サポートがあり、インビテーション以上（ダミーポイント${fmt(dp)}点）なのでキュービッド（${callText(cue)}）。メジャーのサポートは必ずキュービッドで伝える`))) return r;
+          if (dp >= 10.5 && (r = invOrCue(dp, true, `${T(X)}に3枚サポートがあり、インビテーション以上（ダミーポイント${fmt(dp)}点）。メジャーのサポートはキュービッドで伝える`))) return r;
           if (dp >= 6 && levelOf(cheap(X, seq, opp)) <= 3 && (r = R(cheap(X, seq, opp), `${T(X)}に3枚サポートがあり、6〜10点（ダミーポイント${fmt(dp)}点）なのでシングルレイズ`))) return r;
         }
       }
@@ -818,7 +835,7 @@
           if (h.len[M] >= 5 && v >= 10.5 && levelOf(c) === 2 && (r = R(c, `${T(M)}5枚以上でインビテーション以上なので、ノンジャンプの${callText(c)}`))) return r;
           if (h.len[M] >= 5 && v >= 13 && levelOf(c) === 3 && (r = R(c, `${T(M)}5枚以上でゲームフォーシングなので、ノンジャンプの${callText(c)}`))) return r;
           // マイナーのオープン：5枚以上のメジャーと4枚以上のサポートでインビ以上ならジャンプしたニュースート
-          if (!maj && h.len[X] >= 4 && h.len[M] >= 5 && v >= 10.5) { const j = jump(M, seq, opp, 1); if (j && rankOf(j) < rankOf('5' + X) && (r = R(j, `${T(M)}5枚以上・${T(X)}4枚以上のサポートで${rankOf(j) > rankOf('3' + X) ? 'ゲームフォーシング' : 'インビテーション以上'}なのでジャンプしたニュースート（${callText(j)}）`))) return r; }
+          if (!maj && h.len[X] >= 4 && h.len[M] >= 5 && v >= 10.5) { const j = jump(M, seq, opp, 1); if (j && levelOf(j) <= 4 && levelOf(j) < gameLevel(M) && rankOf(j) < rankOf('5' + X) && (r = R(j, `${T(M)}5枚以上・${T(X)}4枚以上のサポートで${rankOf(j) > rankOf('3' + X) ? 'ゲームフォーシング' : 'インビテーション以上'}なのでジャンプしたニュースート（${callText(j)}）`))) return r; }
           if (v >= minX && (r = R('X', `${T(M)}4枚以上なのでダブル（ネガティブ・ダブル）`))) return r;
         }
       } else if (U.length === 2) {
@@ -843,8 +860,8 @@
       if (!maj && h.len[X] >= 4) {
         if (v >= 10.5) {
           const Z = SUITS.filter(s => s !== X && s !== Y && h.len[s] >= 5).sort((a, b) => h.len[b] - h.len[a])[0];
-          if (Z) { const j = jump(Z, seq, opp, 1); if (j && rankOf(j) < rankOf('5' + X) && (r = R(j, `${T(Z)}5枚以上・${T(X)}4枚以上のサポートで${rankOf(j) > rankOf('3' + X) ? 'ゲームフォーシング' : 'インビテーション以上'}なのでジャンプしたニュースート（${callText(j)}）`))) return r; }
-          if ((r = R(cue, `${T(X)}に4枚以上のサポートがあり、インビテーション以上なのでキュービッド（${callText(cue)}。ストッパーかスラムの可能性を探る）`))) return r;
+          if (Z) { const j = jump(Z, seq, opp, 1); if (j && levelOf(j) <= 4 && levelOf(j) < gameLevel(Z) && rankOf(j) < rankOf('5' + X) && (r = R(j, `${T(Z)}5枚以上・${T(X)}4枚以上のサポートで${rankOf(j) > rankOf('3' + X) ? 'ゲームフォーシング' : 'インビテーション以上'}なのでジャンプしたニュースート（${callText(j)}）`))) return r; }
+          if ((r = invOrCue(v, false, `${T(X)}に4枚以上のサポートがあり、インビテーション以上`))) return r;
         }
         if (v >= 6 && (r = R(cheap(X, seq, opp), `${T(X)}に4枚以上のサポートがあり、6〜10点なのでシングルレイズ（インバーテッドは使わない）`))) return r;
       }
@@ -868,6 +885,7 @@
         return null;
       };
       if (unbal) { if ((r = newSuit()) || (r = nt())) return r; } else { if ((r = nt()) || (r = newSuit())) return r; }
+      if (v >= 10.5 && cueHigh && (r = invOrCue(v, false, `インビテーション以上（${fmt(v)}点）`))) return r;
       if (v >= 13 && (r = R(cue, `ゲームの強さがあるが適当なビッドがないのでキュービッド（${callText(cue)}）`))) return r;
       return { call: 'P', why: '介入されて、ビッドできる形・強さがないのでパス' };
     }
@@ -908,6 +926,10 @@
         return R(cheap(X, seq, opp), `ほかに適当なビッドがないので${T(X)}をリビッド`) || P('パス');
       }
       const rs = r1[1], rl = levelOf(r1);
+      // パートナーのゲーム以上のビッド（キュービッド以外）は、それをプレイしたいという意味
+      if (isBid(r1) && rs !== Y && rl >= gameLevel(rs)) return P(`パートナーの${callText(r1)}はそれをプレイしたいという意味なのでパス`);
+      // 3の代を超えるキュービッドはスラムトライ → スラムの仕組みで
+      if (rs === Y && rankOf(r1) > rankOf('3' + X)) return null;
       // NTの応答
       if (r1 === '1N') { if (v >= 17 && stop) return R('3N', '1NT（8〜10点）に対してゲームの点数なので3NT'); if (v >= 15) return R('2N', '1NT（8〜10点）に対して強いので2NTで招待'); return h.len[X] >= 6 ? R(cheap(X, seq, opp), `${T(X)}6枚以上なのでリビッド`) || P('パス') : P('1NT（8〜10点）でゲームの可能性が低いのでパス'); }
       if (r1 === '2N') return v >= 13.5 ? R('3N', '2NT（11〜12点）の招待を受けて3NT') || P('パス') : P('2NT（11〜12点）の招待を断ってパス');
@@ -1062,7 +1084,9 @@
           if (maj && call === '3' + X && ch !== '3' + X) return { shows: { [X]: [4, 13], hcp: [3, 6.99] } };
           return { shows: { [X]: [maj ? 3 : 4, 13], hcp: [6, 10.99] } };
         }
+        if (s !== Y && lv >= gameLevel(s)) return { shows: { [s]: [6, 13] } }; // ゲーム以上＝それをプレイしたい
         if (s === Y) {
+          if (call === ch && rankOf(call) > rankOf('3' + X)) return { shows: { [X]: [maj ? 3 : 4, 13], hcp: [16, 37], agree: X, interest: true }, force: 'GF' }; // スラムトライ
           if (call === ch) return { shows: { [X]: [maj ? 3 : 4, 13], hcp: [10.5, 37] }, force: 1 };
           return { shows: { [X]: [maj ? 4 : 6, 13], [Y]: [0, 1], agree: X, ctrl: [Y], interest: true }, force: 'GF' }; // ジャンプキュービッド＝スプリンター
         }
@@ -1071,6 +1095,7 @@
           if (lv === 2) return { shows: { [s]: [5, 13], hcp: [10.5, 37] }, force: 1 };
           return { shows: { [s]: [5, 13], hcp: [13, 37] }, force: 'GF' };
         }
+        if (lv >= 5) return { shows: { [s]: [6, 13] } }; // 5の代以上は自然（ジャンプの取り決めは4の代まで）
         if (levelOf(ch) + 1 === lv) {
           if (maj) return { shows: { [X]: [4, 13], hcp: [7, 10.99] }, force: 1 };
           return { shows: { [s]: [5, 13], [X]: [4, 13], hcp: [10.5, 37] }, force: rankOf(call) > rankOf('3' + X) ? 'GF' : 1 };
@@ -2768,7 +2793,10 @@
       if (x && x.call && COMP.ok(x.call, seq, compOpp)) res = { call: x.call, why: x.why, source: 'rule', ruleId: 'comp' };
       if (!res && ctx.slam.active) { const s2 = slamDecide(h, seq, ctx); if (s2 && COMP.ok(s2.call, seq, compOpp)) res = { call: s2.call, why: s2.why, source: 'rule', ruleId: 'slam' }; }
       if (!res) { const f = fallback(h, seq, ctx); res = COMP.ok(f.call, seq, compOpp) ? { call: f.call, why: '【汎用判断】' + f.why, source: 'fallback', ruleId: null } : { call: 'P', why: '【汎用判断】パス', source: 'fallback', ruleId: null }; }
-      const g = guard(h, seq, ctx, res);
+      // パートナーのゲーム以上の自然なビッドは「それをプレイしたい」なので、見直しでスラムに進めない
+      const lp = seq[seq.length - 1];
+      const toPlay = isBid(lp) && lp[1] !== compOpp.s && levelOf(lp) >= gameLevel(lp[1]) && !ctx.slam.active;
+      const g = toPlay ? null : guard(h, seq, ctx, res);
       if (g && COMP.ok(g.call, seq, compOpp)) res = { call: g.call, why: g.why, source: 'rule', ruleId: 'guard', ruleCall: res.call, ruleWhy: res.why };
       return res;
     }
