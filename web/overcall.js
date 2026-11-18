@@ -264,7 +264,9 @@
     const rows = (records || []).filter(r => r && r.deal && r.open && (r.type === 'X' || r.action)).map(r => {
       const hand = E.pbnToDeal(r.deal)[r.seat || 'S'];
       return { hand, r };
-    }).filter(o => doubleShape(o.hand, o.r.open));
+    }).filter(o => doubleShape(o.hand, o.r.open))
+      // スートでオーバーコールした回答は「ダブルかオーバーコールか」の選択なので、ダブルの強さの学習には使わない
+      .filter(o => o.r.action !== 'overcall');
     DBL = rows.length ? logistic(rows.map(o => dblX(evaluate(o.hand).adjNoLen, o.hand[o.r.open[1]].length, oppHonors(o.hand, o.r.open))), rows.map(o => (o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)) ? 1 : 0), DBL_PRIOR, 1) : DBL_PRIOR.slice();
     return { n: rows.length, yes: rows.filter(o => o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)).length, w: DBL.slice(),
       // 半々になる点数（敵のスートが1・2・3枚で、A以外のアナーがないとき）
@@ -283,19 +285,35 @@
   function decide(hand, open) {
     if (/^1[CDHS]$/.test(open) && ntOvercall(hand, open))
       return { call: '1N', why: `1NTオープンの形で補正込み16点以上、${JA_SUIT[open[1]]}が止まっているので1NTオーバーコール`, cand: { type: '1N', call: '1N' } };
-    // ダブルの形なら、点数でダブルするかを決める（1♦や2mの候補よりダブルを優先）
-    if (doubleShape(hand, open)) {
+    // ダブルの形なら、点数でダブルするかを決める
+    //   ダブルかスートのオーバーコールかは、メジャーの持ち方とスートの内容で決める：
+    //   アンビッドのメジャーが4枚 → ダブル寄り（ダブルを優先）
+    //   3枚だけ → スートのオーバーコール寄り。ただしスートの内容が悪い（リードショーイング2以下）ならダブル
+    const dShape = doubleShape(hand, open);
+    let preferOC = null, dNote = '';
+    if (dShape) {
+      const m4 = ['H', 'S'].some(M => M !== open[1] && hand[M].length >= 4);
+      dNote = m4 ? '（アンビッドのメジャーが4枚なのでスートのオーバーコールよりダブル）' : '（アンビッドのメジャーは3枚だが、オーバーコールするスートの内容が悪いのでダブル）';
+      const c0 = candidate(hand, open);
+      if (!m4 && c0) { const p0 = estimate(hand, open, c0); if (p0.lead > 2) preferOC = { cand: c0, lead: p0.lead }; }
+    }
+    const dbl = () => {
       const hon = oppHonors(hand, open);
       const adj = evaluate(hand).adjNoLen, pd = doubleProb(adj, hand[open[1]].length, hon);
-      if (pd >= 0.5) return { call: 'X', why: `${JA_SUIT[open[1]]}が3枚以下で、ほかのメジャーが3〜4枚なのでダブルの形。補正込み${Math.round(adj * 10) / 10}点・${JA_SUIT[open[1]]}${hand[open[1]].length}枚${hon ? `（A以外のアナー${hon}枚）` : ''}でダブルする確率${Math.round(pd * 100)}%なのでダブル`, cand: { type: 'X', call: 'X' }, p: pd };
-    }
+      if (pd >= 0.5) return { call: 'X', why: `${JA_SUIT[open[1]]}が3枚以下で、ほかのメジャーが3〜4枚なのでダブルの形。補正込み${Math.round(adj * 10) / 10}点・${JA_SUIT[open[1]]}${hand[open[1]].length}枚${hon ? `（A以外のアナー${hon}枚）` : ''}でダブルする確率${Math.round(pd * 100)}%なのでダブル${preferOC ? '（スートでオーバーコールするほどではない）' : candidate(hand, open) ? dNote : ''}`, cand: { type: 'X', call: 'X' }, p: pd };
+      return null;
+    };
+    if (dShape && !preferOC) { const x = dbl(); if (x) return x; }
     const cand = candidate(hand, open);
     if (!cand) return { call: 'P', why: '介入し得る形・強さではないのでパス', cand: null };
+    const ocNote = preferOC ? `（ダブルの形だが、アンビッドのメジャーが3枚だけでスートの内容が良い（リードショーイング${preferOC.lead.toFixed(1)}）のでスートでのオーバーコールを優先）` : '';
     const params = estimate(hand, open, cand);
     const m4 = cand.type === 'weak' && unbidMajor4(hand, open, cand.call);
     const p = probability(cand.type, params, m4);
     const ptxt = PARAMS.map(k => `${PARAM_JA[k]}${params[k].toFixed(1)}`).join('・');
-    if (p >= 0.5) return { call: cand.call, why: `${TYPE_JA[cand.type]}の候補（${ptxt}）。介入する確率${Math.round(p * 100)}%なので${callText(cand.call)}`, cand, params, p };
+    if (p >= 0.5) return { call: cand.call, why: `${TYPE_JA[cand.type]}の候補（${ptxt}）。介入する確率${Math.round(p * 100)}%なので${callText(cand.call)}${ocNote}`, cand, params, p };
+    // スートでオーバーコールするほどではないときは、ダブルを考える
+    if (preferOC) { const x = dbl(); if (x) return x; }
     return { call: 'P', why: `${TYPE_JA[cand.type]}の候補（${callText(cand.call)}）だが、${ptxt}で介入する確率${Math.round(p * 100)}%なのでパス`, cand, params, p };
   }
 
