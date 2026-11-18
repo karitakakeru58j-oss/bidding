@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.19.0';
+  const ENGINE_VERSION = '0.19.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -256,6 +256,9 @@
     return pos < 2 && h.adj >= 11 && !/[QJ]/.test(honors) && (honors.match(/A/g) || []).length >= 2;
   };
   // ウィーク2のスートの質：トップ3枚中2枚、またはトップ3枚中1枚＋10以上の札が3枚
+  // ウィークのスート以外のメジャーの枚数
+  const sideM4 = (h, s) => ['H', 'S'].some(M => M !== s && h.len[M] >= 4);
+  const sideMajorOk = (h, s, c) => ['H', 'S'].every(M => M === s || h.len[M] <= 3 || (h.len[M] === 4 && !early(c)));
   // 7枚以上のプリエンプトのスートの内容（点数が5点未満のとき）：AKQのうち2枚以上、またはAKQの1枚とAKQJ10の2枚以上（QT87642など）
   const goodPre = (h, s) => h.top3(s) >= 2 || (h.top3(s) >= 1 && h.top5(s) >= 2);
   const goodWeak = (h, s) => h.top3(s) >= 2 || (h.top3(s) >= 1 && [...h.hand[s]].filter(x => 'AKQJT9'.includes(x)).length >= 3)
@@ -297,14 +300,19 @@
       : '15〜17点の5431。シングルトンがA・K・Qで、5枚スートの内容が悪いかパートナーがパスしている（そのスートのスラムを逃す心配が小さい）ので1NTオープン');
   for (const s of ['S', 'H', 'D']) {
     // プリエンプトに点数の下限はない（内容が十分なら2、3点でもビッドする）
+    // ほかのメジャー：5枚以上があればウィークしない。4枚はパートナーがパスしているとき（3・4番手）だけ
+    //   3番手で6-4・スートの内容が良い（AKQのうち2枚以上）なら、2の代でなく3の代で開ける（下のルール）
     R('', '2' + s, (h, c) => h.len[s] === 6 && h.adjNoLen < 11 && !opens(h, c) && goodWeak(h, s) && !(early(c) && sideAce(h, s)) &&
-      (s === 'D' || h.len[s === 'S' ? 'H' : 'S'] < 4),
+      sideMajorOk(h, s, c) && !(c.pos === 2 && sideM4(h, s) && h.top3(s) >= 2),
       { hcp: [0, 10.99], [s]: [6, 6] }, `${JA_SUIT[s]}6枚でオープンの強さがなく、スートの内容が十分なのでウィーク2${SYM[s]}`);
   }
   for (const s of ['S', 'H', 'D', 'C']) {
     // 7-4は、スートの内容が十分（AKQのうち2枚以上）なときだけ4の代。7枚は3の代で普通の長さなので、7枚目は加点しない
     if (isMaj(s)) R('', '4' + s, (h, c) => h.len[s] >= 7 && h.adjNoLen < 11 && (h.adjNoLen >= 5 || goodPre(h, s)) && !opens(h, c) && h.longest() === s && (h.len[s] >= 8 || (h.twoLongest >= 11 && h.top3(s) >= 2)),
       { hcp: [0, 10.99], [s]: [7, 13] }, h => h.len[s] >= 8 ? `${JA_SUIT[s]}8枚以上なので4の代のプリエンプト` : `${JA_SUIT[s]}7枚で7-4の形、スートの内容が十分（AKQのうち2枚以上）なので4の代のプリエンプト`);
+    // 3番手（パートナーがパス）の6-4：スートの内容が良ければ3の代で開ける（K742.85.AQT852.4 で3♦）
+    R('', '3' + s, (h, c) => c.pos === 2 && h.len[s] === 6 && sideM4(h, s) && h.top3(s) >= 2 && h.adjNoLen < 11 && !opens(h, c) && h.longest() === s && ['H', 'S'].every(M => M === s || h.len[M] <= 4),
+      { hcp: [0, 10.99], [s]: [6, 13] }, `3番手で${JA_SUIT[s]}6枚・メジャー4枚の6-4、スートの内容が良いので3レベルのプリエンプト（パートナーがパスしているのでメジャー4枚があってもよい）`);
     R('', '3' + s, (h, c) => h.len[s] >= 7 && h.adjNoLen < 11 && (h.adjNoLen >= 5 || goodPre(h, s)) && !opens(h, c) && h.longest() === s,
       { hcp: [0, 10.99], [s]: [7, 13] }, h => h.adjNoLen >= 5 ? `${JA_SUIT[s]}7枚以上・5〜10点なので3レベルのプリエンプト` : `${JA_SUIT[s]}7枚以上で、点数は少ないがスートの内容が十分なので3レベルのプリエンプト`);
   }
@@ -344,12 +352,13 @@
     //   16点以上＝スラムのチャンス（15〜17点のパートナーと合わせて33点になりうる）、18点以上＝スラム確定（最低の15点とでも33点）
     const m6 = h => { const M = h.len.S >= 6 && h.len.H <= 3 ? 'S' : h.len.H >= 6 && h.len.S <= 3 ? 'H' : null; return M && h.len.C <= 3 && h.len.D <= 3 ? M : null; };
     const m6pts = (h, M) => h.dpLong(M, 3);
-    // 3mインビの目安（トリックの見込み）：スートのA4・K3・Q2・J1・10が0.5、7枚目から1枚+1、サイドのA3・K2.5・Q1.2
+    // 3mインビの目安（トリックの見込み）：スートのA4・K3・Q2・J1・10が0.5、7枚目から1枚+1、サイドのA3・K2.5・Q1.2・J0.5。5.5以上でインビ
+    //   （インビかサインオフか微妙なら、パスでなくインビ。J85.QJ4.5.KT9754 で3♣）
     //   例：サイドにQ以上なし→AQの6枚・AJの7枚、サイドにK→QJ10・KJの6枚、サイドにA→Q109の7枚・K10の6枚
     const minorTricks = (h, m) => {
       let suit = 0, side = 0;
       for (const c of h.hand[m]) suit += c === 'A' ? 4 : c === 'K' ? 3 : c === 'Q' ? 2 : c === 'J' ? 1 : c === 'T' ? 0.5 : 0;
-      for (const s of SUITS) if (s !== m) for (const c of h.hand[s]) side += c === 'A' ? 3 : c === 'K' ? 2.5 : c === 'Q' ? 1.2 : 0;
+      for (const s of SUITS) if (s !== m) for (const c of h.hand[s]) side += c === 'A' ? 3 : c === 'K' ? 2.5 : c === 'Q' ? 1.2 : c === 'J' ? 0.5 : 0;
       return { t: suit + Math.max(0, h.len[m] - 6) + side, suit };
     };
     const has = (h, s) => /[AK]/.test(h.hand[s]);
@@ -367,7 +376,7 @@
     const R_ = (call, why) => ({ call, why });
 
     function pick(h, s, c, seq) {
-      const n = s.length, k = s.join(' '), v = h.adj, kd = kind(h);
+      const n = s.length, k = s.join(' '), v = h.adj - SUITS.filter(x => h.hand[x] === 'K').length, kd = kind(h); // シングルトンのKは1点低く
       // ---------- レスポンダーの1回目 ----------
       if (n === 0) {
         if (kd === '55') {
@@ -410,7 +419,7 @@
           if (m) {
             const { t, suit } = minorTricks(h, m);
             if (v < 10 && t >= 9) return R_('3N', `${JA_SUIT[m]}6枚以上でトリックが十分見込める（目安${fmt(t)}）ので3NT`);
-            if (v < 10 && t >= 6 && suit >= 2.5) return R_('3' + m, `${JA_SUIT[m]}6枚以上で、${JA_SUIT[m]}でトリックを取る見込みが招待の強さ（目安${fmt(t)}、6以上）なので3${SYM[m]}（インビテーション）`);
+            if (v < 10 && t >= 5.5 && suit >= 2.5) return R_('3' + m, `${JA_SUIT[m]}6枚以上で、${JA_SUIT[m]}でトリックを取る見込みが招待の強さ（目安${fmt(t)}、5.5以上）なので3${SYM[m]}（インビテーション）`);
             if (v < 8) return m === 'C' ? R_('2N', 'クラブ6枚以上で招待に満たないので、2NT（3♣を強制）から3♣でサインオフ')
               : R_('2S', 'ダイヤ6枚以上で招待に満たないので、2♠（マイナーステイマン）から3♦でサインオフ');
           }
@@ -753,13 +762,15 @@
     return { pick, interp };
   })();
 
+  // NTの後の点数：シングルトンのKは1点低く数える（NTでは働きにくい。J942.J87.K.K7653 は1NTにパス）
+  const ntPts = h => h.hcp - SUITS.filter(s => h.hand[s] === 'K').length;
   // ===== NTオープン後の仕組み（1NT, 2NT, 2♣-2♦-2NT など共通） =====
   function ntSystem(prefix, lo, hi, L, name) {
     const p = prefix ? prefix + ' ' : '';
     const game = 25 - lo, inv = game - 2, quant = 31 - lo, slam = 33 - lo;
     const mid = (lo + hi) / 2;
-    const accept = h => h.hcp >= lo + 1;           // 招待を受ける
-    const acceptQ = h => h.hcp >= hi;              // 4NT（クオンティタティブ）を受ける
+    const accept = h => ntPts(h) >= lo + 1;           // 招待を受ける
+    const acceptQ = h => ntPts(h) >= hi;              // 4NT（クオンティタティブ）を受ける
     const st = L + 'C', tH = L + 'D', tS = L + 'H'; // ステイマン / トランスファー
     const N2 = L === 2;
     const ntNote = `（${name}は${lo}〜${hi}点）`;
@@ -772,17 +783,17 @@
       const four = h.len.H === 4 || h.len.S === 4;
       const five = h.len.H >= 5 || h.len.S >= 5;
       const need = N2 ? inv : game;
-      return h.hcp >= need && ((four && !five) || (h.len.H >= 4 && h.len.S >= 4));
+      return ntPts(h) >= need && ((four && !five) || (h.len.H >= 4 && h.len.S >= 4));
     };
     R(prefix, st, stOk, { hcp: [N2 ? inv : game, 37] }, `4枚メジャーがあり、${N2 ? '招待' : 'ゲーム'}以上の点数があるのでステイマン${ntNote}`, 1);
     R(prefix, tS, h => h.len.S >= 5 && h.len.S >= h.len.H, { S: [5, 13] }, `スペード5枚以上なのでジャコビー・トランスファー（${callText(tS)}→${L}♠）`, 1);
     R(prefix, tH, h => h.len.H >= 5, { H: [5, 13] }, `ハート5枚以上なのでジャコビー・トランスファー（${callText(tH)}→${L}♥）`, 1);
-    if (N2 && prefix !== '1N') R(prefix, '2N', h => between(h.hcp, inv, game - 1), { hcp: [inv, game - 1], S: [0, 3], H: [0, 3] }, `4枚メジャーがなく${inv}〜${game - 1}点なので2NTで招待${ntNote}`);
+    if (N2 && prefix !== '1N') R(prefix, '2N', h => between(ntPts(h), inv, game - 1), { hcp: [inv, game - 1], S: [0, 3], H: [0, 3] }, `4枚メジャーがなく${inv}〜${game - 1}点なので2NTで招待${ntNote}`);
     // 2NT以上（20点以上）の後は、5枚以上のスートがあれば1点少なくてもゲーム（T43.98.K8652.J62 で3NT）
-    R(prefix, '3N', h => between(h.hcp + (L === 3 && SUITS.some(s => h.len[s] >= 5) ? 1 : 0), game, quant - 1), { hcp: [game, quant - 1], S: [0, 4], H: [0, 4] }, `メジャーのフィットを探す必要がなく、ゲームの点数（${game}点以上）があるので3NT${ntNote}`);
-    R(prefix, '4N', h => between(h.hcp, quant, slam - 1) && h.balanced, { hcp: [quant, slam - 1] }, `スラムの可能性があるので4NT（クオンティタティブ＝スラムへの招待）${ntNote}`);
-    R(prefix, '6N', h => between(h.hcp, slam, slam + 3) && h.balanced, { hcp: [slam, slam + 3] }, `合計で33点以上あるので6NT${ntNote}`);
-    R(prefix, 'P', h => h.hcp < (N2 ? inv : game), { hcp: [0, (N2 ? inv : game) - 1] }, `ゲームの可能性が低いのでパス${ntNote}`);
+    R(prefix, '3N', h => between(ntPts(h) + (L === 3 && SUITS.some(s => h.len[s] >= 5) ? 1 : 0), game, quant - 1), { hcp: [game, quant - 1], S: [0, 4], H: [0, 4] }, `メジャーのフィットを探す必要がなく、ゲームの点数（${game}点以上）があるので3NT${ntNote}`);
+    R(prefix, '4N', h => between(ntPts(h), quant, slam - 1) && h.balanced, { hcp: [quant, slam - 1] }, `スラムの可能性があるので4NT（クオンティタティブ＝スラムへの招待）${ntNote}`);
+    R(prefix, '6N', h => between(ntPts(h), slam, slam + 3) && h.balanced, { hcp: [slam, slam + 3] }, `合計で33点以上あるので6NT${ntNote}`);
+    R(prefix, 'P', h => ntPts(h) < (N2 ? inv : game), { hcp: [0, (N2 ? inv : game) - 1] }, `ゲームの可能性が低いのでパス${ntNote}`);
 
     // --- ステイマンへの答え ---
     R(p + st, L + 'H', h => h.len.H >= 4, { H: [4, 5] }, 'ステイマンへの答え：ハート4枚あり（スペード4枚の可能性もある）');
@@ -795,10 +806,10 @@
         if (N2) R(q, '3' + fitSuit, h => h.len[fitSuit] >= 4 && between(h.dp(fitSuit, 4), inv, game - 1), { [fitSuit]: [4, 5], hcp: [inv, game - 1] }, `${JA_SUIT[fitSuit]}でフィットが見つかったので3${SYM[fitSuit]}で招待`);
         R(q, '4' + fitSuit, h => h.len[fitSuit] >= 4 && h.dp(fitSuit, 4) >= game, { [fitSuit]: [4, 5], hcp: [game, 37] }, `${JA_SUIT[fitSuit]}でフィットが見つかり、ゲームの点数があるので4${SYM[fitSuit]}`);
       }
-      if (N2) R(q, '2N', h => between(h.hcp, inv, game - 1), { hcp: [inv, game - 1] }, 'メジャーのフィットがなかったので2NTで招待');
-      R(q, '3N', h => between(h.hcp, game, quant - 1), { hcp: [game, quant - 1] }, 'メジャーのフィットがなかったので3NT（もう一方のメジャー4枚を持っている）');
-      R(q, '4N', h => between(h.hcp, quant, slam - 1), { hcp: [quant, slam - 1] }, 'フィットはないがスラムの可能性があるので4NT（クオンティタティブ）');
-      R(q, '6N', h => h.hcp >= slam, { hcp: [slam, 37] }, '合計33点以上あるので6NT');
+      if (N2) R(q, '2N', h => between(ntPts(h), inv, game - 1), { hcp: [inv, game - 1] }, 'メジャーのフィットがなかったので2NTで招待');
+      R(q, '3N', h => between(ntPts(h), game, quant - 1), { hcp: [game, quant - 1] }, 'メジャーのフィットがなかったので3NT（もう一方のメジャー4枚を持っている）');
+      R(q, '4N', h => between(ntPts(h), quant, slam - 1), { hcp: [quant, slam - 1] }, 'フィットはないがスラムの可能性があるので4NT（クオンティタティブ）');
+      R(q, '6N', h => ntPts(h) >= slam, { hcp: [slam, 37] }, '合計33点以上あるので6NT');
       R(q, 'P', () => true, null, 'ゲームの点数がないのでパス');
     };
     afterSt(L + 'D', null);
@@ -827,19 +838,19 @@
 
     // --- トランスファーの完了 ---
     for (const [tr, M] of [[tH, 'H'], [tS, 'S']]) {
-      if (N2) R(p + tr, '3' + M, h => h.len[M] >= 4 && h.hcp >= hi, { [M]: [4, 5], hcp: [hi, hi] }, `最高点で${JA_SUIT[M]}4枚のサポートがあるのでスーパーアクセプト（3${SYM[M]}）`);
+      if (N2) R(p + tr, '3' + M, h => h.len[M] >= 4 && ntPts(h) >= hi, { [M]: [4, 5], hcp: [hi, hi] }, `最高点で${JA_SUIT[M]}4枚のサポートがあるのでスーパーアクセプト（3${SYM[M]}）`);
       R(p + tr, L + M, () => true, null, `トランスファーに応じて${L}${SYM[M]}`);
       const done = p + tr + ' ' + L + M;
       if (N2) {
-        R(done, '2N', h => h.len[M] === 5 && between(h.hcp, inv, game - 1), { [M]: [5, 5], hcp: [inv, game - 1] }, `${JA_SUIT[M]}5枚で招待の点数なので2NT`);
+        R(done, '2N', h => h.len[M] === 5 && between(ntPts(h), inv, game - 1), { [M]: [5, 5], hcp: [inv, game - 1] }, `${JA_SUIT[M]}5枚で招待の点数なので2NT`);
         R(done, '3' + M, h => h.len[M] >= 6 && between(h.dpLong(M, 3), inv, game - 1), { [M]: [6, 13], hcp: [inv, game - 1] }, `${JA_SUIT[M]}6枚以上で招待の点数なので3${SYM[M]}`);
       }
-      R(done, '3N', h => h.len[M] === 5 && between(h.hcp, game, quant - 1), { [M]: [5, 5], hcp: [game, quant - 1] }, `${JA_SUIT[M]}5枚でゲームの点数なので3NT（パートナーに4${SYM[M]}か3NTを選んでもらう）`);
+      R(done, '3N', h => h.len[M] === 5 && between(ntPts(h), game, quant - 1), { [M]: [5, 5], hcp: [game, quant - 1] }, `${JA_SUIT[M]}5枚でゲームの点数なので3NT（パートナーに4${SYM[M]}か3NTを選んでもらう）`);
       R(done, '4' + M, h => h.len[M] >= 6 && h.dpLong(M, 3) >= game, { [M]: [6, 13], hcp: [game, 37] }, `${JA_SUIT[M]}6枚以上でゲームの点数なので4${SYM[M]}`);
-      R(done, '4N', h => h.len[M] === 5 && h.hcp >= quant, { [M]: [5, 5], hcp: [quant, 37] }, 'スラムの可能性があるので4NT（クオンティタティブ）');
+      R(done, '4N', h => h.len[M] === 5 && ntPts(h) >= quant, { [M]: [5, 5], hcp: [quant, 37] }, 'スラムの可能性があるので4NT（クオンティタティブ）');
       R(done, 'P', () => true, null, 'ゲームの可能性が低いのでパス（トランスファーでスートを決めた）');
       if (N2) {
-        R(p + tr + ' 3' + M, '4' + M, h => h.hcp >= inv - 3, null, 'パートナーがスーパーアクセプトしたのでゲームに上がる');
+        R(p + tr + ' 3' + M, '4' + M, h => ntPts(h) >= inv - 3, null, 'パートナーがスーパーアクセプトしたのでゲームに上がる');
         R(p + tr + ' 3' + M, 'P', () => true, null, '点数がないのでパス');
         R(done + ' 2N', '4' + M, h => h.len[M] >= 3 && accept(h), null, `${JA_SUIT[M]}3枚以上で招待を受けるので4${SYM[M]}`);
         R(done + ' 2N', '3' + M, h => h.len[M] >= 3, null, `${JA_SUIT[M]}3枚以上あるが最低点なので3${SYM[M]}`);
