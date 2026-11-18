@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.18.1';
+  const ENGINE_VERSION = '0.19.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -340,6 +340,10 @@
     const m4m5 = h => (h.len.H === 4) !== (h.len.S === 4) && Math.max(h.len.H, h.len.S) === 4 && longMinor(h, 5) && h.adj >= 10;
     // M5枚以上（もう一方は3枚以下）・m4枚以上のGF
     const m5m4 = h => { const M = h.len.S >= 5 && h.len.H <= 3 ? 'S' : h.len.H >= 5 && h.len.S <= 3 ? 'H' : null; return M && longMinor(h, 4) && h.adj >= 10 ? M : null; };
+    // M6枚以上の1スーター（もう一方のMは3枚以下、サイドに4枚スートなし）：スラムトライの強さ（パートナー平均3枚と合わせたダミーポイント）
+    //   16点以上＝スラムのチャンス（15〜17点のパートナーと合わせて33点になりうる）、18点以上＝スラム確定（最低の15点とでも33点）
+    const m6 = h => { const M = h.len.S >= 6 && h.len.H <= 3 ? 'S' : h.len.H >= 6 && h.len.S <= 3 ? 'H' : null; return M && h.len.C <= 3 && h.len.D <= 3 ? M : null; };
+    const m6pts = (h, M) => h.dpLong(M, 3);
     // 3mインビの目安（トリックの見込み）：スートのA4・K3・Q2・J1・10が0.5、7枚目から1枚+1、サイドのA3・K2.5・Q1.2
     //   例：サイドにQ以上なし→AQの6枚・AJの7枚、サイドにK→QJ10・KJの6枚、サイドにA→Q109の7枚・K10の6枚
     const minorTricks = (h, m) => {
@@ -383,6 +387,9 @@
           if (v >= 8) return R_('2C', `メジャーの5-4でインビテーション以上（8点以上）なので、ステイマンから`);
           return R_(M5 === 'H' ? '2D' : '2H', `メジャーの5-4でインビテーションしない強さなので、5枚の${JA_SUIT[M5]}にトランスファーしてパス`);
         }
+        const M6 = m6(h);
+        if (M6 && m6pts(h, M6) >= 18) return R_(M6 === 'H' ? '4D' : '4H', `${JA_SUIT[M6]}6枚以上でスラム確定の強さ（${fmt(m6pts(h, M6))}点）なので、テキサス・トランスファーしてから4NT（RKCB）`);
+        if (M6 && m6pts(h, M6) >= 16) return R_(M6 === 'H' ? '2D' : '2H', `${JA_SUIT[M6]}6枚以上でスラムのチャンスがある（${fmt(m6pts(h, M6))}点）ので、2の代でトランスファーしてから${shortOf(h, [M6]) ? 'ジャンプシフト（スプリンター）' : '4' + SYM[M6] + '（テキサスより強い）'}`);
         const M5 = m5m4(h);
         if (M5) return R_(M5 === 'H' ? '2D' : '2H', `${JA_SUIT[M5]}5枚以上・マイナー4枚以上のGFなので、トランスファーしてから3マイナー`);
         // m6枚以上のサインオフ（4枚メジャーがあってもよい。5枚メジャーは上で扱う）
@@ -456,6 +463,12 @@
           if (m4m5(h)) { const m = longMinor(h, 5); return R_('3' + m, `メジャーのフィットがなかったので、${JA_SUIT[m]}5枚以上を3${SYM[m]}で示す（GF）`); }
           return null;
         }
+        if ((k === '2D 2H' || k === '2H 2S') && m6(h) === s[1][1] && m6pts(h, s[1][1]) >= 16) {
+          const M = s[1][1], sh = shortOf(h, [M]);
+          if (sh) { const ch = cheapest(sh, seq), call = (levelOf(ch) + 1) + sh; return R_(call, `${JA_SUIT[M]}6枚以上でスラムのチャンスがあり、${JA_SUIT[sh]}が1枚以下なのでジャンプシフトの${callText(call)}（スプリンター）`); }
+          return R_('4' + M, `${JA_SUIT[M]}6枚以上でスラムのチャンスがある（ショートなし）ので4${SYM[M]}（テキサスより強い手）`);
+        }
+        if ((k === '4D 4H' || k === '4H 4S') && m6(h) === s[1][1] && m6pts(h, s[1][1]) >= 18) return R_('4N', `${JA_SUIT[s[1][1]]}6枚以上でスラム確定の強さなので4NT（RKCB）`);
         if (k === '2D 2H' && kd === '55' && v < 6) return R_('2S', '5-5のメジャーで弱いので2♠（パートナーに♥か♠を選んでもらう）');
         if (k === '2H 2S' && kd === '55' && v >= 12) return R_('3H', '5-5のメジャーでスラムトライなので3♥');
         if ((k === '2D 2H' || k === '2H 2S') && m5m4(h)) { const m = longMinor(h, 4); return R_('3' + m, `${JA_SUIT[m5m4(h)]}5枚以上・${JA_SUIT[m]}4枚以上のGFなので3${SYM[m]}`); }
@@ -558,6 +571,17 @@
           if (h.len[M] >= 3) return slamInt(h, M) ? R_('3' + M, `${JA_SUIT[M]}にフィットし、スラムに興味があるので3${SYM[M]}（${JA_SUIT[M]}のスラムトライ）`) : R_('4' + M, `${JA_SUIT[M]}にフィットしたがスラムに興味がないので4${SYM[M]}`);
           if (h.len[m] >= 4 && slamInt(h, m)) return R_('4' + m, `${JA_SUIT[m]}にフィットし、スラムに興味があるので4${SYM[m]}（${JA_SUIT[m]}のスラムトライ）`);
           return R_('3N', `${JA_SUIT[M]}のフィットがないので3NT`);
+        }
+        if (k === '2D 2H 4H' || k === '2H 2S 4S') {
+          const M = s[1][1];
+          if (slamInt(h, M, 2) || (h.adj >= 16.5 && h.len[M] >= 3)) return R_('4N', `パートナーは${JA_SUIT[M]}6枚以上でスラムのチャンスがある手。こちらも興味がある（AKが多い・最高点）ので4NT（RKCB）`);
+          return R_('P', `パートナーは${JA_SUIT[M]}6枚以上でスラムのチャンスがある手だが、こちらは興味がないのでパス`);
+        }
+        if (/^(2D 2H (3S|4C|4D)|2H 2S (4H|4C|4D))$/.test(k)) {
+          const M = s[1][1], sh = s[2][1];
+          const waste = h.sHcp[sh] - (h.hand[sh].includes('A') ? 4 : 0);
+          if (waste <= 1 && h.adj - waste >= 15 && ctl(h) >= 4) return R_('4N', `パートナーのショートの${JA_SUIT[sh]}に無駄な点がほとんどないので4NT（RKCB）`);
+          return R_('4' + M, `パートナーのショートの${JA_SUIT[sh]}に点が無駄になる（${waste}点）か、強さが足りないので4${SYM[M]}で止める`);
         }
         if (k === '2D 2H 2S') return h.len.H >= h.len.S + 2 ? R_('3H', 'ハートの方がずっと長いので3♥') : R_('P', 'スペードでプレイするのでパス');
         if (k === '2H 2S 3H') {
@@ -675,6 +699,11 @@
         if (k === '2D 2H' && call === '2S') return { shows: { H: [5, 6], S: [5, 6], hcp: [0, 5.99] } };
         if (k === '2H 2S' && call === '3H') return { shows: { H: [5, 6], S: [5, 6], hcp: [12, 37] }, force: GF };
         if ((k === '2D 2H' || k === '2H 2S') && (call === '3C' || call === '3D')) return { shows: { [call[1]]: [4, 13] }, force: GF };
+        if (/^(2D 2H|2H 2S)$/.test(k) && /^(3S|4C|4D|4H)$/.test(call) && call !== '4' + k[4] && call !== '3' + k[4]) {
+          const M = k[4];
+          if (!(k === '2D 2H' && call === '4H')) return { shows: { [call[1]]: [0, 1], [M]: [6, 13], agree: M, ctrl: [call[1]], interest: true }, force: GF };
+        }
+        if ((k === '2D 2H' && call === '4H') || (k === '2H 2S' && call === '4S')) return { shows: { [k[4]]: [6, 13] } };
         if (/^2S (3C|3D)$/.test(k)) {
           const m = k[4];
           if (call === '3H' || call === '3S') return { shows: { [call[1]]: [0, 1], agree: m, ctrl: [call[1]], interest: true }, force: GF };
