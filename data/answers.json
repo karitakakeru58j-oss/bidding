@@ -3602,8 +3602,8 @@
    "P"
   ],
   "seat": "S",
-  "userCall": "3S",
-  "reason": "AIの答えに変更",
+  "userCall": "4S",
+  "reason": "7-4でスートの内容が十分（KQ）なので4♠（3♠から訂正）",
   "doubt": false,
   "aiCall": "3S",
   "aiWhy": "スペード7枚以上・5〜10点なので3レベルのプリエンプト",

@@ -4973,8 +4973,8 @@ Pass 1C Pass
 Pass
 *
 [QuizSeat "S"]
-[Answer "3S"]
-[AnswerReason "AIの答えに変更"]
+[Answer "4S"]
+[AnswerReason "7-4でスートの内容が十分（KQ）なので4♠（3♠から訂正）"]
 [AIBid "3S"]
 [AIReason "スペード7枚以上・5〜10点なので3レベルのプリエンプト"]
 [AISource "rule"]
