@@ -220,6 +220,10 @@ const cases = [
   ['32.A32.K432.KJ32', ['2C','P','2D','P','2H','P'], 'N', '2S'],
   ['AK32.A32.AK32.32', ['2H','P'], 'N', '2N'],
   ['Q2.KQ9876.32.432', ['2H','P','2N','P'], 'N', '3D'],
+  // 6枚目以降の加点：AKQ432は9点＋2点で招待の強さ → クラブを示しながら3♣で招待
+  ['32.32.432.AKQ432', ['1S','P','1N','P','2H','P'], 'N', '3C'],
+  ['32.32.432.AKQ432', ['1H','P','1N','P','2D','P'], 'N', '3C'],
+  ['J97.92.A4.AQ8743', ['1H','P','1N','P','2H','P'], 'N', '3H'],  // オープナーの6枚の♥にフィット → 3♥
 ];
 let ok = 0, ng = 0;
 for (const [hs, auc, dlr, exp, passedFirst] of cases) {
@@ -279,6 +283,8 @@ try {
   const n2 = E.chooseCall(H('KJ4.AQ3.KJ92.Q54'), ['1D'], 'E');   // ♦KJ92 → 1NT
   const n3 = E.chooseCall(H('KQ4.AQ3.KJ9.J542'), ['1C'], 'E');  // ♣Jxxx（4枚）→ 1NT
   const n4 = E.chooseCall(H('KJ4.AQ32.K92.854'), ['1C'], 'E');   // ♣止めなし → 1NTにしない
+  const l1 = OC.decide(H('K.Q86.AQJ8642.73'), '1S');   // 1372：ダブルではなく2♦。7枚の♦で競り合いは4以上
+  if (l1.call !== '2D' || !(l1.params && l1.params.compete >= 4)) { ng++; console.log('NG 7枚の2♦', l1.call, l1.why); } else console.log('7枚の2♦: OK');
   if (n1.call !== '1N' || n2.call !== '1N' || n3.call !== '1N' || n4.call === '1N') { ng++; console.log('NG 1NTオーバーコール', n1.call, n2.call, n3.call, n4.call); } else console.log('1NTオーバーコール: OK');
 }
 process.exit(ng ? 1 : 0);
