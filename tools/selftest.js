@@ -310,6 +310,16 @@ try {
   let same = 0;
   for (const a of recs) { const r = E.chooseCall(E.pbnToDeal(a.deal)[a.seat || 'S'], a.auction, a.dealer); if (r.call === a.userCall) same++; }
   console.log(`回答記録との一致（例を使わないルールだけ）: ${same} / ${recs.length}`);
+  // 過去の回答に合わせた結果が、ルールより悪くならないこと（自分以外の回答を例にして確認）
+  const ex = recs.map(a => ({ ...E.exampleFeatures(E.pbnToDeal(a.deal)[a.seat || 'S'], a.auction, a.dealer), call: a.userCall, id: a.id, created: a.created }));
+  let worse = 0, better = 0;
+  for (const a of recs) {
+    const r = E.chooseCall(E.pbnToDeal(a.deal)[a.seat || 'S'], a.auction, a.dealer, ex.filter(e => e.id !== a.id));
+    if (r.source !== 'example') continue;
+    if (r.ruleCall === a.userCall && r.call !== a.userCall) worse++;
+    if (r.ruleCall !== a.userCall && r.call === a.userCall) better++;
+  }
+  if (worse) { ng++; console.log(`NG 過去の回答に合わせてルールの正解を間違えた: ${worse}件`); } else console.log(`過去の回答に合わせた判断: OK（ルールより良くなった${better}件）`);
 } catch (e) { /* 記録がなければ省略 */ }
 // 回答例の取り違えの確認：♥5枚の例があっても4枚で1♥と言わない
 {

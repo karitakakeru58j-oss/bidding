@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.18.0';
+  const ENGINE_VERSION = '0.18.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -2192,6 +2192,8 @@
     return (passedBeforeMe ? 'p:' : '') + (seq.length ? seq.join('-') : '(open)');
   }
   function distance(h, ex) {
+    // メジャーの枚数（4枚・5枚など）が違う手は、ビッドの意味が変わるので参考にしない
+    if (h.len.S !== ex.len.S || h.len.H !== ex.len.H) return Infinity;
     let d = Math.abs(h.rawHcp - ex.hcp);
     for (const s of SUITS) d += 0.75 * Math.abs(h.len[s] - ex.len[s]);
     return d;
@@ -2346,7 +2348,9 @@
       const sh = interpret(seq, near.ex.call, { self: ctx.self, partner: ctx.partner }).shows || {};
       if (SUITS.some(s => Array.isArray(sh[s]) && (h.len[s] < sh[s][0] || h.len[s] > sh[s][1]))) near = null;
     }
-    if (near && near.d <= NEAR && near.ex.call !== res.call) {
+    // 過去の回答に合わせるのは、ルールがなく汎用判断になったときだけ（ルールがある所はルールを優先。
+    // 点数と枚数だけが近い手に合わせると、4枚メジャーの有無やスートの内容の違いで致命的な間違いが出た）
+    if (near && near.d <= NEAR && near.ex.call !== res.call && res.source === 'fallback') {
       return {
         call: near.ex.call,
         why: `あなたの過去の回答に近い手があるのでそれに合わせる（${describeShape(near.ex)} → ${callText(near.ex.call)}${near.ex.reason ? '「' + near.ex.reason + '」' : ''}）`,
