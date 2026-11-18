@@ -368,6 +368,9 @@ try {
   const n4 = E.chooseCall(H('KJ4.AQ32.K92.854'), ['1C'], 'E');   // ♣止めなし → 1NTにしない
   // ダブルかオーバーコールか：アンビッドのメジャーが4枚ならダブル寄り、3枚だけならスートの内容が良ければオーバーコール
   const x1 = OC.decide(H('T.KQ2.QT7.KQ8763'), '1S'), x2 = OC.decide(H('Q65.A62.AJT2.A53'), '1C'), x3 = OC.decide(H('KQ3.A82.97542.A3'), '1C'), x4 = OC.decide(H('AQ52.KQJ5.T82.74'), '1D');
+  // 5枚の2Mは、ゲームの可能性か競り合いが十分あるときだけ（5332の弱い手はしない）
+  const y1 = OC.decide(H('753.KQT42.AQ3.T6'), '1S'), y2 = OC.decide(H('754.AKJT2.J9.QT5'), '1S'), y3 = OC.decide(H('653.AKT52.7.A932'), '1S');
+  if (y1.call !== 'P' || y2.call !== 'P' || y3.call !== '2H') { ng++; console.log('NG 5枚の2M', y1.call, y2.call, y3.call); } else console.log('5枚の2M: OK');
   if (x1.call !== '2C' || x2.call !== '1D' || x3.call !== 'X' || x4.call !== 'X') { ng++; console.log('NG ダブルかオーバーコールか', x1.call, x2.call, x3.call, x4.call); } else console.log('ダブルかオーバーコールか: OK');
   const l1 = OC.decide(H('K.Q86.AQJ8642.73'), '1S');   // 1372：ダブルではなく2♦。7枚の♦で競り合いは4以上
   if (l1.call !== '2D' || !(l1.params && l1.params.compete >= 4)) { ng++; console.log('NG 7枚の2♦', l1.call, l1.why); } else console.log('7枚の2♦: OK');

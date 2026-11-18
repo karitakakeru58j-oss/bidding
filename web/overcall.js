@@ -311,6 +311,10 @@
     const m4 = cand.type === 'weak' && unbidMajor4(hand, open, cand.call);
     const p = probability(cand.type, params, m4);
     const ptxt = PARAMS.map(k => `${PARAM_JA[k]}${params[k].toFixed(1)}`).join('・');
+    // 2Mオーバーコールを5枚でするのは、ゲームの可能性か競り合いの数値が十分ある手だけ（5332の弱い手はしない）
+    //   目安：推定のゲームの可能性＋競り合いが4以上（回答では、5枚の2Mは評価の合計が4以上のときだけしている）
+    if (p >= 0.5 && cand.type === '2M' && hand[cand.call[1]].length === 5 && params.game + params.compete < 4)
+      return { call: 'P', why: `2Mの候補（${callText(cand.call)}）だが、5枚の2Mはゲームの可能性か競り合いが十分ある手だけ（${ptxt}）なのでパス`, cand, params, p };
     if (p >= 0.5) return { call: cand.call, why: `${TYPE_JA[cand.type]}の候補（${ptxt}）。介入する確率${Math.round(p * 100)}%なので${callText(cand.call)}${ocNote}`, cand, params, p };
     // スートでオーバーコールするほどではないときは、ダブルを考える
     if (preferOC) { const x = dbl(); if (x) return x; }
