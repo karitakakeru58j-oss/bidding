@@ -135,17 +135,26 @@
     if (o === '2D' || o === '2H' || o === '2S') return 'weak';
     return 'other';
   }
+  // 敵の介入が入った場面か（自分たちの1の代のオープンの直後に敵がビッド）
+  function compAuction(auction, dealer) {
+    const d = E.SEATS.indexOf(dealer), seat = i => E.SEATS[(d + i) % 4];
+    const i0 = auction.findIndex(c => c !== 'P');
+    return i0 >= 0 && (seat(i0) === 'N' || seat(i0) === 'S') && E.isBid(auction[i0 + 1] || '');
+  }
   function makeQuiz(filter) {
     const examples = examplesFrom(store.answers);
-    for (let t = 0; t < 800; t++) {
+    const comp = filter === 'comp';
+    for (let t = 0; t < (comp ? 3000 : 800); t++) {
       let hands = E.deal();
       let dealer = E.SEATS[Math.floor(Math.random() * 4)];
-      const { auction, steps } = E.autoAuction(hands, dealer, examples);
+      const { auction, steps } = E.autoAuction(hands, dealer, examples, 40, { oppOvercall: comp });
+      if (comp && !compAuction(auction, dealer)) continue;
       const allPass = auction.every(c => c === 'P');
       if (allPass && Math.random() < 0.85) continue;
       let points = steps.filter(s => s.seat === 'N' || s.seat === 'S');
       points = points.filter(s => {
         const { seq } = E.analyze(auction.slice(0, s.index), dealer);
+        if (comp) return seq.length >= 1 && seq.length <= 3 && !(s.call === 'P' && seq.length === 1 && Math.random() < 0.5);
         if (filter !== 'all' && category(seq) !== filter) return false;
         // 最初のコール以外で、パスしかない場面ばかりにならないように
         if (seq.length === 0 && s.call === 'P' && Math.random() < 0.6) return false;
@@ -180,14 +189,14 @@
     renderBox();
   }
   function renderBox() {
-    const { seq } = E.analyze(quiz.auction, quiz.dealer);
     let html = '';
     for (let lv = 1; lv <= 7; lv++) for (const s of ['C', 'D', 'H', 'S', 'N']) {
       const c = lv + s;
-      const ok = E.legal(c, seq);
+      const ok = E.legalInAuction(c, quiz.auction, quiz.dealer);
       html += `<button class="bid" data-call="${c}" aria-pressed="${chosen === c}" ${ok ? '' : 'disabled'} aria-label="${E.callText(c)}">${callHtml(c)}</button>`;
     }
     html += `<button class="bid pass" data-call="P" aria-pressed="${chosen === 'P'}">パス</button>`;
+    if (E.legalInAuction('X', quiz.auction, quiz.dealer)) html += `<button class="bid pass" data-call="X" aria-pressed="${chosen === 'X'}">ダブル</button>`;
     $('bbox').innerHTML = html;
     const btn = $('submit');
     btn.disabled = !chosen;
@@ -229,7 +238,7 @@
     html += `<div><div class="label">AI</div><div class="bigcall">${callHtml(ai.call)}</div><div class="muted">${esc(ai.why)}</div></div></div>`;
     if (ai.source === 'example' && ai.ruleCall) html += `<p class="muted" style="margin:0">ルール表だけなら ${callHtml(ai.ruleCall)}：${esc(ai.ruleWhy)}</p>`;
     if (!same) {
-      html += `<p style="margin:0">あなたの答えを記録しました。次からは、同じ流れで点数と形がほぼ同じ手なら、AIはあなたの答えに合わせます。</p>`;
+      html += `<p style="margin:0">あなたの答えを記録しました。「回答を取り込んで分析して」と頼むと、AIのルールを直す材料に使います。</p>`;
       html += `<div class="row"><button id="adopt-ai" class="btn small">AIの答えの方が良い（自分の答えを${esc(E.callText(ai.call))}に変える）</button></div>`;
     }
     html += '</div>';

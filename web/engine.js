@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.19.1';
+  const ENGINE_VERSION = '0.20.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -760,6 +760,343 @@
       return null;
     }
     return { pick, interp };
+  })();
+
+  // ===== 敵の介入（ナチュラルなオーバーコール）の後：3番手（レスポンダー）とオープナーのリビッド =====
+  //   フリーランの取り決め（2/1 GF・インバーテッドマイナーなど）は使わない
+  //   opp = { s: 敵のスート, call: 敵のビッド }
+  const COMP = (() => {
+    const MAJ = ['H', 'S'];
+    const maxBid = (seq, opp) => { const lb = lastBid(seq); return !lb || rankOf(opp.call) > rankOf(lb) ? opp.call : lb; };
+    const ok = (call, seq, opp) => call === 'P' || (call === 'X' ? seq.length === 1 : isBid(call) && rankOf(call) > rankOf(maxBid(seq, opp)));
+    const cheap = (s, seq, opp) => { const mb = maxBid(seq, opp); for (let lv = 1; lv <= 7; lv++) { const c = lv + s; if (rankOf(c) > rankOf(mb)) return c; } return null; };
+    const jump = (s, seq, opp, n = 1) => { const c = cheap(s, seq, opp); if (!c) return null; const lv = levelOf(c) + n; return lv <= 7 ? lv + s : null; };
+    const ctlOf = h => SUITS.reduce((t, s) => t + (h.hand[s].includes('A') ? 2 : 0) + (h.hand[s].includes('K') ? 1 : 0), 0);
+    const unbid = (X, Y) => MAJ.filter(M => M !== X && M !== Y);
+    const minDbl = opp => levelOf(opp.call) >= 2 ? 8 : 6;
+    const T = (s) => `${JA_SUIT[s]}`;
+
+    // ---------- レスポンダーの1回目 ----------
+    function resp(h, seq, opp) {
+      const X = seq[0][1], Y = opp.s, v = h.adj, maj = isMaj(X);
+      const U = unbid(X, Y), minX = minDbl(opp), stop = h.stopper(Y);
+      const R = (call, why) => call && ok(call, seq, opp) ? { call, why } : null;
+      const shortS = SUITS.filter(s => s !== X && h.len[s] <= 1).sort((a, b) => h.len[a] - h.len[b])[0] || null;
+      const spl = s => s === Y ? jump(s, seq, opp, 1) : jump(s, seq, opp, 2);
+      const cue0 = cheap(Y, seq, opp);
+      // 1Mのキュービッドは4Mより下のときだけ（それより上ならゲームを直接ビッドする）
+      const cue = maj && cue0 && rankOf(cue0) > rankOf('4' + X) ? '4' + X : cue0;
+      let r;
+      // スプリンター（ダブルジャンプシフト・ジャンプキュービッド）
+      if (shortS && ((maj && h.len[X] >= 4 && (d => d >= 12.5 && d < 16)(h.dp(X, 5))) || (!maj && h.len[X] >= 6 && h.dp(X, 4) >= 16))) {
+        const c = spl(shortS);
+        if (c && rankOf(c) < rankOf(gameCall(X)) && (r = R(c, `${T(X)}に${maj ? '4' : '6'}枚以上のサポートがあり、${T(shortS)}が${h.len[shortS] ? 'シングルトン' : 'ボイド'}なので${shortS === Y ? 'ジャンプキュービッド' : 'ダブルジャンプシフト'}の${callText(c)}（スプリンター）`))) return r;
+      }
+      // 1Mオープン：サポート
+      if (maj && h.len[X] >= 3) {
+        const dp = h.dp(X, 5);
+        if (h.len[X] >= 4) {
+          if (dp >= 11 && (r = R(cue, `${T(X)}に4枚以上のサポートがあり、11点以上（ダミーポイント${fmt(dp)}点）なのでキュービッド（${callText(cue)}）`))) return r;
+          if (dp >= 7) {
+            const fj = SUITS.filter(s => s !== X && s !== Y).map(s => jump(s, seq, opp, 1)).filter(c => c && rankOf(c) <= rankOf('3' + X)).sort((a, b) => rankOf(a) - rankOf(b))[0];
+            if (fj && (r = R(fj, `${T(X)}に4枚以上のサポートがあり、ダミーポイント${fmt(dp)}点（7〜10点）なので、3${SYM[X]}以下のジャンプしたニュースート（${callText(fj)}）`))) return r;
+            if ((r = R(cheap(X, seq, opp), `${T(X)}に4枚以上のサポートがあり7〜10点。ジャンプできるニュースートがないのでレイズ`))) return r;
+          }
+          if (dp >= 3 && (r = R('3' + X, `${T(X)}に4枚以上のサポートがあり、6点まで（ダミーポイント${fmt(dp)}点）なので3${SYM[X]}（プリエンプティブ・レイズ）`))) return r;
+        } else {
+          if (dp >= 10.5 && (r = R(cue, `${T(X)}に3枚サポートがあり、インビテーション以上（ダミーポイント${fmt(dp)}点）なのでキュービッド（${callText(cue)}）。メジャーのサポートは必ずキュービッドで伝える`))) return r;
+          if (dp >= 6 && levelOf(cheap(X, seq, opp)) <= 3 && (r = R(cheap(X, seq, opp), `${T(X)}に3枚サポートがあり、6〜10点（ダミーポイント${fmt(dp)}点）なのでシングルレイズ`))) return r;
+        }
+      }
+      // アンビッドのメジャー
+      if (U.length === 1) {
+        const M = U[0], c = cheap(M, seq, opp);
+        if (!maj && opp.call === '1H' && M === 'S') {
+          if (h.len.S >= 5 && v >= 6 && (r = R(c, 'スペード5枚以上なので1♠（1♥のオーバーコールに対しては、1♠＝5枚以上・ダブル＝ちょうど4枚）'))) return r;
+          if (h.len.S === 4 && v >= minX && (r = R('X', 'スペードちょうど4枚なのでダブル（1♥のオーバーコールに対しては、1♠＝5枚以上・ダブル＝ちょうど4枚）'))) return r;
+        } else if (h.len[M] >= 4) {
+          if (h.len[M] >= 5 && v >= 10.5 && levelOf(c) === 2 && (r = R(c, `${T(M)}5枚以上でインビテーション以上なので、ノンジャンプの${callText(c)}`))) return r;
+          if (h.len[M] >= 5 && v >= 13 && levelOf(c) === 3 && (r = R(c, `${T(M)}5枚以上でゲームフォーシングなので、ノンジャンプの${callText(c)}`))) return r;
+          // マイナーのオープン：5枚以上のメジャーと4枚以上のサポートでインビ以上ならジャンプしたニュースート
+          if (!maj && h.len[X] >= 4 && h.len[M] >= 5 && v >= 10.5) { const j = jump(M, seq, opp, 1); if (j && rankOf(j) < rankOf('5' + X) && (r = R(j, `${T(M)}5枚以上・${T(X)}4枚以上のサポートで${rankOf(j) > rankOf('3' + X) ? 'ゲームフォーシング' : 'インビテーション以上'}なのでジャンプしたニュースート（${callText(j)}）`))) return r; }
+          if (v >= minX && (r = R('X', `${T(M)}4枚以上なのでダブル（ネガティブ・ダブル）`))) return r;
+        }
+      } else if (U.length === 2) {
+        const H = h.len.H, S = h.len.S;
+        const lo = M => levelOf(cheap(M, seq, opp)) === 1;
+        if (H >= 4 && S >= 4 && v >= minX) {
+          const L5 = H >= 5 && H >= S ? 'H' : S >= 5 ? 'S' : null;
+          if (L5 && lo(L5) && (r = R(cheap(L5, seq, opp), `メジャーの${H}-${S}。長い${T(L5)}から1の代でビッド（あとでもう一方を示す）`))) return r;
+          if ((r = R('X', '両メジャー4枚以上なのでダブル'))) return r;
+        }
+        const one = MAJ.filter(M => h.len[M] >= 4).sort((a, b) => h.len[b] - h.len[a])[0];
+        if (one && lo(one) && v >= 6 && (r = R(cheap(one, seq, opp), `${T(one)}4枚以上なので1${SYM[one]}`))) return r;
+        if (one && h.len[one] >= 5 && v >= 10.5 && levelOf(cheap(one, seq, opp)) === 2 && (r = R(cheap(one, seq, opp), `${T(one)}5枚以上でインビテーション以上なので${callText(cheap(one, seq, opp))}`))) return r;
+        // 1の代でメジャーを言えない（2の代以上のオーバーコール）：4枚メジャーが1つでもダブル
+        if (one && !lo(one) && v >= minX && (r = R('X', `${T(one)}4枚以上（1の代では言えない）なのでダブル`))) return r;
+      } else {
+        // アンビッドのメジャーがない（1♠-(2♥) など）：ダブル＝マイナー4-4以上の8点以上、またはストッパーがなく5枚スートのないインビ以上
+        if (h.len.C >= 4 && h.len.D >= 4 && v >= 8 && (r = R('X', 'アンビッドのメジャーがなく、マイナー4-4以上・8点以上なのでダブル'))) return r;
+        if (v >= 10.5 && !stop && !SUITS.some(s => s !== Y && h.len[s] >= 5) && !(maj && h.len[X] >= 3) && (r = R('X', `${T(Y)}のストッパーがなく5枚スートもないインビテーション以上なので、まずダブル`))) return r;
+      }
+      // マイナーのオープン：サポート
+      if (!maj && h.len[X] >= 4) {
+        if (v >= 10.5) {
+          const Z = SUITS.filter(s => s !== X && s !== Y && h.len[s] >= 5).sort((a, b) => h.len[b] - h.len[a])[0];
+          if (Z) { const j = jump(Z, seq, opp, 1); if (j && rankOf(j) < rankOf('5' + X) && (r = R(j, `${T(Z)}5枚以上・${T(X)}4枚以上のサポートで${rankOf(j) > rankOf('3' + X) ? 'ゲームフォーシング' : 'インビテーション以上'}なのでジャンプしたニュースート（${callText(j)}）`))) return r; }
+          if ((r = R(cue, `${T(X)}に4枚以上のサポートがあり、インビテーション以上なのでキュービッド（${callText(cue)}。ストッパーかスラムの可能性を探る）`))) return r;
+        }
+        if (v >= 6 && (r = R(cheap(X, seq, opp), `${T(X)}に4枚以上のサポートがあり、6〜10点なのでシングルレイズ（インバーテッドは使わない）`))) return r;
+      }
+      // ニュースート（5枚以上）とNT
+      const noUM = U.every(M => h.len[M] < 4);
+      const unbal = SUITS.some(s => h.len[s] >= 6) || SUITS.filter(s => h.len[s] >= 5).length >= 2 || SUITS.some(s => h.len[s] <= 1);
+      const newSuit = () => {
+        const cands = SUITS.filter(s => s !== X && s !== Y && h.len[s] >= 5 && (!U.includes(s) || h.len[s] >= 5)).sort((a, b) => h.len[b] - h.len[a] || (isMaj(b) ? 1 : 0) - (isMaj(a) ? 1 : 0));
+        for (const Z of cands) {
+          const c = cheap(Z, seq, opp), lv = levelOf(c);
+          if (lv === 2 && v >= 10.5 && (noUM || U.includes(Z))) return R(c, `${T(Z)}5枚以上でインビテーション以上なので、ノンジャンプの${callText(c)}（ダブルで示せるメジャーはない）`);
+          if (lv === 3 && v >= 13) return R(c, `${T(Z)}5枚以上でゲームフォーシングなので、ノンジャンプの${callText(c)}`);
+        }
+        return null;
+      };
+      const nt = () => {
+        if (!noUM) return null;
+        if (v >= 13 && stop) return R('3N', `${T(Y)}のストッパーがあり13〜15点なので3NT`);
+        if (v >= 11 && v < 13 && stop) return R('2N', `${T(Y)}のストッパーがあり11〜12点なので2NT`);
+        if (v >= 8 && v < 11 && ok('1N', seq, opp)) return R('1N', `8〜10点なので1NT${stop ? '' : '（ストッパーがなくても点数があればビッドする）'}`);
+        return null;
+      };
+      if (unbal) { if ((r = newSuit()) || (r = nt())) return r; } else { if ((r = nt()) || (r = newSuit())) return r; }
+      if (v >= 13 && (r = R(cue, `ゲームの強さがあるが適当なビッドがないのでキュービッド（${callText(cue)}）`))) return r;
+      return { call: 'P', why: '介入されて、ビッドできる形・強さがないのでパス' };
+    }
+
+    // ---------- オープナーのリビッド ----------
+    function opener(h, seq, opp) {
+      const X = seq[0][1], Y = opp.s, r1 = seq[1], v = h.adj, maj = isMaj(X);
+      const U = unbid(X, Y), stop = h.stopper(Y);
+      const R = (call, why) => call && ok(call, seq, opp) ? { call, why } : null;
+      const P = why => ({ call: 'P', why });
+      const ntMin = h.balanced && v < 15 && stop;
+      let r;
+      if (r1 === 'P') return P('パートナーはパス。リオープンはしない');
+      if (r1 === 'X') {
+        if (U.length) {
+          const Ms = U.filter(M => h.len[M] >= 4).sort((a, b) => h.len[b] - h.len[a] || (a === 'H' ? -1 : 1));
+          if (Ms.length) {
+            const M = Ms[0], dp = h.dp(M, 4), c = cheap(M, seq, opp);
+            // 2の代以上のオーバーコールに両メジャーが残っているときのダブルは、どちらか一方の4枚かもしれないのでジャンプしない
+            const sure = !(U.length === 2 && levelOf(opp.call) >= 2);
+            const call = !sure ? c : dp >= 18 ? '4' + M : dp >= 15 ? (Math.min(levelOf(c) + 1, 4)) + M : c;
+            if ((r = R(call, `パートナーのダブルは${T(M)}4枚以上。${T(M)}4枚でフィット（ダミーポイント${fmt(dp)}点）なので${callText(call)}`))) return r;
+          }
+          if (h.balanced && stop && v >= 18 && (r = R(jump('N', seq, opp, 1).replace(/^[4-7]/, '3'), `${T(Y)}のストッパーがあるバランスハンド18〜19点なのでジャンプのNT`))) return r;
+          if (ntMin && levelOf(cheap('N', seq, opp)) <= 2 && (r = R(cheap('N', seq, opp), `${T(Y)}のストッパーがあるバランスハンドの最低点なので${callText(cheap('N', seq, opp))}`))) return r;
+        } else {
+          if (stop) return R(v >= 15 ? '3N' : cheap('N', seq, opp), `${T(Y)}のストッパーがあるので${v >= 15 ? '3NT' : callText(cheap('N', seq, opp))}`) || P('パス');
+          if (h.len[X] >= 6 && v >= 15 && (r = R(jump(X, seq, opp, 1), `${T(X)}6枚以上で強いのでジャンプ`))) return r;
+          const m = ['C', 'D'].filter(s => s !== X && h.len[s] >= 4).sort((a, b) => h.len[b] - h.len[a])[0];
+          if (m && (r = R(cheap(m, seq, opp), `パートナーはマイナー4-4以上が多い。${T(m)}4枚以上なので${callText(cheap(m, seq, opp))}`))) return r;
+          return R(cheap(X, seq, opp), `${T(Y)}のストッパーがないので${T(X)}をリビッド`) || P('パス');
+        }
+        if (v >= 15 && stop && (r = R('3N', `${T(Y)}のストッパーがあり強い（${fmt(v)}点）ので3NT`))) return r;
+        if (v >= 18 && h.len[X] >= 6 && (r = R(maj ? '4' + X : '5' + X, `${T(X)}6枚以上で18点以上なのでゲーム`))) return r;
+        if (h.len[X] >= 6 && (r = R(v >= 15.5 ? jump(X, seq, opp, 1) : cheap(X, seq, opp), `${T(X)}6枚以上なので${T(X)}をリビッド`))) return r;
+        const s2 = SUITS.filter(s => s !== X && s !== Y && !U.includes(s) && h.len[s] >= 4).map(s => cheap(s, seq, opp)).filter(c => c && levelOf(c) <= 2)[0];
+        if (s2 && (r = R(s2, `4枚以上の${T(s2[1])}を${callText(s2)}で示す`))) return r;
+        return R(cheap(X, seq, opp), `ほかに適当なビッドがないので${T(X)}をリビッド`) || P('パス');
+      }
+      const rs = r1[1], rl = levelOf(r1);
+      // NTの応答
+      if (r1 === '1N') { if (v >= 17 && stop) return R('3N', '1NT（8〜10点）に対してゲームの点数なので3NT'); if (v >= 15) return R('2N', '1NT（8〜10点）に対して強いので2NTで招待'); return h.len[X] >= 6 ? R(cheap(X, seq, opp), `${T(X)}6枚以上なのでリビッド`) || P('パス') : P('1NT（8〜10点）でゲームの可能性が低いのでパス'); }
+      if (r1 === '2N') return v >= 13.5 ? R('3N', '2NT（11〜12点）の招待を受けて3NT') || P('パス') : P('2NT（11〜12点）の招待を断ってパス');
+      if (r1 === '3N') return P('パートナーがゲームを決めたのでパス');
+      // レイズ
+      if (rs === X) {
+        const dp = h.dp(X, maj ? 3 : 4);
+        if (maj && rl === 3 && seq[1] === '3' + X && cheap(X, [seq[0]], opp) !== '3' + X) return dp >= 19 ? R('4' + X, 'プリエンプティブ・レイズだがこちらが非常に強いのでゲーム') || P('パス') : P('パートナーはプリエンプティブ・レイズ（6点まで）なのでパス');
+        if (maj) return dp >= 17 ? R('4' + X, `シングルレイズ（6〜10点）に対して17点以上（ダミーポイント${fmt(dp)}点）なのでゲーム`) || P('パス') : P('シングルレイズ（6〜10点）に対してゲームの点数がないのでパス');
+        if (v >= 18) return stop ? R('3N', 'シングルレイズに対して18点以上でストッパーがあるので3NT') || P('パス') : R('5' + X, 'シングルレイズに対して18点以上なのでゲーム') || P('パス');
+        return P('シングルレイズ（6〜10点）に対してゲームの点数がないのでパス');
+      }
+      // キュービッド
+      if (rs === Y && r1 === cheap(Y, [seq[0]], opp)) {
+        if (maj) {
+          const dp = h.dp(X, 3);
+          if (dp + 10.5 >= 31 && ctlOf(h) >= 5) { for (let rr = rankOf('3' + X) + 1; rr < rankOf('4' + X); rr++) { const s = STRAINS[rr % 5], c = (Math.floor(rr / 5) + 1) + s; if (s !== 'N' && s !== X && /[AK]/.test(h.hand[s]) && (r = R(c, `キュービッド（${T(X)}3枚以上のインビ以上）に対してスラムの可能性があるので、3${SYM[X]}より高い${callText(c)}でコントロール紹介`))) return r; } }
+          if (dp >= 15) return R('4' + X, `キュービッド（インビ以上）に対して招待に乗る（ダミーポイント${fmt(dp)}点）ので4${SYM[X]}`) || R('5' + X, 'ゲーム') || P('パス');
+          if (dp >= 13.5) { const ri = SUITS.filter(s => s !== X).map(s => cheap(s, seq, opp)).filter(c => c && rankOf(c) < rankOf('3' + X)).sort((a, b) => rankOf(a) - rankOf(b))[0]; if (ri && (r = R(ri, `ゲームするか微妙なので、3${SYM[X]}以下のニュースート（${callText(ri)}）でリインビテーション`))) return r; }
+          return R('3' + X, `キュービッドに対して弱いので3${SYM[X]}（サインオフ）`) || R('4' + X, `キュービッドが4の代なので4${SYM[X]}`) || P('パス');
+        }
+        if (stop) return R(v >= 15 ? '3N' : cheap('N', seq, opp), `${T(Y)}のストッパーがあるので${v >= 15 ? '3NT' : 'NT'}`) || P('パス');
+        return R(v >= 15 ? '4' + X : cheap(X, seq, opp), `${T(Y)}のストッパーがないので${T(X)}に戻る`) || R(cheap(X, seq, opp), `${T(X)}に戻る`) || P('パス');
+      }
+      // ジャンプしたニュースート（1M：4枚以上サポート7〜10点／1m：5枚以上＆4枚以上サポートのインビ以上）
+      if (rl >= 2 && r1 === jump(rs, [seq[0]], opp, 1) && rs !== X && rs !== Y) {
+        if (maj) return h.dp(X, 4) >= 15 ? R('4' + X, `パートナーは${T(X)}4枚以上のサポートで7〜10点。こちらは15点以上なので4${SYM[X]}`) || P('パス') : R('3' + X, `パートナーは${T(X)}4枚以上のサポートで7〜10点。最低点なので3${SYM[X]}`) || P('パス');
+        const gf = rankOf(r1) > rankOf('3' + X);
+        if (isMaj(rs) && h.len[rs] >= 3) return (gf || v >= 14) ? R('4' + rs, `パートナーの${T(rs)}5枚以上にフィットしたので4${SYM[rs]}`) || R('5' + X, 'ゲーム') || P('パス') : R(cheap(rs, seq, opp), `パートナーの${T(rs)}にフィットしたが最低点`) || P('パス');
+        if (gf || v >= 14) return (stop && R('3N', `${T(Y)}のストッパーがあるので3NT`)) || R('5' + X, `${T(X)}のフィットでゲーム`) || P('パス');
+        return R(cheap(X, seq, opp), `最低点なので${T(X)}に戻る`) || P('パス');
+      }
+      // 2の代のノンジャンプのニュースート（5枚以上のインビ以上）
+      if (rl === 2 && r1 === cheap(rs, [seq[0]], opp) && rs !== X && rs !== Y) {
+        const sup = h.len[rs] >= 3, game = isMaj(rs) ? '4' + rs : (stop ? '3N' : '5' + rs);
+        if (sup) {
+          const dp = h.dp(rs, 5);
+          if (dp >= 15) return R(cheap(Y, seq, opp), `パートナーの${T(rs)}に3枚サポートがあり、余裕を持って招待に乗るのでキュービッド（GF）`) || R(game, 'ゲーム');
+          if (dp >= 13.5) return R(game, `パートナーの${T(rs)}に3枚サポートがあり、招待にギリギリ乗るのでゲーム`) || P('パス');
+          return R('3' + rs, `パートナーの${T(rs)}に3枚サポートがあるが弱いので3の代にレイズ`) || P('パス');
+        }
+        if (stop && h.balanced) return R(v >= 15 ? '3N' : cheap('N', seq, opp), `${T(Y)}のストッパーがあるので${v >= 15 ? '3NT' : '2NT'}`) || P('パス');
+        if (h.len[X] >= 6) return R(v >= 15 ? jump(X, seq, opp, 1) : cheap(X, seq, opp), `${T(X)}6枚以上なのでリビッド`) || P('パス');
+        if (v >= 15) return R(cheap(Y, seq, opp), '強い手なのでキュービッド（GF）') || P('パス');
+        return R(cheap(X, seq, opp), `${T(X)}をリビッド`) || P('パス');
+      }
+      // 3の代のノンジャンプのニュースート（5枚以上GF）
+      if (rl === 3 && r1 === cheap(rs, [seq[0]], opp) && rs !== X && rs !== Y) {
+        if (isMaj(rs) && h.len[rs] >= 3) return R('4' + rs, `パートナーの${T(rs)}5枚以上にフィットしたので4${SYM[rs]}`);
+        if (stop) return R('3N', `${T(Y)}のストッパーがあるので3NT`);
+        if (maj && h.len[X] >= 6) return R(cheap(X, seq, opp), `${T(X)}6枚以上なのでリビッド`);
+        if (h.len[rs] >= 3) return R(rankOf('4' + rs) > rankOf(maxBid(seq, opp)) ? '4' + rs : '5' + rs, `パートナーの${T(rs)}にフィット`);
+        return R(cheap(X, seq, opp), `${T(X)}をリビッド`);
+      }
+      return null;
+    }
+
+    // ---------- レスポンダーの2回目（主な流れ） ----------
+    function resp2(h, seq, opp, ctx) {
+      if (ctx && ctx.slam.active) return null; // スラムの仕組みで決める
+      const X = seq[0][1], Y = opp.s, r1 = seq[1], o2 = seq[2], v = h.adj, maj = isMaj(X);
+      const R = (call, why) => call && ok(call, seq, opp) ? { call, why } : null;
+      const P = why => ({ call: 'P', why });
+      const stop = h.stopper(Y), U = unbid(X, Y);
+      // 自分のキュービッド（1M）の後
+      if (r1 === cheap(Y, [seq[0]], opp) && r1[1] === Y && maj) {
+        const dp = h.dp(X, 5);
+        if (o2 === '3' + X) return dp >= 13 ? R('4' + X, 'オープナーは弱いが、こちらはゲームフォーシングの強さなので4' + SYM[X]) || P('パス') : P('オープナーは弱くサインオフしたのでパス');
+        if (isBid(o2) && rankOf(o2) < rankOf('3' + X)) return dp >= 12 ? R('4' + X, `オープナーのリインビテーション。こちらは上の方（ダミーポイント${fmt(dp)}点）なので4${SYM[X]}`) || P('パス') : R('3' + X, `オープナーのリインビテーション。こちらは下の方なので3${SYM[X]}`) || P('パス');
+        if (o2 === '4' + X) return P('オープナーが招待に乗ったのでパス');
+        return null; // コントロール紹介 → スラムの仕組み
+      }
+      // 自分のキュービッド（1m）の後
+      if (r1 === cheap(Y, [seq[0]], opp) && r1[1] === Y && !maj) {
+        if (o2[1] === 'N') return (o2 === '2N' && v >= 13) ? R('3N', 'ゲームの強さがあるので3NT') || P('パス') : P('オープナーがNTを選んだのでパス');
+        if (o2[1] === X) { if (stop && ok('3N', seq, opp)) return R('3N', `${T(Y)}のストッパーがこちらにあるので3NT`); return v >= 13 ? R('5' + X, `ゲームの強さがあるので5${SYM[X]}`) || P('パス') : P('ゲームの強さがないのでパス'); }
+        return null;
+      }
+      // 2の代のニュースートの後
+      if (levelOf(r1) === 2 && r1[1] !== X && r1[1] !== Y && r1 === cheap(r1[1], [seq[0]], opp)) {
+        const Z = r1[1];
+        if (o2 === '3' + Z) return v >= 13 ? R(isMaj(Z) ? '4' + Z : (stop ? '3N' : '5' + Z), 'オープナーのレイズ（弱い）だが、こちらはゲームの強さがあるのでゲーム') || P('パス') : P('オープナーは弱いのでパス');
+        if (o2 === cheap(Y, seq.slice(0, 2), opp) && o2[1] === Y) return R(stop ? '3N' : isMaj(Z) ? '4' + Z : '5' + Z, `オープナーのキュービッド（GF）。${stop ? `${T(Y)}のストッパーがあるので3NT` : 'ストッパーがないのでスートのゲーム'}`);
+        if (isBid(o2) && levelOf(o2) >= gameLevel(o2[1])) return P('オープナーがゲームを決めたのでパス');
+        if (o2[1] === 'N') return (o2 === '2N' && v >= 13) ? R('3N', 'ゲームの強さがあるので3NT') || P('パス') : P('パス');
+        if (o2[1] === X && h.len[X] >= 2 && v >= 13) return R(maj ? '4' + X : stop ? '3N' : '5' + X, 'ゲームの強さがあるのでゲーム') || P('パス');
+        return v >= 13 ? R(stop ? '3N' : (isMaj(Z) && h.len[Z] >= 6 ? '4' + Z : null), 'ゲームの強さがあるので3NT') || P('パス') : P('インビテーションの強さで、オープナーが招待に乗らなかったのでパス');
+      }
+      // ダブルの後
+      if (r1 === 'X' && isBid(o2)) {
+        const M = o2[1];
+        // オープナーの強さの下限：ジャンプ＝15.5点、ジャンプのNT＝18点、それ以外＝11.5点
+        const jumpedO = o2 !== cheap(M, seq.slice(0, 2), opp);
+        const pMin = M === 'N' ? (jumpedO ? 18 : 11.5) : jumpedO ? 15.5 : 11.5;
+        // 2の代以上で両メジャーが残っていたダブル：オープナーの選んだメジャーがなければ、もう一方の5枚以上を示す
+        const other = U.find(x => x !== M);
+        if (U.length === 2 && U.includes(M) && h.len[M] < 4 && other && h.len[other] >= 5) {
+          if (v + pMin >= 25 || h.len[other] >= 6) return R('4' + other, `オープナーの${T(M)}にはフィットしない。${T(other)}${h.len[other]}枚でゲーム`) || P('パス');
+          return R(cheap(other, seq, opp), `オープナーの${T(M)}にはフィットしない。${T(other)}5枚以上を示す`) || P('パス');
+        }
+        if (!U.includes(M) && M !== 'N' && levelOf(o2) < gameLevel(M) && v + pMin >= 25) {
+          if (isMaj(M) && h.len[M] >= 2) return R('4' + M, `オープナー（${pMin}点以上）とでゲームの点数があり、${T(M)}にフィットするので4${SYM[M]}`) || P('パス');
+          if (stop) return R('3N', `オープナー（${pMin}点以上）とでゲームの点数があり、${T(Y)}のストッパーがあるので3NT`) || R('5' + M, 'ゲーム') || P('パス');
+          if (h.len[M] >= 3) return R('5' + M, `ゲームの点数があるので5${SYM[M]}`) || P('パス');
+        }
+        if (U.includes(M) && h.len[M] >= 4) {
+          const dp = h.dp(M, 4), lv = levelOf(o2), jumped = o2 !== cheap(M, seq.slice(0, 2), opp);
+          if (lv >= 4) return P('オープナーがゲームを決めたのでパス');
+          if (jumped) return dp >= 8 ? R('4' + M, `オープナーのジャンプレイズ（15〜17点）に対して8点以上なので4${SYM[M]}`) || P('パス') : P('オープナーのジャンプレイズの招待を断ってパス');
+          if (dp >= 13) return R('4' + M, `${T(M)}のフィットでゲームの強さがあるので4${SYM[M]}`) || P('パス');
+          if (dp >= 11 && lv <= 2) return R('3' + M, `${T(M)}のフィットで招待の強さなので3${SYM[M]}`) || P('パス');
+          return P(`${T(M)}のフィットだがゲームの強さがないのでパス`);
+        }
+        if (M === 'N') { if (levelOf(o2) >= 3) return P('オープナーがゲームを決めたのでパス'); return v >= 13 ? R('3N', 'ゲームの強さがあるので3NT') || P('パス') : (v >= 11 ? R('2N', '招待の強さなので2NT') || P('パス') : P('パス')); }
+        if (v >= 13) return R(stop ? '3N' : (h.len[M] >= 3 && levelOf(o2) < gameLevel(M) ? gameCall(M) : null), 'ゲームの強さがあるのでゲーム') || null;
+        if (v >= 11 && h.len[M] >= 3 && levelOf(o2) === 2) return R('3' + M, `${T(M)}のサポートがあり招待の強さなので3${SYM[M]}`) || P('パス');
+        return P('ゲームの強さがないのでパス');
+      }
+      // NTの応答の後
+      if (/^[12]N$/.test(r1)) {
+        if (o2 === '2N') return v >= 9.5 ? R('3N', '招待の上の方なので3NT') || P('パス') : P('招待の下の方なのでパス');
+        if (o2 === '3N') return P('オープナーがゲームを決めたのでパス');
+        return P('パス');
+      }
+      // シングルレイズ・ジャンプしたニュースートの後など
+      if (isBid(o2) && levelOf(o2) >= gameLevel(o2[1])) return P('オープナーがゲームを決めたのでパス');
+      return null;
+    }
+
+    function pick(h, seq, opp, ctx) {
+      if (seq.length === 1) return resp(h, seq, opp);
+      if (seq.length === 2) return opener(h, seq, opp);
+      if (seq.length === 3) return resp2(h, seq, opp, ctx);
+      return null;
+    }
+
+    // パートナーから見た意味
+    function interp(before, call, opp) {
+      const X = before[0][1], Y = opp.s, maj = isMaj(X), U = unbid(X, Y), n = before.length;
+      if (n === 1) {
+        if (call === 'X') {
+          if (U.length === 1) return { shows: { [U[0]]: [4, 13], hcp: [minDbl(opp), 37] }, force: 1 };
+          if (U.length === 2) return levelOf(opp.call) === 1 ? { shows: { H: [4, 13], S: [4, 13], hcp: [minDbl(opp), 37] }, force: 1 } : { shows: { hcp: [minDbl(opp), 37] }, force: 1 };
+          return { shows: { hcp: [8, 37] }, force: 1 };
+        }
+        if (!isBid(call)) return { shows: { hcp: [0, 9] } };
+        const s = call[1], lv = levelOf(call), ch = cheap(s, before, opp);
+        if (call === '1N') return { shows: { hcp: [8, 10.99] } };
+        if (call === '2N') return { shows: { hcp: [11, 12.99], stop: [Y] } };
+        if (call === '3N') return { shows: { hcp: [13, 15.99], stop: [Y] } };
+        if (s === X) {
+          if (maj && call === '3' + X && ch !== '3' + X) return { shows: { [X]: [4, 13], hcp: [3, 6.99] } };
+          return { shows: { [X]: [maj ? 3 : 4, 13], hcp: [6, 10.99] } };
+        }
+        if (s === Y) {
+          if (call === ch) return { shows: { [X]: [maj ? 3 : 4, 13], hcp: [10.5, 37] }, force: 1 };
+          return { shows: { [X]: [maj ? 4 : 6, 13], [Y]: [0, 1], agree: X, ctrl: [Y], interest: true }, force: 'GF' }; // ジャンプキュービッド＝スプリンター
+        }
+        if (call === ch) {
+          if (lv === 1) return { shows: { [s]: [Y === 'H' && s === 'S' && !maj ? 5 : 4, 13], hcp: [6, 37] }, force: 1 };
+          if (lv === 2) return { shows: { [s]: [5, 13], hcp: [10.5, 37] }, force: 1 };
+          return { shows: { [s]: [5, 13], hcp: [13, 37] }, force: 'GF' };
+        }
+        if (levelOf(ch) + 1 === lv) {
+          if (maj) return { shows: { [X]: [4, 13], hcp: [7, 10.99] }, force: 1 };
+          return { shows: { [s]: [5, 13], [X]: [4, 13], hcp: [10.5, 37] }, force: rankOf(call) > rankOf('3' + X) ? 'GF' : 1 };
+        }
+        if (levelOf(ch) + 2 === lv) return { shows: { [X]: [maj ? 4 : 6, 13], [s]: [0, 1], agree: X, ctrl: [s], interest: true }, force: 'GF' };
+        return { shows: {} };
+      }
+      if (n === 2) {
+        const r1 = before[1];
+        // キュービッド（1M）の後の、3Mより高いニュースート＝コントロール紹介
+        if (maj && r1[1] === Y && r1 === cheap(Y, [before[0]], opp) && isBid(call) && call[1] !== 'N' && call[1] !== X && rankOf(call) > rankOf('3' + X) && rankOf(call) < rankOf('4' + X))
+          return { shows: { agree: X, interest: true, ctrl: [call[1]], cue: true }, force: 'GF' };
+        if (r1 === 'X' && isBid(call) && U.includes(call[1])) {
+          const jumped = call !== cheap(call[1], before, opp);
+          return { shows: { [call[1]]: [4, 5], hcp: levelOf(call) >= 4 ? [18, 21] : jumped ? [15, 17.99] : [11.5, 14.99] } };
+        }
+        return null;
+      }
+      if (n === 3 && isBid(call)) {
+        // レスポンダーの2回目：3の代のレイズ・2NT＝招待、ゲーム＝ゲームの点数
+        if (call === '2N' || (levelOf(call) === 3 && call[1] !== 'N' && call[1] === before[2][1])) return { shows: { hcp: [11, 12.99] } };
+        return null;
+      }
+      return null;
+    }
+    return { pick, interp, ok };
   })();
 
   // NTの後の点数：シングルトンのKは1点低く数える（NTでは働きにくい。J942.J87.K.K7653 は1NTにパス）
@@ -1856,6 +2193,21 @@
     if (n >= 4 && auction.some(c => c !== 'P') && auction.slice(-3).every(c => c === 'P')) return true;
     return false;
   }
+  // 実際のオークション全体で合法か（敵のビッドも含める。ダブルは直前の敵のビッドに対してだけ）
+  function legalInAuction(call, auction, dealer) {
+    if (call === 'P') return true;
+    const d = SEATS.indexOf(dealer);
+    const bids = auction.filter(isBid);
+    const lb = bids.length ? bids[bids.length - 1] : null;
+    if (call === 'X') {
+      let i = auction.length - 1; while (i >= 0 && auction[i] === 'P') i--;
+      if (i < 0 || !isBid(auction[i])) return false;
+      const seatOf = j => SEATS[(d + j) % 4], me = seatOf(auction.length);
+      const sameSide = (a, b) => ((SEATS.indexOf(a) - SEATS.indexOf(b)) % 2 === 0);
+      return !sameSide(seatOf(i), me);
+    }
+    return isBid(call) && (!lb || rankOf(call) > rankOf(lb));
+  }
   function lastBid(seq) { for (let i = seq.length - 1; i >= 0; i--) if (isBid(seq[i])) return seq[i]; return null; }
   function legal(call, seq) {
     if (call === 'P') return true;
@@ -1866,6 +2218,10 @@
 
   // ルールで「このビッドは何を意味するか」を調べる
   function interpret(seqBefore, call, ctx) {
+    if (COMP_OPP && seqBefore.length >= 1) {
+      const x = COMP.interp(seqBefore, call, COMP_OPP);
+      if (x) return { shows: x.shows || null, force: x.force || 0, rule: null };
+    }
     if (seqBefore[0] === '1N') {
       const x = NT1.interp(seqBefore.slice(1), call);
       if (x) return { shows: x.shows || null, force: x.force || 0, rule: null };
@@ -2302,6 +2658,7 @@
     return null;
   }
 
+  let COMP_OPP = null; // buildContext中の解釈で使う（敵のオーバーコール）
   function chooseCall(hand, auction, dealer, examples) {
     const h = evaluate(hand);
     const { seq, seqSeats, passedSeats } = analyze(auction, dealer);
@@ -2309,6 +2666,7 @@
     const mySeat = SEATS[(d + auction.length) % 4];
     if (mySeat === 'E' || mySeat === 'W') return { call: 'P', why: '相手はパス（今は競り合いなし）', source: 'rule' };
     // 相手のビッドがあるとき：今は「敵のオープンの直後の介入（オーバーコール）」だけに対応
+    let compOpp = null; // 敵のオーバーコールの後（3番手・オープナーのリビッド）
     let ntOC = 0; // 1NTオーバーコールの後：1NTオープンの仕組みを、点数を1点ずらして使う
     {
       const oppIdx = auction.findIndex((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'E' || SEATS[(d + i) % 4] === 'W'));
@@ -2317,7 +2675,12 @@
         && auction.slice(0, oppIdx).every(c => c === 'P')
         && auction.every((c, i) => i <= oppIdx + 1 || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S');
       if (isOC && auction.length > oppIdx + 2) ntOC = SEATS[(d + oppIdx + 1) % 4] === mySeat ? -1 : 1;
-      if (oppIdx >= 0 && !ntOC) {
+      // 自分たちの1の代のスートのオープン → 敵のナチュラルなオーバーコール（スート） → その後は敵がずっとパス
+      const ourIdx = auction.findIndex((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'));
+      if (ourIdx >= 0 && oppIdx === ourIdx + 1 && /^1[CDHS]$/.test(auction[ourIdx]) && isBid(auction[oppIdx]) && auction[oppIdx][1] !== 'N'
+        && auction.every((c, i) => i === oppIdx || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'))
+        compOpp = { s: auction[oppIdx][1], call: auction[oppIdx] };
+      if (oppIdx >= 0 && !ntOC && !compOpp) {
         const ourBid = auction.some((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'));
         const direct = !ourBid && oppIdx === auction.length - 1 && auction.slice(0, oppIdx).every(c => c === 'P');
         if (direct && api.overcall) {
@@ -2332,51 +2695,84 @@
     const passedBeforeMe = false; // 将来：パス済みハンドを区別する
     const respSeat = seqSeats.length ? (seqSeats[0] === 'N' ? 'S' : 'N') : null;
     const respPassed = !!respSeat && passedSeats.includes(respSeat);
-    const ctx = buildContext(seq, respPassed);
+    COMP_OPP = compOpp;
+    let ctx;
+    try { ctx = buildContext(seq, respPassed); } finally { COMP_OPP = null; }
     ctx.pos = seq.length ? null : auction.length;   // オープンの何番手か（0〜3）
     ctx.respPassed = respPassed;
     ctx.iPassed = passedSeats.includes(mySeat);
 
-    let res = null;
-    // 1NTオープン（・オーバーコール）の後の仕組み（スラムの仕組みより先に見る）
-    if (seq[0] === '1N') {
-      let x = null;
-      try { x = NT1.pick(h, seq.slice(1), ctx, seq); } catch (e) { x = null; }
-      if (x && x.call && legal(x.call, seq)) res = { call: x.call, why: x.why, source: 'rule', ruleId: 'nt1' };
-    }
-    if (!res && ctx.slam.active) for (const r of RULES) {
-      if (!r.pre) continue;
-      const b = matchRule(r, seq);
-      if (!b) continue;
-      let x = null;
-      try { x = r.pick(h, { b, ...ctx, seq }); } catch (e) { x = null; }
-      if (x && x.call && legal(x.call, seq)) { res = { call: x.call, why: x.why, source: 'rule', ruleId: r.id }; break; }
-    }
-    if (!res && ctx.slam.active) {
-      const s = slamDecide(h, seq, ctx);
-      if (s && legal(s.call, seq)) res = { call: s.call, why: s.why, source: 'rule', ruleId: 'slam' };
-    }
-    for (const r of res ? [] : RULES) {
-      const b = matchRule(r, seq);
-      if (!b) continue;
-      if (r.dyn) {
+    // ルール表による判断（1NT後の仕組み・スラム・ルール表・汎用判断・3回目以降の見直し）
+    const pipeline = () => {
+      let res = null;
+      // 1NTオープン（・オーバーコール）の後の仕組み（スラムの仕組みより先に見る）
+      if (seq[0] === '1N') {
+        let x = null;
+        try { x = NT1.pick(h, seq.slice(1), ctx, seq); } catch (e) { x = null; }
+        if (x && x.call && legal(x.call, seq)) res = { call: x.call, why: x.why, source: 'rule', ruleId: 'nt1' };
+      }
+      if (!res && ctx.slam.active) for (const r of RULES) {
+        if (!r.pre) continue;
+        const b = matchRule(r, seq);
+        if (!b) continue;
         let x = null;
         try { x = r.pick(h, { b, ...ctx, seq }); } catch (e) { x = null; }
         if (x && x.call && legal(x.call, seq)) { res = { call: x.call, why: x.why, source: 'rule', ruleId: r.id }; break; }
-        continue;
       }
-      const call = fill(r.call, b);
-      if (!legal(call, seq)) continue;
-      if (call === 'P' && seq.length && (ctx.forcing || (ctx.gf && !reachedGame(seq)))) continue;
-      let ok = false;
-      try { ok = r.test(h, { b, ...ctx, seq }); } catch (e) { ok = false; }
-      if (ok) { res = { call, why: typeof r.why === 'function' ? r.why(h, { b, ...ctx, seq }) : r.why, source: 'rule', ruleId: r.id }; break; }
+      if (!res && ctx.slam.active) {
+        const s = slamDecide(h, seq, ctx);
+        if (s && legal(s.call, seq)) res = { call: s.call, why: s.why, source: 'rule', ruleId: 'slam' };
+      }
+      for (const r of res ? [] : RULES) {
+        const b = matchRule(r, seq);
+        if (!b) continue;
+        if (r.dyn) {
+          let x = null;
+          try { x = r.pick(h, { b, ...ctx, seq }); } catch (e) { x = null; }
+          if (x && x.call && legal(x.call, seq)) { res = { call: x.call, why: x.why, source: 'rule', ruleId: r.id }; break; }
+          continue;
+        }
+        const call = fill(r.call, b);
+        if (!legal(call, seq)) continue;
+        if (call === 'P' && seq.length && (ctx.forcing || (ctx.gf && !reachedGame(seq)))) continue;
+        let ok = false;
+        try { ok = r.test(h, { b, ...ctx, seq }); } catch (e) { ok = false; }
+        if (ok) { res = { call, why: typeof r.why === 'function' ? r.why(h, { b, ...ctx, seq }) : r.why, source: 'rule', ruleId: r.id }; break; }
+      }
+      if (!res) {
+        const f = fallback(h, seq, ctx);
+        res = { call: f.call, why: '【汎用判断】' + f.why, source: 'fallback', ruleId: null };
+      }
+      { const g = guard(h, seq, ctx, res); if (g) res = { call: g.call, why: g.why, source: 'rule', ruleId: 'guard', ruleCall: res.call, ruleWhy: res.why }; }
+      return res;
+    };
+    let res = null;
+    // 1m-(1x)-1M のように1の代のニュースートで応答した後は、フリーランの1Mレスポンスと同じ（NTは敵のスートのストッパーが必要）
+    const compFree = compOpp && seq.length >= 2 && isBid(seq[1]) && levelOf(seq[1]) === 1 && seq[1][1] !== 'N' && seq[1][1] !== compOpp.s;
+    if (compFree) {
+      const oppBid = compOpp;
+      compOpp = null;
+      const r0 = pipeline();
+      const Y = oppBid.s;
+      if (r0 && /^[12]N$/.test(r0.call) && !h.stopper(Y)) {
+        const X = seq[seq.length % 2 === 0 ? 0 : 1][1];
+        const alt = cheapest(X, seq);
+        return { call: alt, why: `${JA_SUIT[Y]}のストッパーがないのでNTではなく${callText(alt)}（ルールでは${callText(r0.call)}）`, source: 'rule', ruleId: 'comp' };
+      }
+      return r0;
     }
-    if (!res) {
-      const f = fallback(h, seq, ctx);
-      res = { call: f.call, why: '【汎用判断】' + f.why, source: 'fallback', ruleId: null };
+    if (compOpp) {
+      // 敵のオーバーコールの後：フリーランの取り決めは使わない
+      let x = null;
+      try { x = COMP.pick(h, seq, compOpp, ctx); } catch (e) { x = null; }
+      if (x && x.call && COMP.ok(x.call, seq, compOpp)) res = { call: x.call, why: x.why, source: 'rule', ruleId: 'comp' };
+      if (!res && ctx.slam.active) { const s2 = slamDecide(h, seq, ctx); if (s2 && COMP.ok(s2.call, seq, compOpp)) res = { call: s2.call, why: s2.why, source: 'rule', ruleId: 'slam' }; }
+      if (!res) { const f = fallback(h, seq, ctx); res = COMP.ok(f.call, seq, compOpp) ? { call: f.call, why: '【汎用判断】' + f.why, source: 'fallback', ruleId: null } : { call: 'P', why: '【汎用判断】パス', source: 'fallback', ruleId: null }; }
+      const g = guard(h, seq, ctx, res);
+      if (g && COMP.ok(g.call, seq, compOpp)) res = { call: g.call, why: g.why, source: 'rule', ruleId: 'guard', ruleCall: res.call, ruleWhy: res.why };
+      return res;
     }
-    { const g = guard(h, seq, ctx, res); if (g) res = { call: g.call, why: g.why, source: 'rule', ruleId: 'guard', ruleCall: res.call, ruleWhy: res.why }; }
+    res = pipeline();
     if (ntOC) res.why += '（1NTオーバーコールは16〜18点なので、1NTオープンの仕組みを点数を1点ずらして使う）';
     // あなたの回答例
     const key = seqKeyOf(seq, passedBeforeMe);
@@ -2448,13 +2844,19 @@
   }
 
   // AI同士で最後までビッドする
-  function autoAuction(hands, dealer, examples, maxCalls = 40) {
+  // opts.oppOvercall：自分たちの1の代のスートのオープンの直後に、敵がナチュラルなオーバーコール（スート）をする
+  function autoAuction(hands, dealer, examples, maxCalls = 40, opts = {}) {
     const auction = [], steps = [];
     const d = SEATS.indexOf(dealer);
     while (!isOver(auction) && auction.length < maxCalls) {
       const seat = SEATS[(d + auction.length) % 4];
       let r;
-      if (seat === 'E' || seat === 'W') r = { call: 'P', why: '相手はパス', source: 'opp' };
+      const prev = auction.length ? auction[auction.length - 1] : null;
+      const ourOpen = prev && /^1[CDHS]$/.test(prev) && auction.slice(0, -1).every(c => c === 'P');
+      if ((seat === 'E' || seat === 'W') && opts.oppOvercall && ourOpen && api.overcall) {
+        const o = api.overcall.decide(hands[seat], prev);
+        r = o && isBid(o.call) && o.call[1] !== 'N' ? { call: o.call, why: o.why, source: 'opp' } : { call: 'P', why: '相手はパス', source: 'opp' };
+      } else if (seat === 'E' || seat === 'W') r = { call: 'P', why: '相手はパス', source: 'opp' };
       else r = chooseCall(hands[seat], auction, dealer, examples);
       steps.push({ seat, ...r, index: auction.length });
       auction.push(r.call);
@@ -2464,7 +2866,7 @@
 
   const api = {
     ENGINE_VERSION, SUITS, SEATS, SYM, JA_SUIT, RULES,
-    evaluate, chooseCall, autoAuction, analyze, isOver, legal, lastBid, isBid, rankOf,
+    evaluate, chooseCall, autoAuction, analyze, isOver, legal, lastBid, isBid, rankOf, legalInAuction,
     callText, callPbn, parseCall, deal, dealToPbn, pbnToDeal, handToPbn, pbnToHand,
     exampleFeatures, seqKeyOf, buildContext, matchSeq, ntShape: (h, c) => ntShape(h, c),
   };
