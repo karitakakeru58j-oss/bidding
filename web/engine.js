@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.17.0';
+  const ENGINE_VERSION = '0.17.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -286,6 +286,7 @@
     if (h.pattern === '4441') return true;
     if (h.pattern !== '5431') return false;
     const five = SUITS.find(s => h.len[s] === 5);
+    if (h.len.S >= 4 && h.len.H >= 4) return false; // メジャーの5-4は1NTオープンしない
     return (h.top3(five) <= 1 && h.top5(five) <= 3) || (c && c.pos >= 2);
   };
   R('', '1N', (h, c) => ntShape(h, c) && between(h.adjNoLen, 15, 17), { hcp: [15, 17], ...BAL_SHOWS, S: [1, 5], H: [1, 5], D: [1, 5], C: [1, 5] },
@@ -381,6 +382,12 @@
         }
         const M5 = m5m4(h);
         if (M5) return R_(M5 === 'H' ? '2D' : '2H', `${JA_SUIT[M5]}5枚以上・マイナー4枚以上のGFなので、トランスファーしてから3マイナー`);
+        // m6枚以上のサインオフ（4枚メジャーがあってもよい。5枚メジャーは上で扱う）
+        if (h.len.H <= 4 && h.len.S <= 4 && !noM(h) && v < 8) {
+          const m = longMinor(h, 6);
+          if (m && h.len[m] >= 6) return m === 'C' ? R_('2N', 'クラブ6枚以上で弱いので、2NT（3♣を強制）から3♣でサインオフ（4枚メジャーがあってもマイナーでサインオフ）')
+            : R_('2S', 'ダイヤ6枚以上で弱いので、2♠（マイナーステイマン）から3♦でサインオフ（4枚メジャーがあってもマイナーでサインオフ）');
+        }
         if (noM(h)) {
           const C = h.len.C, D = h.len.D;
           if (C >= 4 && D >= 4 && v >= 14) return R_('2S', 'マイナーの4-4以上でスラムトライ（14点以上）なので2♠（マイナーステイマン）');
@@ -634,8 +641,8 @@
       const GF = 'GF';
       if (n === 0) {
         if (call === '2C') return { shows: {}, force: 1 };
-        if (call === '2N') return { shows: { C: [6, 13], S: [0, 3], H: [0, 3] }, force: 1 };
-        if (call === '2S') return { shows: { S: [0, 3], H: [0, 3] }, force: 1 };
+        if (call === '2N') return { shows: { C: [6, 13], S: [0, 4], H: [0, 4] }, force: 1 };
+        if (call === '2S') return { shows: { S: [0, 4], H: [0, 4] }, force: 1 };
         if (call === '3C' || call === '3D') return { shows: { [call[1]]: [6, 13], S: [0, 3], H: [0, 3], hcp: [4, 9.99] } };
         if (call === '3H' || call === '3S') return { shows: { [call === '3H' ? 'C' : 'D']: [5, 13], S: [0, 3], H: [0, 3], hcp: [13, 37] }, force: GF };
         return null;
@@ -739,7 +746,8 @@
     R(prefix, tS, h => h.len.S >= 5 && h.len.S >= h.len.H, { S: [5, 13] }, `スペード5枚以上なのでジャコビー・トランスファー（${callText(tS)}→${L}♠）`, 1);
     R(prefix, tH, h => h.len.H >= 5, { H: [5, 13] }, `ハート5枚以上なのでジャコビー・トランスファー（${callText(tH)}→${L}♥）`, 1);
     if (N2 && prefix !== '1N') R(prefix, '2N', h => between(h.hcp, inv, game - 1), { hcp: [inv, game - 1], S: [0, 3], H: [0, 3] }, `4枚メジャーがなく${inv}〜${game - 1}点なので2NTで招待${ntNote}`);
-    R(prefix, '3N', h => between(h.hcp, game, quant - 1), { hcp: [game, quant - 1], S: [0, 4], H: [0, 4] }, `メジャーのフィットを探す必要がなく、ゲームの点数（${game}点以上）があるので3NT${ntNote}`);
+    // 2NT以上（20点以上）の後は、5枚以上のスートがあれば1点少なくてもゲーム（T43.98.K8652.J62 で3NT）
+    R(prefix, '3N', h => between(h.hcp + (L === 3 && SUITS.some(s => h.len[s] >= 5) ? 1 : 0), game, quant - 1), { hcp: [game, quant - 1], S: [0, 4], H: [0, 4] }, `メジャーのフィットを探す必要がなく、ゲームの点数（${game}点以上）があるので3NT${ntNote}`);
     R(prefix, '4N', h => between(h.hcp, quant, slam - 1) && h.balanced, { hcp: [quant, slam - 1] }, `スラムの可能性があるので4NT（クオンティタティブ＝スラムへの招待）${ntNote}`);
     R(prefix, '6N', h => between(h.hcp, slam, slam + 3) && h.balanced, { hcp: [slam, slam + 3] }, `合計で33点以上あるので6NT${ntNote}`);
     R(prefix, 'P', h => h.hcp < (N2 ? inv : game), { hcp: [0, (N2 ? inv : game) - 1] }, `ゲームの可能性が低いのでパス${ntNote}`);
