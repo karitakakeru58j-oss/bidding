@@ -55,13 +55,13 @@
     }
     // 1♦オーバーコールの特例：♣のオープンに対して、ほかに5枚スートがなければ♦4枚でもビッドすることがある
     if (h.len[s] < 5) {
-      if (O === 'C' && h.len.D >= 4 && h.adj >= 8 && h.adj < 18) return { type: '1D', call: '1D', suit: 'D' };
+      if (O === 'C' && h.len.D >= 4 && h.adjNoLen >= 8 && h.adjNoLen < 18) return { type: '1D', call: '1D', suit: 'D' };
       return null;
     }
     const call = cheapest(s, open);
     const lv = Number(call[0]);
-    if (lv === 1 && (h.adj < 5.5 || h.adj >= 18)) return null;
-    if (lv === 2 && (h.adj < 7.5 || h.adj >= 18)) return null;
+    if (lv === 1 && (h.adjNoLen < 5.5 || h.adjNoLen >= 18)) return null;
+    if (lv === 2 && (h.adjNoLen < 7.5 || h.adjNoLen >= 18)) return null;
     const type = lv === 1 ? (s === 'D' ? '1D' : '1M') : (isMaj(s) ? '2M' : '2m');
     return { type, call, suit: s };
   }
@@ -265,7 +265,7 @@
       const hand = E.pbnToDeal(r.deal)[r.seat || 'S'];
       return { hand, r };
     }).filter(o => doubleShape(o.hand, o.r.open));
-    DBL = rows.length ? logistic(rows.map(o => dblX(evaluate(o.hand).adj, o.hand[o.r.open[1]].length, oppHonors(o.hand, o.r.open))), rows.map(o => (o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)) ? 1 : 0), DBL_PRIOR, 1) : DBL_PRIOR.slice();
+    DBL = rows.length ? logistic(rows.map(o => dblX(evaluate(o.hand).adjNoLen, o.hand[o.r.open[1]].length, oppHonors(o.hand, o.r.open))), rows.map(o => (o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)) ? 1 : 0), DBL_PRIOR, 1) : DBL_PRIOR.slice();
     return { n: rows.length, yes: rows.filter(o => o.r.action === 'double' || (o.r.type === 'X' && o.r.decision)).length, w: DBL.slice(),
       // 半々になる点数（敵のスートが1・2・3枚で、A以外のアナーがないとき）
       honW: DBL[3],
@@ -277,7 +277,7 @@
   function ntOvercall(hand, open) {
     const h = evaluate(hand), O = open[1], x = hand[O];
     const stop = h.stopper(O) || (x.includes('Q') && x.length >= 2) || (x.includes('J') && x.length >= 3);
-    return E.ntShape(h, { pos: 0 }) && h.adj >= 16 && h.adj < 19 && stop;
+    return E.ntShape(h, { pos: 0 }) && h.adjNoLen >= 16 && h.adjNoLen < 19 && stop;
   }
   // 介入の判断（engine の chooseCall から呼ばれる）
   function decide(hand, open) {
@@ -286,7 +286,7 @@
     // ダブルの形なら、点数でダブルするかを決める（1♦や2mの候補よりダブルを優先）
     if (doubleShape(hand, open)) {
       const hon = oppHonors(hand, open);
-      const adj = evaluate(hand).adj, pd = doubleProb(adj, hand[open[1]].length, hon);
+      const adj = evaluate(hand).adjNoLen, pd = doubleProb(adj, hand[open[1]].length, hon);
       if (pd >= 0.5) return { call: 'X', why: `${JA_SUIT[open[1]]}が3枚以下で、ほかのメジャーが3〜4枚なのでダブルの形。補正込み${Math.round(adj * 10) / 10}点・${JA_SUIT[open[1]]}${hand[open[1]].length}枚${hon ? `（A以外のアナー${hon}枚）` : ''}でダブルする確率${Math.round(pd * 100)}%なのでダブル`, cand: { type: 'X', call: 'X' }, p: pd };
     }
     const cand = candidate(hand, open);

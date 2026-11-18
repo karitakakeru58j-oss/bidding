@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.14.0';
+  const ENGINE_VERSION = '0.15.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -94,20 +94,27 @@
         if (x.length >= 5) long += (c === 'A' || c === 'K') ? 1 / 2 : (c === 'Q' || c === 'J') ? 1 / 3 : 0;
       }
       bonus += Math.min(1, long);
-      // 内容が標準以上（AKQのどれかを持ち、AKQJ10のうち2枚以上）の6枚以上のスートは、6枚目から1枚ごとに+1
-      if (x.length >= 6 && /[AKQ]/.test(x) && [...x].filter(c => 'AKQJT'.includes(c)).length >= 2) lenB[s] = x.length - 5;
+      // 6枚以上のロングスートは、トリックにできる見込みがあれば6枚目から1枚ごとに+1
+      //   条件：A・Kのどちらかを持ち、AKQJ10のうち2枚以上（QJ…のようなA・Kのないスートは加点しない）
+      //   さらにスートを立ててから使うためのエントリー：AKQのうち2枚以上ならスート自身がエントリー、
+      //   そうでなければサイドのAがあれば+1、サイドのKだけなら+1/2、サイドにA・Kがなければ加点なし
+      if (x.length >= 6 && /[AK]/.test(x) && [...x].filter(c => 'AKQJT'.includes(c)).length >= 2) {
+        const side = SUITS.filter(t => t !== s).map(t => hand[t]).join('');
+        const f = count(s, 'AKQ') >= 2 || side.includes('A') ? 1 : side.includes('K') ? 0.5 : 0;
+        lenB[s] = (x.length - 5) * f;
+      }
       if (x === 'KQ' || x === 'KQJ') bonus -= 1 / 2;                                     // KQの2枚・KQJの3枚
     }
     h.bonus = bonus;
     h.rawHcp = hcp;             // 補正なしのHCP（表示・回答例の比較用）
-    h.adj = hcp + bonus;        // 補正込みの点数（「強め／弱め」を含めた強さ）
+    const lenSum = lenB.S + lenB.H + lenB.D + lenB.C;
+    h.adjNoLen = hcp + bonus;   // 6枚目以降の加点を除いた強さ（オープン・プリエンプト・オウガスト：長さはビッドが約束している）
+    h.adj = hcp + bonus + lenSum; // 補正込みの点数（「強め／弱め」を含めた強さ）
     h.hcp = h.adj;              // ルールの点数はすべて補正込みで判断する
     h.lenB = lenB;
-    // 6枚目以降の加点は、そのスートを示す（ビッドする・切り札にする）ときの強さにだけ入れる
-    h.adjWith = s => h.adj + lenB[s];
+    h.adjWith = s => h.adj;
     // そのスートで promised 枚数をすでに約束しているビッドの強さ：約束した枚数を超えた分だけ加点する
-    h.adjFor = (s, promised) => h.adj + (lenB[s] ? Math.max(0, len[s] - promised) : 0);
-    h.adjNoLen = h.adj;
+    h.adjFor = (s, promised) => h.adj - lenB[s] + (lenB[s] ? Math.max(0, len[s] - promised) * lenB[s] / (len[s] - 5) : 0);
     // 6枚スートのリビッドの強さ：AKQのうち2枚以上を持つ6枚以上のスートは、A・K・Q・Jの加点の上限を1点から2点に広げる
     h.rebidPts = s => {
       if (len[s] < 6 || h.top3(s) < 2) return h.adjFor(s, 6);
@@ -133,7 +140,10 @@
       else if (pLen === 4 && mine === 4) t1 = [3, 5];
       else if (pLen === 4 && mine >= 5) t1 = [4, 5];
       if (!t1) return 0;
-      let b = twoSuiter(s);
+      // 2スーターの加点は長さを数えているので、6枚目以降の加点はその分差し引く。
+      // 切り札のスートの長さも「5枚以上のサポートは1枚ごとに+1」で数えるので差し引く
+      let b = twoSuiter(s) ? twoSuiter(s) - lenSum : 0;
+      if (pLen >= 5 && mine >= 5 && !twoSuiter(s)) b -= lenB[s];
       for (const o of SUITS) if (o !== s && hand[o] === 'K') b -= 1; // フィットした後のシングルトンのKは2点として数える
       if (pLen >= 5 && mine >= 5) b += mine - 4;     // 5枚以上のサポートは1枚ごとに+1
       for (const o of SUITS) if (o !== s) { if (len[o] === 1 && hand[o] !== 'K') b += t1[0]; else if (len[o] === 0) b += t1[1]; }
@@ -234,12 +244,12 @@
   const between = (x, a, b) => x >= a && x < b + 1;
   // オープンの強さ：補正込み11.5点以上。
   //   1・2番手：AAKだけ（Q・Jなし、Aが2枚以上）の11点もオープン
-  //   4番手：12.5点以上、またはスペード5枚以上で「点数＋スペードの枚数」が15以上
+  //   4番手：12点以上、またはスペード5枚以上で「点数＋スペードの枚数」が15以上
   const opens = (h, c) => {
     const pos = c ? c.pos : 0;
     // オープンの強さは、6枚目以降の加点を入れずに判断する（ウィーク2・プリエンプトの範囲と合わせるため）
     const a = h.adjNoLen;
-    if (pos === 3) return a >= 12.5 || (h.len.S >= 5 && a + h.len.S >= 15);
+    if (pos === 3) return a >= 12 || (h.len.S >= 5 && a + h.len.S >= 15);
     if (a >= 11.5) return true;
     if (h.pattern === '4441' && h.adj >= 11) return true; // 4441の11点はオープン
     const honors = SUITS.map(s => h.hand[s].replace(/[^AKQJ]/g, '')).join('');
@@ -247,7 +257,7 @@
   };
   // ウィーク2のスートの質：トップ3枚中2枚、またはトップ3枚中1枚＋10以上の札が3枚
   const goodWeak = (h, s) => h.top3(s) >= 2 || (h.top3(s) >= 1 && [...h.hand[s]].filter(x => 'AKQJT9'.includes(x)).length >= 3)
-    || (h.sHcp[s] >= 3 && h.adj < 7); // メインスートに3点以上で手が6点以下なら積極的に
+    || (h.sHcp[s] >= 3 && h.adjNoLen < 7); // メインスートに3点以上で手が6点以下なら積極的に
   const sideAce = (h, s) => SUITS.some(o => o !== s && h.hand[o].includes('A'));
   const early = c => (c.pos || 0) < 2; // 1番手・2番手
 
@@ -256,7 +266,7 @@
     'P', (h, c) => c.respPassed && h.len[c.b.Y] >= 4 && h.dp(c.b.Y, 4) < 12,
     null, 'パートナーはパス済みなのでゲームの可能性はない。フィットがあり最低点（ダミーポイント12点未満）なので、低いレベルでプレイするためにパス');
   // ===== オープニング =====
-  R('', 'P', (h, c) => c.pos === 3 && h.adj < 22 && !opens(h, c), { hcp: [0, 12.49] }, '4番手で3人がパスしている。ゲームの可能性は低く、スペードが短いのでオープンぎりぎりの強さではパス（4番手は12.5点以上か、点数＋スペードの枚数が15以上でオープン）');
+  R('', 'P', (h, c) => c.pos === 3 && h.adj < 22 && !opens(h, c), { hcp: [0, 11.99] }, '4番手で3人がパスしている。ゲームの可能性は低く、スペードが短いのでオープンぎりぎりの強さではパス（4番手は12点以上か、点数＋スペードの枚数が15以上でオープン）');
   R('', '2C', h => h.hcp >= 22, { hcp: [22, 37] }, '22点以上なのでストロング2♣オープン', 1);
   R('', '2N', h => h.balanced && between(h.hcp, 20, 21), { hcp: [20, 21], ...BAL_SHOWS }, 'バランスハンド20〜21点なので2NTオープン');
   // 1NTの形：バランスハンド、またはシングルトンがA・K・Qの4441・5431。
@@ -278,7 +288,7 @@
     const five = SUITS.find(s => h.len[s] === 5);
     return (h.top3(five) <= 1 && h.top5(five) <= 3) || (c && c.pos >= 2);
   };
-  R('', '1N', (h, c) => ntShape(h, c) && between(h.hcp, 15, 17), { hcp: [15, 17], ...BAL_SHOWS, S: [1, 5], H: [1, 5], D: [1, 5], C: [1, 5] },
+  R('', '1N', (h, c) => ntShape(h, c) && between(h.adjNoLen, 15, 17), { hcp: [15, 17], ...BAL_SHOWS, S: [1, 5], H: [1, 5], D: [1, 5], C: [1, 5] },
     h => h.balanced ? 'バランスハンド15〜17点なので1NTオープン'
       : h.pattern === '4441' ? '15〜17点で、シングルトンがA・K・Qなので1NTオープン'
       : '15〜17点の5431。シングルトンがA・K・Qで、5枚スートの内容が悪いかパートナーがパスしている（そのスートのスラムを逃す心配が小さい）ので1NTオープン');
@@ -288,8 +298,9 @@
       { hcp: [3, 10.99], [s]: [6, 6] }, `${JA_SUIT[s]}6枚でオープンの強さがなく、スートの内容が十分なのでウィーク2${SYM[s]}`);
   }
   for (const s of ['S', 'H', 'D', 'C']) {
-    if (isMaj(s)) R('', '4' + s, (h, c) => h.len[s] >= 7 && between(h.adjNoLen, 5, 10) && !opens(h, c) && h.longest() === s && (h.len[s] >= 8 || h.twoLongest >= 11),
-      { hcp: [5, 10], [s]: [7, 13] }, `${JA_SUIT[s]}7枚以上で、8枚以上か7-4以上の形なので4の代のプリエンプト`);
+    // 7-4は、スートの内容が十分（AKQのうち2枚以上）なときだけ4の代。7枚は3の代で普通の長さなので、7枚目は加点しない
+    if (isMaj(s)) R('', '4' + s, (h, c) => h.len[s] >= 7 && between(h.adjNoLen, 5, 10) && !opens(h, c) && h.longest() === s && (h.len[s] >= 8 || (h.twoLongest >= 11 && h.top3(s) >= 2)),
+      { hcp: [5, 10], [s]: [7, 13] }, h => h.len[s] >= 8 ? `${JA_SUIT[s]}8枚以上なので4の代のプリエンプト` : `${JA_SUIT[s]}7枚で7-4の形、スートの内容が十分（AKQのうち2枚以上）なので4の代のプリエンプト`);
     R('', '3' + s, (h, c) => h.len[s] >= 7 && between(h.adjNoLen, 5, 10) && !opens(h, c) && h.longest() === s,
       { hcp: [5, 10], [s]: [7, 13] }, `${JA_SUIT[s]}7枚以上・5〜10点なので3レベルのプリエンプト`);
   }
@@ -602,11 +613,12 @@
   // 3. 1Mレスポンスに対するダブルジャンプシフト
   RD(seq => seq.length === 2 && /^1[CDH]$/.test(seq[0]) && /^1[HS]$/.test(seq[1]) && seq[0] !== seq[1] ? { X: seq[0][1], M: seq[1][1] } : null, (h, c) => {
     const { X, M } = c.b;
-    if (h.len[M] < 4 || h.dp(M, 4) < 19) return null;
+    // オープナーのスラムトライ：パートナーのA2枚と切り札のQくらいでスモールスラムがほぼメイクする強さ（21点以上）
+    if (h.len[M] < 4 || h.dp(M, 4) < 21) return null;
     const sp = findSplinter(h, c.seq, M, [X], 2);
     return sp && { call: sp.call, why: `${JA_SUIT[M]}に4枚以上のフィットがあり、${JA_SUIT[sp.s]}が1枚以下でスラムの可能性があるので、ダブルジャンプのスプリンター（${callText(sp.call)}）` };
   }, (call, b, before) => isSplinterCall(call, before, b.M, [b.X], 2)
-    ? { shows: { [b.M]: [4, 13], [call[1]]: [0, 1], hcp: [19, 21.99], agree: b.M, ctrl: [call[1]], interest: true }, force: 'GF' } : null);
+    ? { shows: { [b.M]: [4, 13], [call[1]]: [0, 1], hcp: [21, 24.99], agree: b.M, ctrl: [call[1]], interest: true }, force: 'GF' } : null);
 
   // 1H-1S のオープナー
   R('1H 1S', '4S', h => h.len.S >= 4 && h.dp('S', 4) >= 18, null, 'スペード4枚のサポートで18点以上なので4♠');
@@ -708,8 +720,8 @@
   RD(seq => seq.length === 3 && /^1[CD]$/.test(seq[0]) && /^1[HS]$/.test(seq[1]) && seq[2] === '2' + seq[0][1]
     ? { m: seq[0][1], M: seq[1][1], O: seq[1][1] === 'H' ? 'S' : 'H', t: M2[seq[0][1] + ' ' + seq[1][1]] } : null, (h, c) => {
     const { m, M, O, t } = c.b;
-    // オープナーのリビッドしたマイナーに1枚以下（ミスフィット）なら1点低く評価
-    const v = h.adj - (h.len[m] <= 1 ? 1 : 0);
+    // オープナーのリビッドしたマイナーに1枚以下（ミスフィット）なら1点低く評価し、6枚目以降の加点も入れない
+    const v = h.len[m] <= 1 ? h.adjNoLen - 1 : h.adj;
     // もう一方のメジャーちょうど4枚は、別のフィットの可能性があるのでミスフィットでも示す
     if (h.adj >= 10.5 && t.four && h.len[O] === 4) return { call: t.four, why: `${JA_SUIT[O]}ちょうど4枚でインビテーション以上なので${callText(t.four)}` };
     if (v < 10.5) {
