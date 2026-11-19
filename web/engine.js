@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.28.0';
+  const ENGINE_VERSION = '0.28.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -272,7 +272,7 @@
     null, 'パートナーはパス済みなのでゲームの可能性はない。フィットがあり最低点（ダミーポイント12点未満）なので、低いレベルでプレイするためにパス');
   // ===== オープニング =====
   R('', 'P', (h, c) => c.pos === 3 && h.adj < 22 && !opens(h, c), { hcp: [0, 11.99] }, '4番手で3人がパスしている。ゲームの可能性は低く、スペードが短いのでオープンぎりぎりの強さではパス（4番手は12点以上か、点数＋スペードの枚数が15以上でオープン）');
-  R('', '2C', h => h.hcp >= 22, { hcp: [22, 37] }, '22点以上なのでストロング2♣オープン', 1);
+  R('', '2C', h => h.hcp >= 22 || h.rawHcp >= 22, { hcp: [22, 37] }, '22点以上なのでストロング2♣オープン（22点あれば必ず）', 1);
   R('', '2N', h => h.balanced && between(h.hcp, 20, 21), { hcp: [20, 21], ...BAL_SHOWS }, 'バランスハンド20〜21点なので2NTオープン');
   // 1NTの形：バランスハンド、またはシングルトンがA・K・Qの4441・5431。
   //   5431は、5枚スートの内容が悪い（AKQが1枚以下かつAKQJ10が3枚以下）か、パートナーがパスしているときだけ
@@ -345,9 +345,10 @@
     const shortOf = (h, excl) => SUITS.filter(s => !excl.includes(s) && h.len[s] <= 1).sort((a, b) => h.len[a] - h.len[b])[0] || null;
     const longMinor = (h, n) => ['C', 'D'].filter(m => h.len[m] >= n).sort((a, b) => h.len[b] - h.len[a] || (a === 'C' ? -1 : 1))[0] || null;
     // M4枚（もう一方は3枚以下）・m5枚以上のGF
-    const m4m5 = h => (h.len.H === 4) !== (h.len.S === 4) && Math.max(h.len.H, h.len.S) === 4 && longMinor(h, 5) && h.adj >= 10;
+    // マイナーを示すGFのルート（ステイマン→3m、トランスファー→3m）は12点から（10〜11点は3NT）
+    const m4m5 = h => (h.len.H === 4) !== (h.len.S === 4) && Math.max(h.len.H, h.len.S) === 4 && longMinor(h, 5) && h.adj >= 12;
     // M5枚以上（もう一方は3枚以下）・m4枚以上のGF
-    const m5m4 = h => { const M = h.len.S >= 5 && h.len.H <= 3 ? 'S' : h.len.H >= 5 && h.len.S <= 3 ? 'H' : null; return M && longMinor(h, 4) && h.adj >= 10 ? M : null; };
+    const m5m4 = h => { const M = h.len.S >= 5 && h.len.H <= 3 ? 'S' : h.len.H >= 5 && h.len.S <= 3 ? 'H' : null; return M && longMinor(h, 4) && h.adj >= 12 ? M : null; };
     // M6枚以上の1スーター（もう一方のMは3枚以下、サイドに4枚スートなし）：スラムトライの強さ（パートナー平均3枚と合わせたダミーポイント）
     //   16点以上＝スラムのチャンス（15〜17点のパートナーと合わせて33点になりうる）、18点以上＝スラム確定（最低の15点とでも33点）
     const m6 = h => { const M = h.len.S >= 6 && h.len.H <= 3 ? 'S' : h.len.H >= 6 && h.len.S <= 3 ? 'H' : null; return M && h.len.C <= 3 && h.len.D <= 3 ? M : null; };
@@ -2001,6 +2002,8 @@
     '4枚メジャーがなく、♣4枚以上・♦4枚の6〜10点なので1NT（1♣-1NTは♣4枚以上を保証し、♣のレイズとして働く）');
   R('1C', '1D', h => h.adj >= 6 && h.len.D >= 4 && (!bidMajorFirst(h) || (h.len.D >= 5 && h.hcp >= 11 && h.len.D > h.len.H && h.len.D > h.len.S)),
     { D: [4, 13], hcp: [6, 37] }, 'ダイヤ4枚以上（4枚メジャーがないか、ダイヤがずっと長く強い）なので1♦', 1);
+  // GFの強さで♣6枚以上なら、4枚メジャーがあっても2/1の2♣から（メジャーはあとで示す）
+  R('1D', '2C', h => h.hcp >= 13 && h.len.C >= 6 && Math.max(h.len.H, h.len.S) <= 4, { C: [6, 13], hcp: [13, 37] }, 'GFの強さでクラブ6枚以上なので、4枚メジャーがあっても2/1の2♣から（メジャーはあとで示す）', 'GF');
   R('1m', '1S', h => resp4(h) && h.len.S >= 4 && (h.len.S > h.len.H || (h.len.S === h.len.H && h.len.S >= 5)), { S: [4, 13], hcp: [6, 37] }, 'スペード4枚以上（ハートより長い）なので1♠', 1);
   R('1m', '1H', h => resp4(h) && h.len.H >= 4, { H: [4, 13], hcp: [6, 37] }, 'ハート4枚以上なので1♥（4-4のメジャーはハートから）', 1);
   R('1m', '1S', h => resp4(h) && h.len.S >= 4, { S: [4, 13], hcp: [6, 37] }, 'スペード4枚以上なので1♠', 1);
@@ -2134,6 +2137,7 @@
   R('1D 1N 2C 2N', '3N', h => h.adj >= 16, null, '強いので招待を受けて3NT');
   R('1D 1N', '2C', h => h.len.C >= 4, null, 'クラブ4枚以上なので2♣');
   R('1m 1N', '2m', (h, c) => h.len[c.b.m] >= 6, null, 'マイナー6枚以上なので2マイナー');
+  R('1m 1N', '3N', h => h.adj >= 18 && SUITS.every(x => h.len[x] <= 5), { hcp: [18, 21] }, '18点以上の強い手（バランスでなくても）なので、1NTにパスせず3NT');
   R('1m 1N', 'P', () => true, null, 'パス');
   R('1m 2N', '3N', h => h.hcp >= 13, null, '招待を受けて3NT');
   R('1m 2N', '3m', (h, c) => h.len[c.b.m] >= 6, null, '最低点でマイナーが長いので3マイナー');
@@ -3186,6 +3190,21 @@
       else if (ourIdx >= 0 && oppIdx === ourIdx + 1 && /^1[CDHS]$/.test(auction[ourIdx]) && isBid(auction[oppIdx]) && auction[oppIdx][1] !== 'N'
         && auction.every((c, i) => i === oppIdx || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'))
         compOpp = { s: auction[oppIdx][1], call: auction[oppIdx] };
+      // 自分たちの1の代のスートのオープン → 敵の1NTオーバーコール：10点以上はダブル（ペナルティ）、2の代のニュースートはto play
+      if (ourIdx >= 0 && oppIdx === ourIdx + 1 && /^1[CDHS]$/.test(auction[ourIdx]) && auction[oppIdx] === '1N'
+        && auction.every((c, i) => i === oppIdx || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S')) {
+        const X = auction[ourIdx][1], hh = evaluate(hand), v = hh.adj, k = auction.length - ourIdx;
+        const okA = c => legalInAuction(c, auction, dealer);
+        const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+        if (k === 2) {
+          if (v >= 10 && okA('X')) return { call: 'X', why: `敵の1NTオーバーコールに、10点以上（${fmt(v)}点）なのでダブル（ペナルティ）`, source: 'rule', ruleId: 'vs1N' };
+          const L = SUITS.filter(s => s !== X && hh.len[s] >= 5).sort((a, b) => hh.len[b] - hh.len[a])[0];
+          if (L && levelOf(cheapOf(L)) === 2 && okA(cheapOf(L))) return { call: cheapOf(L), why: `敵の1NTオーバーコールの後の2の代のニュースートはto play：${JA_SUIT[L]}${hh.len[L]}枚`, source: 'rule', ruleId: 'vs1N' };
+          if (hh.len[X] >= (isMaj(X) ? 3 : 5) && v >= 5 && okA('2' + X)) return { call: '2' + X, why: `パートナーの${JA_SUIT[X]}にサポートがあるので2${SYM[X]}（to play）`, source: 'rule', ruleId: 'vs1N' };
+          return { call: 'P', why: '敵の1NTオーバーコール：10点未満でto playのスートもないのでパス', source: 'rule', ruleId: 'vs1N' };
+        }
+        if (k === 4 && auction[ourIdx + 2] !== 'P') return { call: 'P', why: auction[ourIdx + 2] === 'X' ? 'パートナーのペナルティ・ダブルなのでパス' : 'パートナーのビッドはto playなのでパス', source: 'rule', ruleId: 'vs1N' };
+      }
       // バランシング：敵の1の代のオープン → P → P → 自分（4番手）
       {
         const i0 = auction.findIndex(c => c !== 'P');
