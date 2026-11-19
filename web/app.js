@@ -174,6 +174,8 @@
       // 4番手の1回目。キュービッドの流れなら、その後の場面も出題する
       const cands = [i0 + 3];
       if (auction[i0 + 3] && E.isBid(auction[i0 + 3]) && auction[i0 + 3][1] === auction[i0][1]) cands.push(i0 + 5, i0 + 7);
+      // ダブルした側のリビッド（パスばかりにならないよう、パスの場面は少なめ）
+      else if (auction[i0 + 3] && auction[i0 + 3] !== 'P' && (auction[i0 + 5] !== 'P' || Math.random() < 0.3)) cands.push(i0 + 5);
       const idx = cands.filter(i => i < auction.length)[Math.floor(Math.random() * cands.filter(i => i < auction.length).length)];
       if (idx === undefined) continue;
       if (seat(idx) === 'N') { const h2 = {}; for (const k of E.SEATS) h2[ROT[k]] = hands[k]; hands = h2; dealer = ROT[dealer]; }

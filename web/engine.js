@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.24.0';
+  const ENGINE_VERSION = '0.24.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1353,11 +1353,64 @@
       if (inv44) return { call: 'P', why: 'パートナーに4枚メジャーがない。インビテーションの強さなのでパス' };
       return B('3N', 'ゲームフォーシングの強さなので3NT') || { call: 'P', why: 'パス' };
     }
+    // ダブルした側のリビッド（パートナーがキュービッド以外）：基本はパス。インビには答える。
+    //   動き直す＝ストロングテイクアウト（18点以上）：NT（ノンジャンプ18〜20、ジャンプ21以上）、レイズ（16〜18はノンジャンプ、19〜21はジャンプ。
+    //   強さ＝点数＋シングルトンがあれば1：15点の4441・16点の4432が下限）、ニュースート（ノンジャンプ＝5枚ちょうど18〜20、ワンジャンプ＝5枚20〜21か6枚20まで）、
+    //   それを超える2♣オープン級はキュービッド
+    function doublerRebid(h, Y, adv, jumpN, ok, cheapOf) {
+      const v = h.adj;
+      const B = (call, why) => call && ok(call) ? { call, why } : null;
+      const P = why => ({ call: 'P', why });
+      const jumpOf = (s, n) => { const c = cheapOf(s); return c ? (levelOf(c) + n) + s : null; };
+      const cue = cheapOf(Y);
+      if (adv === 'P') return P('パートナーはペナルティのパス');
+      const as = adv[1], al = levelOf(adv);
+      let r;
+      // パートナーのインビテーションに答える
+      if (as === 'N') {
+        if (adv === '3N') return P('パートナーがゲームを決めたのでパス');
+        if (adv === '2N') return v >= 14 ? B('3N', '2NT（11〜12点）の招待を受けて3NT') || P('パス') : P('2NT（11〜12点）の招待を断ってパス');
+        if (v >= 16.5 && (r = B('3N', `パートナーの1NT（8〜10点）に対して強い（${fmt(v)}点）ので3NT`))) return r;
+        if (v >= 15 && (r = B('2N', 'パートナーの1NT（8〜10点）に対して招待'))) return r;
+        return P('パートナーの1NTでよいのでパス');
+      }
+      if (al >= gameLevel(as)) return P('パートナーがゲームを決めたのでパス');
+      if (jumpN >= 1) {
+        const sup = h.len[as];
+        if (isMaj(as)) {
+          if ((sup >= 4 || (jumpN >= 2 && sup >= 3)) && v >= 14) return B('4' + as, `パートナーの${T(as)}のジャンプ（インビ）に、${sup}枚のサポートと14点以上で4${SYM[as]}`) || P('パス');
+          if (sup < 3 && v >= 15 && h.stopper(Y)) return B('3N', `パートナーの招待に、${T(as)}のサポートはないがストッパーがあり15点以上なので3NT`) || P('パス');
+          return P(`パートナーの${T(as)}のジャンプ（インビ）を断ってパス`);
+        }
+        if (v >= 15 && h.stopper(Y) && (r = B('3N', `パートナーのマイナーのジャンプ（インビ）に、ストッパーがあり15点以上なので3NT`))) return r;
+        return P('パートナーの招待を断ってパス');
+      }
+      // ノンジャンプの応答（0〜8点）：ストロングテイクアウトのときだけ動き直す
+      const sc = v + (SUITS.some(x => h.len[x] === 1) ? 1 : 0);
+      const stop = h.stopper(Y);
+      if (h.len[as] >= 4 && sc >= 16 && sc < 22) {
+        if (sc >= 19 && (r = B(jumpOf(as, 1), `パートナーの${T(as)}に4枚のサポートがあり、ストロングテイクアウト（${fmt(v)}点）なのでジャンプレイズ`))) return r;
+        if ((r = B(cheapOf(as), `パートナーの${T(as)}に4枚のサポートがあり、16〜18点くらい（${fmt(v)}点）なのでレイズ`))) return r;
+      }
+      if (sc >= 22 && v >= 20 && (r = B(cue, `2♣オープン級の強い手（${fmt(v)}点）なのでキュービッド（${callText(cue)}）`))) return r;
+      if (h.balanced && stop && v >= 18) {
+        if (v >= 21 && (r = B(jumpOf('N', 1), `ストロングテイクアウトのバランスハンド21点以上なのでジャンプのNT`))) return r;
+        if (v < 21 && (r = B(cheapOf('N'), `ストロングテイクアウトのバランスハンド18〜20点で${T(Y)}のストッパーがあるので、ノンジャンプのNT`))) return r;
+      }
+      const Z = SUITS.filter(x => x !== Y && x !== as && h.len[x] >= 5).sort((a, b) => h.len[b] - h.len[a])[0];
+      if (Z) {
+        const n = h.len[Z];
+        if (((n === 5 && v >= 20 && v < 22) || (n >= 6 && v >= 18 && v < 21)) && (r = B(jumpOf(Z, 1), `${T(Z)}${n}枚の強い手（${fmt(v)}点）なのでワンジャンプの${callText(jumpOf(Z, 1))}`))) return r;
+        if (n === 5 && v >= 18 && v < 20 && (r = B(cheapOf(Z), `${T(Z)}ちょうど5枚で18〜20点なので、ノンジャンプの${callText(cheapOf(Z))}`))) return r;
+      }
+      if (v >= 21 && (r = B(cue, `2♣オープン級の強い手（${fmt(v)}点）なのでキュービッド（${callText(cue)}）`))) return r;
+      return P('ダブルした側は基本的にずっとパス（ストロングテイクアウトではない）');
+    }
     // ダブルした側：パートナーの3M（メジャー4-4のインビ）への答え
     function doublerAfterInvite(h, M) {
       return h.adj >= 14.5 ? { call: '4' + M, why: `パートナーのインビテーション（メジャー4-4・${T(M)}フィット）を受けて4${SYM[M]}` } : { call: 'P', why: 'パートナーのインビテーションを断ってパス' };
     }
-    return { advance, doublerAfterCue, advancerAfterReply, doublerAfterInvite };
+    return { advance, doublerAfterCue, advancerAfterReply, doublerAfterInvite, doublerRebid };
   })();
 
   // ===== 4番手（アドバンサー）：敵のオープン-(パートナーのスートのオーバーコール)-敵の応答（パス以外）の後 =====
@@ -3062,6 +3115,13 @@
           try {
             if (k === 3) x = TOX.advance(hh, Y, okA, cheapOf);
             else if (k === 5 && cueC(auction[i0 + 3])) x = TOX.doublerAfterCue(hh, Y, okA, cheapOf);
+            else if (k === 5) {
+              // パートナーの応答が何段ジャンプしたか（ダブルの直後の一番安いビッドとの差）
+              const adv = auction[i0 + 3], pre = auction.slice(0, i0 + 3);
+              let jumpN = 0;
+              if (isBid(adv)) { for (let lv = 1; lv <= 7; lv++) if (legalInAuction(lv + adv[1], pre, dealer)) { jumpN = levelOf(adv) - lv; break; } }
+              x = TOX.doublerRebid(hh, Y, adv, jumpN, okA, cheapOf);
+            }
             else if (k === 7 && cueC(auction[i0 + 3])) x = TOX.advancerAfterReply(hh, Y, auction[i0 + 5], okA, cheapOf);
             else if (k === 9 && cueC(auction[i0 + 3]) && /^3[HS]$/.test(auction[i0 + 7])) x = TOX.doublerAfterInvite(hh, auction[i0 + 7][1]);
           } catch (e) { x = null; }
