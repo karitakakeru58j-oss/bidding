@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.22.2';
+  const ENGINE_VERSION = '0.23.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1219,6 +1219,72 @@
       return null;
     }
     return { pick, interp, ok };
+  })();
+
+  // ===== 敵のテイクアウトダブルの後の3番手（レスポンダー） =====
+  //   インビ以上のほとんどの手はリダブルから。例外：1Mへの4枚以上のサポート（フリーランのレイズ）、1mへの5枚以上のサポート
+  //   （インビ＝3mのジャンプレイズ、GF＝マイナーのジャンプシフト、弱い＝2NTのプリエンプティブ・レイズ）、5枚以上のメジャー（1M）
+  //   2/1（ノンジャンプの2の代のニュースート）＝6枚以上・インビ未満のto play
+  const XRESP = (() => {
+    const T = s => JA_SUIT[s];
+    const other = m => m === 'C' ? 'D' : 'C';
+    const jsOf = X => X === 'C' ? '2D' : '3C';             // マイナーのジャンプシフト（1♣-(X)-2♦、1♦-(X)-3♣）
+    const twoOne = (X, s) => isBid(cheapest(s, ['1' + X])) && levelOf(cheapest(s, ['1' + X])) === 2 && s !== X && !(X === 'C' && s === 'D') && !(X === 'H' && s === 'S');
+    function resp(h, seq, pipeline) {
+      const X = seq[0][1], v = h.adj, maj = isMaj(X);
+      const R = (call, why) => call && legal(call, seq) ? { call, why } : null;
+      let r;
+      // 1M：4枚以上のサポートはフリーランの各種レイズ
+      if (maj && h.len[X] >= 4) { const f = pipeline(); if (f && f.call !== 'XX') return { call: f.call, why: `テイクアウトダブルの後も、4枚以上のサポートはフリーランのレイズ：${f.why}` }; }
+      if (maj && h.len[X] === 3) {
+        const dp = h.dp(X, 5);
+        if (dp >= 10.5) return { call: 'XX', why: `${T(X)}3枚のサポートでインビテーション以上（ダミーポイント${fmt(dp)}点）なのでリダブルから` };
+        if (dp >= 6 && (r = R('2' + X, `${T(X)}3枚のサポートで6〜10点なので2${SYM[X]}`))) return r;
+      }
+      // 1m：5枚以上のサポート
+      if (!maj && h.len[X] >= 5) {
+        if (v >= 13 && (r = R(jsOf(X), `${T(X)}5枚以上のサポートでゲームフォーシングなので、マイナーのジャンプシフト（${callText(jsOf(X))}）`))) return r;
+        if (v >= 10.5 && (r = R('3' + X, `${T(X)}5枚以上のサポートでインビテーションなので、3${SYM[X]}（ジャンプレイズ）`))) return r;
+        if (h.adjNoLen < 6 && (r = R('2N', `${T(X)}5枚以上のサポートで弱いので、2NT（プリエンプティブ・レイズ）`))) return r;
+        if ((r = R('2' + X, `${T(X)}5枚以上のサポートで6〜9点なので2${SYM[X]}（シングルレイズ）`))) return r;
+      }
+      // 5枚以上のメジャー：1の代で言えれば1M（強さにかかわらず）
+      for (const M of ['S', 'H']) if (M !== X && h.len[M] >= 5 && v >= 6) { const c = cheapest(M, seq); if (levelOf(c) === 1 && (r = R(c, `${T(M)}5枚以上なので1${SYM[M]}（テイクアウトダブルの後も、5枚以上のメジャーはインビ以上でも1M）`))) return r; }
+      // インビテーション以上はリダブル
+      if (v >= 10.5) return { call: 'XX', why: `インビテーション以上（${fmt(v)}点）なのでリダブル` };
+      // 弱い手：4枚メジャーを先に
+      for (const M of ['H', 'S']) if (M !== X && h.len[M] >= 4 && v >= 6) { const c = cheapest(M, seq); if (levelOf(c) === 1 && (r = R(c, `${T(M)}4枚以上・6〜9点なので1${SYM[M]}`))) return r; }
+      if (!maj && h.len[X] >= 4 && v >= 6 && (r = R('2' + X, `${T(X)}4枚以上のサポートで6〜9点なので2${SYM[X]}（シングルレイズ）`))) return r;
+      for (const s of SUITS.filter(s => twoOne(X, s)).sort((a, b) => h.len[b] - h.len[a])) {
+        if (h.len[s] >= 6 && v >= 4 && (r = R('2' + s, `${T(s)}6枚以上でインビテーション未満なので、to playの2${SYM[s]}（テイクアウトダブルの後の2/1）`))) return r;
+      }
+      if (X === 'C' && h.len.D >= 4 && v >= 6 && (r = R('1D', 'ダイヤ4枚以上・6〜9点なので1♦'))) return r;
+      if (v >= 6 && (r = R('1N', `6〜9点でほかに適当なビッドがないので1NT`))) return r;
+      return { call: 'P', why: 'テイクアウトダブルされて、ビッドする強さ・形がないのでパス' };
+    }
+    // フリーランと同様に続ける流れ：1の代のスートの応答、メジャーのレイズ
+    function freeAfter(seq) {
+      const X = seq[0][1], r1 = seq[1];
+      if (!isBid(r1)) return false;
+      if (levelOf(r1) === 1 && r1[1] !== 'N') return true;
+      if (isMaj(X) && r1 !== 'XX' && !(r1[0] === '2' && twoOne(X, r1[1]) && r1[1] !== X) && r1 !== '1N') return true;
+      return false;
+    }
+    function later(h, seq) {
+      const X = seq[0][1], r1 = seq[1], v = h.adj, n = seq.length;
+      const P = why => ({ call: 'P', why });
+      const R = (call, why) => call && legal(call, seq) ? { call, why } : null;
+      if (n !== 2) return null;
+      if (r1 === 'XX') return P('パートナーのリダブル（インビテーション以上）。敵の動きを待ってパス');
+      if (isBid(r1) && r1[0] === '2' && twoOne(X, r1[1]) && r1[1] !== X) return P('パートナーの2/1はto play（6枚以上・インビ未満）なのでパス');
+      if (r1 === '2N' && !isMaj(X)) return v >= 19 ? R('5' + X, '強いのでゲーム') || P('パス') : R('3' + X, `パートナーの2NTはプリエンプティブ・レイズなので3${SYM[X]}`) || P('パス');
+      if (r1 === '3' + X) return v >= 14 ? (h.balanced ? R('3N', '招待を受けて3NT') : R('5' + X, '招待を受けて5' + SYM[X])) || P('パス') : P('招待を断ってパス');
+      if (r1 === jsOf(X)) return h.balanced ? R('3N', `パートナーは${T(X)}5枚以上のサポートでGF。バランスハンドなので3NT`) || R('5' + X, 'ゲーム') : R('5' + X, `パートナーは${T(X)}5枚以上のサポートでGF。5${SYM[X]}`) || P('パス');
+      if (r1 === '2' + X) return v >= 18 ? (h.balanced ? R('3N', 'シングルレイズに対して強いので3NT') : R('3' + X, '強いので招待')) || P('パス') : P('シングルレイズに対してゲームの点数がないのでパス');
+      if (r1 === '1N') { if (v >= 19) return R('3N', '1NT（6〜9点）に対して強いので3NT') || P('パス'); if (v >= 17) return R('2N', '1NT（6〜9点）に対して招待') || P('パス'); if (h.len[X] >= 6) return R(cheapest(X, seq), `${T(X)}6枚以上なのでリビッド`) || P('パス'); return P('1NT（6〜9点）でゲームの可能性が低いのでパス'); }
+      return null;
+    }
+    return { resp, freeAfter, later };
   })();
 
   // ===== 4番手（アドバンサー）：敵のオープン-(パートナーのスートのオーバーコール)-敵の応答（パス以外）の後 =====
@@ -2895,6 +2961,7 @@
     if (mySeat === 'E' || mySeat === 'W') return { call: 'P', why: '相手はパス（今は競り合いなし）', source: 'rule' };
     // 相手のビッドがあるとき：今は「敵のオープンの直後の介入（オーバーコール）」だけに対応
     let compOpp = null; // 敵のオーバーコールの後（3番手・オープナーのリビッド）
+    let compX = null;   // 敵のテイクアウトダブルの後
     let ntOC = 0; // 1NTオーバーコールの後：1NTオープンの仕組みを、点数を1点ずらして使う
     {
       const oppIdx = auction.findIndex((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'E' || SEATS[(d + i) % 4] === 'W'));
@@ -2923,7 +2990,11 @@
           return { call: 'P', why: '4番手：パス', source: 'rule', ruleId: 'adv' };
         }
       }
-      if (oppIdx >= 0 && !ntOC && !compOpp) {
+      // 自分たちの1の代のスートのオープン → 敵のテイクアウトダブル → その後は敵がずっとパス
+      if (ourIdx >= 0 && oppIdx === ourIdx + 1 && auction[oppIdx] === 'X' && /^1[CDHS]$/.test(auction[ourIdx])
+        && auction.every((c, i) => i === ourIdx + 1 || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'))
+        compX = { s: auction[ourIdx][1] };
+      if (oppIdx >= 0 && !ntOC && !compOpp && !compX) {
         const ourBid = auction.some((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'));
         const direct = !ourBid && oppIdx === auction.length - 1 && auction.slice(0, oppIdx).every(c => c === 'P');
         if (direct && api.overcall) {
@@ -2990,6 +3061,16 @@
       return res;
     };
     let res = null;
+    // 敵のテイクアウトダブルの後
+    if (compX) {
+      const X = compX.s;
+      if (seq.length === 1) { const x = XRESP.resp(h, seq, pipeline); if (x) return { ...x, source: 'rule', ruleId: 'xresp' }; }
+      // 1の代のスートの応答・メジャーのレイズの後は、フリーランと同様（4番手がパスしていれば）
+      if (XRESP.freeAfter(seq)) return pipeline();
+      const x = XRESP.later(h, seq);
+      if (x) return { ...x, source: 'rule', ruleId: 'xresp' };
+      return { call: 'P', why: 'テイクアウトダブルの後の流れ：パス', source: 'rule', ruleId: 'xresp' };
+    }
     // 1m-(1x)-1M のように1の代のニュースートで応答した後は、フリーランの1Mレスポンスと同じ（NTは敵のスートのストッパーが必要）
     const compFree = compOpp && seq.length >= 2 && isBid(seq[1]) && levelOf(seq[1]) === 1 && seq[1][1] !== 'N' && seq[1][1] !== compOpp.s;
     // パートナーが2回目以降に敵のスートをビッド（キュービッド＝GFの強い手で、ストッパーを探している）
@@ -3117,6 +3198,9 @@
         const early = i0 < 0 || auction.length <= i0 + 2;
         if (early) { const rd = SEATS[(d + 3) % 4]; const x = chooseCall(hands[seat], auction, rd, examples); r = { call: x.call, why: x.why, source: 'opp' }; }
         else r = { call: 'P', why: '相手はパス', source: 'opp' };
+      } else if ((seat === 'E' || seat === 'W') && opts.oppTakeout && ourOpen && api.overcall) {
+        const o = api.overcall.decide(hands[seat], prev);
+        r = o && o.call === 'X' ? { call: 'X', why: o.why, source: 'opp' } : { call: 'P', why: '相手はパス', source: 'opp' };
       } else if ((seat === 'E' || seat === 'W') && opts.oppOvercall && ourOpen && api.overcall) {
         const o = api.overcall.decide(hands[seat], prev);
         r = o && isBid(o.call) && o.call[1] !== 'N' ? { call: o.call, why: o.why, source: 'opp' } : { call: 'P', why: '相手はパス', source: 'opp' };

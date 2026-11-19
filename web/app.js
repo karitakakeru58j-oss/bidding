@@ -137,10 +137,10 @@
     return 'other';
   }
   // 敵の介入が入った場面か（自分たちの1の代のオープンの直後に敵がビッド）
-  function compAuction(auction, dealer) {
+  function compAuction(auction, dealer, takeout) {
     const d = E.SEATS.indexOf(dealer), seat = i => E.SEATS[(d + i) % 4];
     const i0 = auction.findIndex(c => c !== 'P');
-    return i0 >= 0 && (seat(i0) === 'N' || seat(i0) === 'S') && E.isBid(auction[i0 + 1] || '');
+    return i0 >= 0 && (seat(i0) === 'N' || seat(i0) === 'S') && (takeout ? auction[i0 + 1] === 'X' : E.isBid(auction[i0 + 1] || ''));
   }
   // 4番手（アドバンサー）の問題：敵のオープン → パートナーのスートのオーバーコール → 敵の応答（パス以外） → 自分
   function makeAdvQuiz() {
@@ -164,17 +164,19 @@
   function makeQuiz(filter) {
     if (filter === 'adv') return makeAdvQuiz();
     const examples = examplesFrom(store.answers);
-    const comp = filter === 'comp';
-    for (let t = 0; t < (comp ? 3000 : 800); t++) {
+    const xr = filter === 'xresp';
+    const comp = filter === 'comp' || xr;
+    for (let t = 0; t < (comp ? 4000 : 800); t++) {
       let hands = E.deal();
       let dealer = E.SEATS[Math.floor(Math.random() * 4)];
-      const { auction, steps } = E.autoAuction(hands, dealer, examples, 40, { oppOvercall: comp });
-      if (comp && !compAuction(auction, dealer)) continue;
+      const { auction, steps } = E.autoAuction(hands, dealer, examples, 40, xr ? { oppTakeout: true } : { oppOvercall: comp });
+      if (comp && !compAuction(auction, dealer, xr)) continue;
       const allPass = auction.every(c => c === 'P');
       if (allPass && Math.random() < 0.85) continue;
       let points = steps.filter(s => s.seat === 'N' || s.seat === 'S');
       points = points.filter(s => {
         const { seq } = E.analyze(auction.slice(0, s.index), dealer);
+        if (xr) return seq.length >= 1 && seq.length <= 2 && !(s.call === 'P' && Math.random() < 0.6);
         if (comp) return seq.length >= 1 && seq.length <= 3 && !(s.call === 'P' && seq.length === 1 && Math.random() < 0.5);
         if (filter !== 'all' && category(seq) !== filter) return false;
         // 最初のコール以外で、パスしかない場面ばかりにならないように
