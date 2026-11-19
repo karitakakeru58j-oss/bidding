@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.28.2';
+  const ENGINE_VERSION = '0.28.3';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -2129,7 +2129,6 @@
   // 1m-1NT, 1m-2NT, 1m-3NT, 1m-3m
   R('1C 1N', '2C', h => h.len.C >= 4 && h.adj < 18, null, 'パートナーは♣4枚以上を持っているので、1NTより2♣の方がプレイしやすい');
   R('1D 1N', '3C', h => h.len.C >= 4 && h.adj >= 18, { C: [4, 13], hcp: [18, 21] }, '18点以上でクラブ4枚以上なのでジャンプシフト（ゲームフォーシング）', 'GF');
-  R('1C 1N', '3D', h => h.len.D >= 4 && h.len.C >= 5 && h.adj >= 18, { D: [4, 13], hcp: [18, 21] }, '18点以上でダイヤ4枚以上なのでジャンプシフト（ゲームフォーシング）', 'GF');
   R('1m 1N', '3N', (h, c) => h.len[c.b.m] >= 7 && h.top5(c.b.m) >= 4 && h.adj >= 16, null, '長く強いマイナーがトリックになるので3NTをプレイしたい');
   R('1m 1N', 'P', h => h.balanced && h.hcp < 15, null, 'バランスハンドの最低点なのでパス');
   R('1m 1N', '3N', h => h.balanced && h.hcp >= 18, null, 'バランスハンド18〜19点。1m-1NTの後だけは2NTでなく3NT');
