@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.21.1';
+  const ENGINE_VERSION = '0.22.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1221,6 +1221,96 @@
     return { pick, interp, ok };
   })();
 
+  // ===== 4番手（アドバンサー）：敵のオープン-(パートナーのスートのオーバーコール)-敵の応答（パス以外）の後 =====
+  //   info = { O: 敵のオープンのスート, oc: パートナーのオーバーコール, Z: そのスート, R: 敵の応答（ビッドかX） }
+  //   ok(call) で合法か判断する（オークション全体）
+  const ADV = (() => {
+    const T = s => JA_SUIT[s];
+    function pick(h, info, ok, cheapOf) {
+      const { O, oc, Z, R } = info, v = h.adj;
+      const P = why => ({ call: 'P', why });
+      const B = (call, why) => call && ok(call) ? { call, why } : null;
+      const lvOC = levelOf(oc);
+      // 示されたスート：オープン・オーバーコール・敵の応答（ナチュラルなスート、またはネガティブ・ダブルのアンビッドのメジャー）
+      const rSuit = isBid(R) && R[1] !== 'N' ? R[1] : null;
+      const raised = rSuit === O;
+      const shown = new Set([O, Z]);
+      if (rSuit) shown.add(rSuit);
+      if (R === 'X') for (const M of ['H', 'S']) if (!shown.has(M)) shown.add(M);
+      const unbidS = SUITS.filter(s => !shown.has(s));
+      const caseA = lvOC === 1 && (raised || R === '1N');            // 敵がレイズか1NT
+      const fourth = shown.size === 3 ? unbidS[0] : null;
+      const caseB = fourth && isMaj(fourth);                          // 4thスートがメジャー
+      const caseC = fourth && !isMaj(fourth);                         // 4thスートがマイナー
+      const dbl = R === 'X' ? 'XX' : 'X';
+      const cue = cheapOf(O);
+      const supNeed = isMaj(Z) ? 3 : (lvOC >= 2 ? 3 : 4);
+      const dp = h.dp(Z, 5);
+      const stopO = h.stopper(O), stopR = !rSuit || rSuit === O || h.stopper(rSuit);
+      let r;
+      // (c) 4thスートがマイナー：パートナーのスートにAKQのどれかを持つちょうど3枚のサポート（シングルレイズの強さ）
+      if (caseC && h.len[Z] === 3 && /[AKQ]/.test(h.hand[Z]) && dp >= 6 && dp < 10.5
+        && (r = B(dbl, `パートナーの${T(Z)}にAKQのどれかを持つちょうど3枚のサポートで、シングルレイズくらいの強さなので${callText(dbl)}（ディフェンスで攻めるスートを明確にする）`))) return r;
+      const majFirst = !isMaj(Z);
+      const tryMaj = () => {
+      // (b) 4thスートがメジャー：ダブル＝そのメジャー4枚以上（上限なし）。1の代で言えるなら1M＝5枚以上、2の代以上の6枚以上の弱い手はto play
+      if (caseB) {
+        const F = fourth, c = cheapOf(F);
+        if (h.len[F] >= 5 && c && levelOf(c) === 1 && v >= 8 && (r = B(c, `${T(F)}5枚以上なので1${SYM[F]}（4枚ちょうどならダブル）`))) return r;
+        if (h.len[F] >= 6 && v < 10.5 && c && levelOf(c) >= 2 && levelOf(c) <= 3 && (r = B(c, `${T(F)}6枚以上でインビテーション未満なので、to playの${callText(c)}`))) return r;
+        if (h.len[F] >= 4 && v >= (c && levelOf(c) >= 2 ? 8 : 6) && (r = B(dbl, `アンビッドの${T(F)}4枚以上なので${callText(dbl)}（強さの上限なし）`))) return r;
+      }
+      // (a) パートナーが1の代でオーバーコールし、敵がレイズか1NT：ダブル＝アンビッドの2スーター（理想は4-4以上）
+      if (caseA && unbidS.length === 2) {
+        const [A, Bs] = unbidS;
+        const lvl = Math.max(levelOf(cheapOf(A) || '7N'), levelOf(cheapOf(Bs) || '7N'));
+        const need = lvl <= 2 ? 8 : lvl === 3 ? 10 : 12;
+        const both = h.len[A] >= 4 && h.len[Bs] >= 4;
+        const shape = both && h.len[A] + h.len[Bs] >= 9;                       // 5-4以上なら点が足りなくても
+        const maj4 = unbidS.find(s => isMaj(s) && h.len[s] >= 4);
+        if (((both && v >= need) || (shape && v >= need - 2) || (maj4 && v >= need))
+          && (r = B(dbl, both ? `アンビッドの${T(A)}と${T(Bs)}の${h.len[A]}-${h.len[Bs]}で、${lvl}の代に必要な強さ${shape && v < need ? 'には少し足りないが形が良い' : `（${need}点以上）がある`}のでダブル` : `示すべき${T(maj4)}4枚以上と点数（${need}点以上）があるのでダブル`))) return r;
+      }
+        return null;
+      };
+      if (majFirst && (r = tryMaj())) return r;
+      // サポート
+      if (h.len[Z] >= supNeed) {
+        if (dp >= 10.5) {
+          if (cue && rankOf(cue) < rankOf(gameCall(Z)) && (r = B(cue, `パートナーの${T(Z)}にサポートがあり、インビテーション以上（ダミーポイント${fmt(dp)}点）なので、オープンされた敵のスートのキュービッド（${callText(cue)}）`))) return r;
+          if ((r = B(gameCall(Z), `パートナーの${T(Z)}にサポートがあり、インビテーション以上。キュービッドがゲームを超えるのでゲーム`))) return r;
+        }
+        const single = cheapOf(Z);
+        if (h.len[Z] >= 4 && dp < 8) {
+          const j = single && levelOf(single) + 1 <= 4 ? (levelOf(single) + 1) + Z : null;
+          if (j && (r = B(j, `パートナーの${T(Z)}に4枚以上のサポートがあり弱いので、ジャンプのプリエンプティブ・レイズ（${callText(j)}）`))) return r;
+        }
+        if (dp >= 6 && single && levelOf(single) <= 3 && (r = B(single, `パートナーの${T(Z)}にサポートがあり、6〜10点（ダミーポイント${fmt(dp)}点）なのでシングルレイズ`))) return r;
+      }
+      if (!majFirst && (r = tryMaj())) return r;
+      // 1の代のニュースート：ナチュラル4枚以上・8点以上
+      for (const s of SUITS.filter(x => !shown.has(x) || (R === 'X' && x !== O && x !== Z))) {
+        const c = cheapOf(s);
+        if (c && levelOf(c) === 1 && h.len[s] >= 4 && v >= 8 && !(caseB && s === fourth) && (r = B(c, `${T(s)}4枚以上・8点以上なので1${SYM[s]}（ナチュラル）`))) return r;
+      }
+      // NT：1NT＝8〜12、2NT＝13〜14、3NT＝15点以上（敵のスートのストッパー）
+      if (stopO && stopR) {
+        if (v >= 15 && (r = B('3N', `${T(O)}${rSuit && rSuit !== O ? `・${T(rSuit)}` : ''}のストッパーがあり15点以上なので3NT`))) return r;
+        if (v >= 13 && v < 15 && (r = B('2N', `ストッパーがあり13〜14点なので2NT`))) return r;
+        if (v >= 8 && v < 13 && (r = B('1N', `ストッパーがあり8〜12点なので1NT（オーバーコーラーがオープンの強さならパスできない）`))) return r;
+      }
+      // 2の代以上のジャンプしていないニュースート＝to play（6枚以上・インビテーション未満）
+      for (const s of SUITS.filter(x => !shown.has(x)).sort((a, b) => h.len[b] - h.len[a])) {
+        const c = cheapOf(s);
+        if (c && levelOf(c) >= 2 && levelOf(c) <= 3 && h.len[s] >= 6 && v < 10.5 && (r = B(c, `${T(s)}6枚以上でインビテーション未満なので、to playの${callText(c)}`))) return r;
+      }
+      // インビ以上でフィットもストッパーもない：キュービッド（私の判断）
+      if (v >= 12 && cue && (r = B(cue, `インビテーション以上の強さだが、フィットも${T(O)}のストッパーもないのでキュービッド（${callText(cue)}）`))) return r;
+      return P('4番手として、ビッドできる形・強さがないのでパス');
+    }
+    return { pick };
+  })();
+
   // NTの後の点数：シングルトンのKは1点低く数える（NTでは働きにくい。J942.J87.K.K7653 は1NTにパス）
   const ntPts = h => h.hcp - SUITS.filter(s => h.hand[s] === 'K').length;
   // ===== NTオープン後の仕組み（1NT, 2NT, 2♣-2♦-2NT など共通） =====
@@ -2321,9 +2411,10 @@
     const d = SEATS.indexOf(dealer);
     const bids = auction.filter(isBid);
     const lb = bids.length ? bids[bids.length - 1] : null;
-    if (call === 'X') {
+    if (call === 'X' || call === 'XX') {
       let i = auction.length - 1; while (i >= 0 && auction[i] === 'P') i--;
-      if (i < 0 || !isBid(auction[i])) return false;
+      if (i < 0) return false;
+      if (call === 'X' ? !isBid(auction[i]) : auction[i] !== 'X') return false;
       const seatOf = j => SEATS[(d + j) % 4], me = seatOf(auction.length);
       const sameSide = (a, b) => ((SEATS.indexOf(a) - SEATS.indexOf(b)) % 2 === 0);
       return !sameSide(seatOf(i), me);
@@ -2802,6 +2893,21 @@
       if (ourIdx >= 0 && oppIdx === ourIdx + 1 && /^1[CDHS]$/.test(auction[ourIdx]) && isBid(auction[oppIdx]) && auction[oppIdx][1] !== 'N'
         && auction.every((c, i) => i === oppIdx || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'))
         compOpp = { s: auction[oppIdx][1], call: auction[oppIdx] };
+      // 4番手（アドバンサー）：敵の1の代のオープン → パートナーのスートのオーバーコール → 敵の応答（パス以外） → 自分
+      {
+        const i0 = auction.findIndex(c => c !== 'P');
+        const seatAt = i => SEATS[(d + i) % 4], ew = i => seatAt(i) === 'E' || seatAt(i) === 'W';
+        if (i0 >= 0 && ew(i0) && /^1[CDHS]$/.test(auction[i0]) && isBid(auction[i0 + 1] || '') && auction[i0 + 1][1] !== 'N'
+          && auction[i0 + 2] && auction[i0 + 2] !== 'P' && auction.length === i0 + 3) {
+          const info = { O: auction[i0][1], oc: auction[i0 + 1], Z: auction[i0 + 1][1], R: auction[i0 + 2] };
+          const okA = c => legalInAuction(c, auction, dealer);
+          const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+          let x = null;
+          try { x = ADV.pick(evaluate(hand), info, okA, cheapOf); } catch (e) { x = null; }
+          if (x && okA(x.call)) return { call: x.call, why: x.why, source: 'rule', ruleId: 'adv' };
+          return { call: 'P', why: '4番手：パス', source: 'rule', ruleId: 'adv' };
+        }
+      }
       if (oppIdx >= 0 && !ntOC && !compOpp) {
         const ourBid = auction.some((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'));
         const direct = !ourBid && oppIdx === auction.length - 1 && auction.slice(0, oppIdx).every(c => c === 'P');
@@ -2990,7 +3096,13 @@
       let r;
       const prev = auction.length ? auction[auction.length - 1] : null;
       const ourOpen = prev && /^1[CDHS]$/.test(prev) && auction.slice(0, -1).every(c => c === 'P');
-      if ((seat === 'E' || seat === 'W') && opts.oppOvercall && ourOpen && api.overcall) {
+      if ((seat === 'E' || seat === 'W') && opts.oppOpen) {
+        // 敵（東西）のオープンと、こちらのオーバーコールの後の応答だけ、席を回してこのAIで決める（それ以外はパス）
+        const i0 = auction.findIndex(c => c !== 'P');
+        const early = i0 < 0 || auction.length <= i0 + 2;
+        if (early) { const rd = SEATS[(d + 3) % 4]; const x = chooseCall(hands[seat], auction, rd, examples); r = { call: x.call, why: x.why, source: 'opp' }; }
+        else r = { call: 'P', why: '相手はパス', source: 'opp' };
+      } else if ((seat === 'E' || seat === 'W') && opts.oppOvercall && ourOpen && api.overcall) {
         const o = api.overcall.decide(hands[seat], prev);
         r = o && isBid(o.call) && o.call[1] !== 'N' ? { call: o.call, why: o.why, source: 'opp' } : { call: 'P', why: '相手はパス', source: 'opp' };
       } else if (seat === 'E' || seat === 'W') r = { call: 'P', why: '相手はパス', source: 'opp' };

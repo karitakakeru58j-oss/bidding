@@ -86,6 +86,7 @@
   function callHtml(c) {
     if (c === 'P') return 'パス';
     if (c === 'X') return 'ダブル';
+    if (c === 'XX') return 'リダブル';
     if (!E.isBid(c)) return esc(c);
     const s = c[1];
     if (s === 'N') return c[0] + 'NT';
@@ -141,7 +142,27 @@
     const i0 = auction.findIndex(c => c !== 'P');
     return i0 >= 0 && (seat(i0) === 'N' || seat(i0) === 'S') && E.isBid(auction[i0 + 1] || '');
   }
+  // 4番手（アドバンサー）の問題：敵のオープン → パートナーのスートのオーバーコール → 敵の応答（パス以外） → 自分
+  function makeAdvQuiz() {
+    for (let t = 0; t < 5000; t++) {
+      let hands = E.deal();
+      let dealer = Math.random() < 0.5 ? 'E' : 'W';
+      const { auction } = E.autoAuction(hands, dealer, null, 6, { oppOpen: true });
+      const i0 = auction.findIndex(c => c !== 'P');
+      if (i0 < 0 || !/^1[CDHS]$/.test(auction[i0])) continue;
+      const d = E.SEATS.indexOf(dealer), seat = i => E.SEATS[(d + i) % 4];
+      if (seat(i0) !== 'E' && seat(i0) !== 'W') continue;
+      const oc = auction[i0 + 1], rr = auction[i0 + 2];
+      if (!oc || !E.isBid(oc) || oc[1] === 'N' || !rr || rr === 'P') continue;
+      if (auction.length < i0 + 3) continue;
+      const qSeat = seat(i0 + 3);
+      if (qSeat === 'N') { const h2 = {}; for (const k of E.SEATS) h2[ROT[k]] = hands[k]; hands = h2; dealer = ROT[dealer]; }
+      return { hands, dealer, auction: auction.slice(0, i0 + 3), vul: 'None' };
+    }
+    return null;
+  }
   function makeQuiz(filter) {
+    if (filter === 'adv') return makeAdvQuiz();
     const examples = examplesFrom(store.answers);
     const comp = filter === 'comp';
     for (let t = 0; t < (comp ? 3000 : 800); t++) {
@@ -197,6 +218,7 @@
     }
     html += `<button class="bid pass" data-call="P" aria-pressed="${chosen === 'P'}">パス</button>`;
     if (E.legalInAuction('X', quiz.auction, quiz.dealer)) html += `<button class="bid pass" data-call="X" aria-pressed="${chosen === 'X'}">ダブル</button>`;
+    if (E.legalInAuction('XX', quiz.auction, quiz.dealer)) html += `<button class="bid pass" data-call="XX" aria-pressed="${chosen === 'XX'}">リダブル</button>`;
     $('bbox').innerHTML = html;
     const btn = $('submit');
     btn.disabled = !chosen;
