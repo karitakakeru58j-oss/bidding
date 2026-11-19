@@ -1540,7 +1540,7 @@
       }
       // 自分たちがゲームに達した後に敵がさらにビッド（セーブ）：合わせて22点以上ならダブル
       if (ourLast && levelOf(ourLast) >= gameLevel(ourLast[1]) && lastByOpp) {
-        if (okA('X') && (tot >= 22 || h.adj >= 16)) return out('X', `自分たちのゲームの上に敵がビッドした（セーブ）。合わせて22点以上${pts}、または自分が16点以上あるのでペナルティ・ダブル`);
+        if (okA('X') && (tot >= 25 || h.adj >= 16) && (lb[1] === 'N' || h.len[lb[1]] >= 2)) return out('X', `自分たちのゲームの上に敵がビッドした（セーブ）。合わせて25点以上${pts}、または自分が16点以上あり、敵のスートが2枚以上なのでペナルティ・ダブル`);
         return out('P', '自分たちのゲームの上に敵がビッドした。ダブルするほどの強さがないのでパス（パートナーに任せる）');
       }
       // そのビッドが（敵のスート以外の）ナチュラルなビッドか
@@ -1573,8 +1573,9 @@
         // NT：ゲームの強さで敵のスートのストッパーがあれば3NT
         if (!fits.length && stopAll && tot >= 25 && okA('3N')) return out('3N', `${tag}敵のスートのストッパーがあり、ゲームの強さ${pts}があるので3NT`);
         // ペナルティ・ダブル：敵のスートに4枚以上でストッパー、合わせて22点以上、フィットなし
-        if (lastByOpp && lb[1] !== 'N' && okA('X') && !fits.length && h.len[lb[1]] >= 4 && h.stopper(lb[1]) && tot >= 22)
-          return out('X', `${tag}敵の${T(lb[1])}に${h.len[lb[1]]}枚でストッパーがあり、合わせて22点以上${pts}・フィットもないのでペナルティ・ダブル`);
+        const honors = s => (h.hand[s].match(/[AKQJ]/g) || []).length;
+        if (lastByOpp && lb[1] !== 'N' && oppSuits.includes(lb[1]) && okA('X') && !fits.length && h.len[lb[1]] >= 4 && honors(lb[1]) >= 2 && h.stopper(lb[1]) && h.adj >= 10 && tot >= 24)
+          return out('X', `${tag}敵の${T(lb[1])}に${h.len[lb[1]]}枚でオナー2枚以上、合わせて24点以上${pts}・フィットもないのでペナルティ・ダブル`);
         // 自分の長いスート（6枚以上）
         const L = SUITS.filter(s => !oppSuits.includes(s) && h.len[s] >= 6).sort((a, b) => h.len[b] - h.len[a])[0];
         if (L && h.adj >= 8 && !onlyGame) {
