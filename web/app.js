@@ -186,7 +186,30 @@
     }
     return null;
   }
+  // バランシングの問題：敵のビッド（2の代以下）がパス-パスで回ってきた席（AI4体でビッドして場面を探す）
+  function makeBalQuiz() {
+    for (let t = 0; t < 4000; t++) {
+      let hands = E.deal();
+      let dealer = E.SEATS[Math.floor(Math.random() * 4)];
+      const { auction } = E.autoAuction(hands, dealer, null, 40, { full4: true });
+      const d = E.SEATS.indexOf(dealer), seat = i => E.SEATS[(d + i) % 4];
+      const pts = [];
+      for (let i = 3; i <= auction.length; i++) {
+        const me = seat(i); if (me !== 'N' && me !== 'S') continue;
+        let li = -1; for (let j = i - 1; j >= 0; j--) if (auction[j] !== 'P') { li = j; break; }
+        if (li < 0 || i - li !== 3 || !E.isBid(auction[li]) || auction[li][1] === 'N' || Number(auction[li][0]) > 2) continue;
+        if (seat(li) !== 'E' && seat(li) !== 'W') continue;
+        pts.push(i);
+      }
+      if (!pts.length) continue;
+      const idx = pts[Math.floor(Math.random() * pts.length)];
+      if (seat(idx) === 'N') { const h2 = {}; for (const k of E.SEATS) h2[ROT[k]] = hands[k]; hands = h2; dealer = ROT[dealer]; }
+      return { hands, dealer, auction: auction.slice(0, idx), vul: 'None' };
+    }
+    return null;
+  }
   function makeQuiz(filter) {
+    if (filter === 'bal') return makeBalQuiz();
     if (filter === 'adv') return makeAdvQuiz();
     if (filter === 'tox') return makeToxQuiz();
     const examples = examplesFrom(store.answers);

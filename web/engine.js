@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.25.0';
+  const ENGINE_VERSION = '0.26.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1328,7 +1328,7 @@
       }
       if (v >= 12 && (r = B(cue, `ゲームフォーシングの強さ（${fmt(v)}点）なのでキュービッド（${callText(cue)}）`))) return r;
       // マイナーなど：ノンジャンプ＝8点以下、ジャンプ＝インビ
-      const L = SUITS.filter(s => s !== Y).sort((a, b) => h.len[b] - h.len[a] || (isMaj(b) ? 1 : 0) - (isMaj(a) ? 1 : 0))[0];
+      const L = SUITS.filter(s => s !== Y).sort((a, b) => h.len[b] - h.len[a] || (isMaj(b) ? 1 : 0) - (isMaj(a) ? 1 : 0) || rankOf(cheapOf(a) || '7N') - rankOf(cheapOf(b) || '7N'))[0];
       if (v >= 9 && (r = B(jumpOf(L, 1), `${T(L)}${h.len[L]}枚・9〜11点なのでジャンプの${callText(jumpOf(L, 1))}（インビテーション）`))) return r;
       return B(cheapOf(L), `${T(L)}${h.len[L]}枚。8点以下なのでノンジャンプの${callText(cheapOf(L))}（パートナーのダブルにはパスしない）`) || { call: 'P', why: 'パス' };
     }
@@ -1438,6 +1438,53 @@
       return h.adj >= 14.5 ? { call: '4' + M, why: `パートナーのインビテーション（メジャー4-4・${T(M)}フィット）を受けて4${SYM[M]}` } : { call: 'P', why: 'パートナーのインビテーションを断ってパス' };
     }
     return { advance, doublerAfterCue, advancerAfterReply, doublerAfterInvite, doublerRebid, advanceAfterBid };
+  })();
+
+  // ===== バランシング（パス-パスで回ってきた席）：システムは同じで、下限が下がる =====
+  //   敵のオープン-P-P：1NT＝12〜14、1の代のオーバーコール＝6〜7点くらいから、2の代は変えない、ウィーク（ジャンプ）はしない。
+  //   ダブルは借りたKの分（3点）だけ下限を下げる
+  const BAL = (() => {
+    const T = s => JA_SUIT[s];
+    function afterOpen(hand, Y, ok, cheapOf) {
+      const h = evaluate(hand), a = h.adjNoLen, OC = api.overcall;
+      const B = (call, why) => call && ok(call) ? { call, why } : null;
+      let r;
+      const x = hand[Y];
+      const stop = h.stopper(Y) || (x.includes('Q') && x.length >= 2) || (x.includes('J') && x.length >= 3);
+      if (ntShape(h, { pos: 0 }) && a >= 12 && a < 15 && stop && (r = B('1N', `バランシング：1NTは12〜14点（${fmt(a)}点）で、${T(Y)}のストッパーがあるので1NT`))) return r;
+      if (OC && OC.doubleShape(hand, '1' + Y)) {
+        const pd = OC.doubleProb(a + 3, h.len[Y], OC.oppHonors(hand, '1' + Y));
+        if (pd >= 0.5 && (r = B('X', `バランシング：ダブルの形で、借りたKの分（3点）を足すとダブルする強さ（${fmt(a)}点）なのでダブル`))) return r;
+      }
+      // スートのオーバーコール（ノンジャンプのみ）
+      const cands = SUITS.filter(s => s !== Y && h.len[s] >= 5).sort((p, q) => h.len[q] - h.len[p] || (isMaj(q) ? 1 : 0) - (isMaj(p) ? 1 : 0));
+      for (const s of cands) {
+        const c = cheapOf(s);
+        if (!c) continue;
+        if (levelOf(c) === 1 && a >= 6 && a < 17.5 && (r = B(c, `バランシング：${T(s)}${h.len[s]}枚。1の代のオーバーコールは6〜7点くらいから（${fmt(a)}点）なので${callText(c)}`))) return r;
+        if (levelOf(c) === 2 && OC) {
+          const d = OC.decide(hand, '1' + Y);
+          if (d && d.call === c && (r = B(c, `バランシング：2の代のオーバーコールはふだんと同じ基準で${callText(c)}（${d.why}）`))) return r;
+          // ふだんならウィーク（ジャンプ）の手：バランシングではジャンプせず、8点以上なら一番安い代で
+          if (d && d.cand && d.cand.type === 'weak' && d.call !== 'P' && a >= 8 && (r = B(c, `バランシング：ウィークオーバーコールはしないので、${T(s)}${h.len[s]}枚を一番安い${callText(c)}で`))) return r;
+        }
+      }
+      if (a >= 15 && (r = B('X', `バランシング：強い手（${fmt(a)}点）なので、まずダブル`))) return r;
+      return { call: 'P', why: 'バランシングの席だが、ビッドできる形・強さがないのでパス' };
+    }
+    // 2の代以下でパス-パスで流れてきたコントラクト（敵のビッド）に積極的に競り合う
+    function protect(hand, Y, ok, cheapOf, oursBid) {
+      const h = evaluate(hand), v = h.adj;
+      const B = (call, why) => call && ok(call) ? { call, why } : null;
+      let r;
+      const uOk = ['H', 'S'].filter(M => M !== Y && !oursBid.includes(M)).every(M => h.len[M] >= 3);
+      const long = SUITS.filter(s => s !== Y && h.len[s] >= 5).sort((p, q) => h.len[q] - h.len[p] || (isMaj(q) ? 1 : 0) - (isMaj(p) ? 1 : 0))[0];
+      if (long && h.len[long] >= 6 && v >= 7) { const c = cheapOf(long); if (c && levelOf(c) <= 3 && (r = B(c, `2の代以下で流れてきたので競り合う：${T(long)}${h.len[long]}枚で${callText(c)}`))) return r; }
+      if (h.len[Y] <= 2 && uOk && v >= 9 && (r = B('X', `2の代以下で流れてきたので競り合う：${T(Y)}が${h.len[Y]}枚で9点以上（${fmt(v)}点）なのでダブル`))) return r;
+      if (long && v >= 8) { const c = cheapOf(long); if (c && levelOf(c) <= 2 && (r = B(c, `2の代以下で流れてきたので競り合う：${T(long)}5枚で${callText(c)}`))) return r; }
+      return null;
+    }
+    return { afterOpen, protect };
   })();
 
   // ===== 4番手（アドバンサー）：敵のオープン-(パートナーのスートのオーバーコール)-敵の応答（パス以外）の後 =====
@@ -3123,11 +3170,35 @@
         && auction.slice(0, oppIdx).every(c => c === 'P')
         && auction.every((c, i) => i <= oppIdx + 1 || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S');
       if (isOC && auction.length > oppIdx + 2) ntOC = SEATS[(d + oppIdx + 1) % 4] === mySeat ? -1 : 1;
+      // バランシングの1NT（12〜14点）：1NTオープンの仕組みを3点ずらして使う
+      const isBalNT = oppIdx >= 0 && /^1[CDHS]$/.test(auction[oppIdx]) && auction[oppIdx + 1] === 'P' && auction[oppIdx + 2] === 'P' && auction[oppIdx + 3] === '1N'
+        && auction.slice(0, oppIdx).every(c => c === 'P')
+        && auction.every((c, i) => i <= oppIdx + 3 || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S');
+      if (isBalNT && auction.length > oppIdx + 4) ntOC = SEATS[(d + oppIdx + 3) % 4] === mySeat ? -3 : 3;
       // 自分たちの1の代のスートのオープン → 敵のナチュラルなオーバーコール（スート） → その後は敵がずっとパス
       const ourIdx = auction.findIndex((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'));
       if (ourIdx >= 0 && oppIdx === ourIdx + 1 && /^1[CDHS]$/.test(auction[ourIdx]) && isBid(auction[oppIdx]) && auction[oppIdx][1] !== 'N'
         && auction.every((c, i) => i === oppIdx || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'))
         compOpp = { s: auction[oppIdx][1], call: auction[oppIdx] };
+      // バランシング：敵の1の代のオープン → P → P → 自分（4番手）
+      {
+        const i0 = auction.findIndex(c => c !== 'P');
+        const seatAt = i => SEATS[(d + i) % 4], ew = i => seatAt(i) === 'E' || seatAt(i) === 'W';
+        const okA = c => legalInAuction(c, auction, dealer);
+        const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+        if (i0 >= 0 && ew(i0) && /^1[CDHS]$/.test(auction[i0]) && auction[i0 + 1] === 'P' && auction[i0 + 2] === 'P' && auction.length === i0 + 3) {
+          let x = null;
+          try { x = BAL.afterOpen(hand, auction[i0][1], okA, cheapOf); } catch (e) { x = null; }
+          if (x && okA(x.call)) return { call: x.call, why: x.why, source: 'rule', ruleId: 'bal' };
+        }
+        // バランシングのダブルへの応答：パートナーは借りたKの分（3点）を引いて、テイクアウトダブルへの応答と同じに
+        if (i0 >= 0 && ew(i0) && /^1[CDHS]$/.test(auction[i0]) && auction[i0 + 1] === 'P' && auction[i0 + 2] === 'P' && auction[i0 + 3] === 'X' && auction[i0 + 4] === 'P' && auction.length === i0 + 5) {
+          const hh = evaluate(hand); hh.adj -= 3; hh.hcp -= 3; hh.adjNoLen -= 3;
+          let x = null;
+          try { x = TOX.advance(hh, auction[i0][1], okA, cheapOf); } catch (e) { x = null; }
+          if (x && okA(x.call)) return { call: x.call, why: x.why + '（バランシングのダブルなので、借りたKの分3点を引いて考える）', source: 'rule', ruleId: 'bal' };
+        }
+      }
       // テイクアウトダブルへの応答：敵の1の代のオープン → パートナーのX → 敵のパス → 自分（その後も敵がパスしている間の流れ）
       {
         const i0 = auction.findIndex(c => c !== 'P');
@@ -3143,7 +3214,13 @@
           try {
             if (k === 3) x = bidX ? TOX.advanceAfterBid(hh, Y, auction[i0 + 2], okA, cheapOf) : TOX.advance(hh, Y, okA, cheapOf);
             else if (k === 5 && cueC(auction[i0 + 3])) x = TOX.doublerAfterCue(hh, Y, okA, cheapOf);
-            else if (k === 5 && bidX) x = null;
+            else if (k === 5 && bidX) {
+              // 1♠-(X)-2♠-(P)-P：ダブルした側がもう一度ダブルするのは16点くらいから
+              const R = auction[i0 + 2];
+              if (auction[i0 + 3] === 'P' && auction[i0 + 4] === 'P' && levelOf(R) <= 2 && hh.adj >= 16 && okA('X'))
+                x = { call: 'X', why: `パス-パスで回ってきた。もう一度ダブルするのは16点くらいから（${fmt(hh.adj)}点）なのでダブル` };
+              else x = { call: 'P', why: 'もう一度ダブルする強さ（16点くらい）がないのでパス' };
+            }
             else if (k === 5) {
               // パートナーの応答が何段ジャンプしたか（ダブルの直後の一番安いビッドとの差）
               const adv = auction[i0 + 3], pre = auction.slice(0, i0 + 3);
@@ -3183,6 +3260,34 @@
         if (direct && api.overcall) {
           const r = api.overcall.decide(hand, auction[oppIdx]);
           return { call: r.call, why: r.why, source: 'rule', ruleId: 'overcall', overcall: r };
+        }
+        // 2の代以下でパス-パスで流れてきた敵のコントラクトには積極的に競り合う（バランシング）
+        {
+          const n = auction.length;
+          let li = -1; for (let i = n - 1; i >= 0; i--) if (auction[i] !== 'P') { li = i; break; }
+          const lastBidC = li >= 0 ? auction[li] : null;
+          const byOpp = li >= 0 && (SEATS[(d + li) % 4] === 'E' || SEATS[(d + li) % 4] === 'W');
+          if (byOpp && isBid(lastBidC) && lastBidC[1] !== 'N' && levelOf(lastBidC) <= 2 && n - li === 3 && auction[n - 1] === 'P' && auction[n - 2] === 'P') {
+            const okA = c => legalInAuction(c, auction, dealer);
+            const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+            const oursBid = auction.filter((c, i) => isBid(c) && (SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S')).map(c => c[1]);
+            let x = null;
+            try { x = BAL.protect(hand, lastBidC[1], okA, cheapOf, oursBid); } catch (e) { x = null; }
+            if (x && okA(x.call)) return { call: x.call, why: x.why, source: 'rule', ruleId: 'bal' };
+          }
+          // パートナーのバランシングのダブル（2の代以下）への応答
+          if (n >= 2 && auction[n - 1] === 'P' && auction[n - 2] === 'X' && (SEATS[(d + n - 2) % 4] === 'N' || SEATS[(d + n - 2) % 4] === 'S')) {
+            let bi = -1; for (let i = n - 3; i >= 0; i--) if (isBid(auction[i])) { bi = i; break; }
+            const b = bi >= 0 ? auction[bi] : null;
+            if (b && b[1] !== 'N' && levelOf(b) <= 2 && (SEATS[(d + bi) % 4] === 'E' || SEATS[(d + bi) % 4] === 'W')) {
+              const okA = c => legalInAuction(c, auction, dealer);
+              const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+              const hh = evaluate(hand); hh.adj -= 3; hh.hcp -= 3; hh.adjNoLen -= 3;
+              let x = null;
+              try { x = TOX.advance(hh, b[1], okA, cheapOf); } catch (e) { x = null; }
+              if (x && okA(x.call)) return { call: x.call, why: x.why + '（パートナーのバランシングのダブルなので3点引いて考える）', source: 'rule', ruleId: 'bal' };
+            }
+          }
         }
         return { call: 'P', why: '相手が入った競り合いは、まだ直後の介入しか対応していないのでパス', source: 'rule', ruleId: 'competitive' };
       }
@@ -3295,7 +3400,7 @@
       return res;
     }
     res = pipeline();
-    if (ntOC) res.why += '（1NTオーバーコールは16〜18点なので、1NTオープンの仕組みを点数を1点ずらして使う）';
+    if (ntOC) res.why += Math.abs(ntOC) === 3 ? '（バランシングの1NTは12〜14点なので、1NTオープンの仕組みを点数を3点ずらして使う）' : '（1NTオーバーコールは16〜18点なので、1NTオープンの仕組みを点数を1点ずらして使う）';
     // あなたの回答例
     const key = seqKeyOf(seq, passedBeforeMe);
     let near = nearestExample(h, key, examples, seq);
