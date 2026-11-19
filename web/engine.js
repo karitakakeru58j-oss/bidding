@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.28.3';
+  const ENGINE_VERSION = '0.28.4';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -3312,6 +3312,8 @@
               else if (h.stopper(Y) && hh.balanced && okA('3N') && strong) x = { call: '3N', why: `パートナーのキュービッドに、${JA_SUIT[Y]}のストッパーがあるので3NT` };
               else if (okA(cheapOf(Z))) x = { call: cheapOf(Z), why: `パートナーのキュービッド（フォーシング）に、最低限なので${callText(cheapOf(Z))}` };
             }
+            // 4枚以上のメジャー → ストッパーがあればNT → パートナーのスートやほかのスート
+            if (!x) { const M = ['H', 'S'].filter(s => !oppSuits.includes(s) && h.len[s] >= 4).sort((a, b) => h.len[b] - h.len[a] || (a === 'H' ? -1 : 1))[0]; if (M && okA(cheapOf(M))) x = { call: cheapOf(M), why: `パートナーのキュービッド（フォーシング）に、${JA_SUIT[M]}${h.len[M]}枚を示す` }; }
             if (!x && h.stopper(Y) && okA(cheapOf('N')) && levelOf(cheapOf('N')) <= 3) x = { call: cheapOf('N'), why: `パートナーのキュービッド（フォーシング）に、${JA_SUIT[Y]}のストッパーがあるのでNT` };
             if (!x) {
               const M = ['H', 'S'].filter(s => !oppSuits.includes(s) && h.len[s] >= 4).sort((a, b) => h.len[b] - h.len[a])[0];
@@ -3365,10 +3367,30 @@
             if (b && b[1] !== 'N' && levelOf(b) <= 2 && (SEATS[(d + bi) % 4] === 'E' || SEATS[(d + bi) % 4] === 'W')) {
               const okA = c => legalInAuction(c, auction, dealer);
               const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
-              const hh = evaluate(hand); hh.adj -= 3; hh.hcp -= 3; hh.adjNoLen -= 3;
+              // 流れてきたコントラクトへのダブルは9〜11点くらい：ふつうのテイクアウトダブル（12点以上）より2点少ないとして考える
+              const hh = evaluate(hand); hh.adj -= 2; hh.hcp -= 2; hh.adjNoLen -= 2;
               let x = null;
               try { x = TOX.advance(hh, b[1], okA, cheapOf); } catch (e) { x = null; }
-              if (x && okA(x.call)) return { call: x.call, why: x.why + '（パートナーのバランシングのダブルなので3点引いて考える）', source: 'rule', ruleId: 'bal' };
+              if (x && okA(x.call)) return { call: x.call, why: x.why + '（パートナーのダブルは9〜11点くらいなので2点引いて考える）', source: 'rule', ruleId: 'bal' };
+            }
+          }
+        }
+        // 自分のキュービッドにパートナーが答えた後：ゲームの強さ（13点以上）ならゲームへ（私の判断）
+        {
+          const n = auction.length, mineSide = i => SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S';
+          const firstBy = {};
+          auction.forEach((c, i) => { if (isBid(c) && c[1] !== 'N' && !(c[1] in firstBy)) firstBy[c[1]] = mineSide(i) ? 'us' : 'them'; });
+          let me = -1; for (let i = n - 4; i >= 0; i -= 4) if (isBid(auction[i])) { me = i; break; }
+          const pc = n >= 2 ? auction[n - 2] : null;
+          if (me >= 0 && me === n - 4 && auction[me][1] !== 'N' && firstBy[auction[me][1]] === 'them' && isBid(pc) && levelOf(pc) < gameLevel(pc[1])) {
+            const hh = evaluate(hand), okA = c => legalInAuction(c, auction, dealer);
+            if (hh.adj >= 13) {
+              const ps = pc[1];
+              let x = null;
+              if (ps !== 'N' && isMaj(ps) && hh.len[ps] >= 4 && okA('4' + ps)) x = { call: '4' + ps, why: `自分のキュービッドにパートナーが${JA_SUIT[ps]}を示し、フィットしてゲームの強さがあるので4${SYM[ps]}` };
+              else if (hh.stopper(auction[me][1]) && okA('3N')) x = { call: '3N', why: 'ゲームの強さがあり、敵のスートのストッパーがあるので3NT' };
+              else if (ps !== 'N' && hh.len[ps] >= 4 && okA(gameCall(ps))) x = { call: gameCall(ps), why: `パートナーの${JA_SUIT[ps]}にフィットしてゲームの強さがあるのでゲーム` };
+              if (x) return { call: x.call, why: x.why, source: 'rule', ruleId: 'cue-follow' };
             }
           }
         }
