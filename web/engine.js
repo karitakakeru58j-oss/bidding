@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.28.4';
+  const ENGINE_VERSION = '0.29.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1491,6 +1491,105 @@
   // ===== 4番手（アドバンサー）：敵のオープン-(パートナーのスートのオーバーコール)-敵の応答（パス以外）の後 =====
   //   info = { O: 敵のオープンのスート, oc: パートナーのオーバーコール, Z: そのスート, R: 敵の応答（ビッドかX） }
   //   ok(call) で合法か判断する（オークション全体）
+  // ===== 自分たちのオープンの後、2回目以降に敵が割り込んだ流れ（オープン-(P)-応答-(介入) など） =====
+  //   基本：割り込みがなかったものとしてフリーランのルールで決め、言えなければ同じスートの一番安い代へ（上げすぎならやめる）。
+  //   人工的なビッド（ステイマン・トランスファーなど）や敵のスートは使わず、競り合いの判断（フィット・トータルトリック・ペナルティ）にする
+  const LATE = (() => {
+    const T = s => JA_SUIT[s];
+    function pick(h, seq, ctx, auction, dealer, oppSuits, pipeline, oppOpened) {
+      const d = SEATS.indexOf(dealer), n = auction.length;
+      const seatAt = i => SEATS[(d + i) % 4], mine = i => seatAt(i) === 'N' || seatAt(i) === 'S';
+      const me = seatAt(n);
+      const okA = c => legalInAuction(c, auction, dealer);
+      const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+      const out = (call, why) => ({ call, why, source: 'rule', ruleId: 'late' });
+      const pk = ctx && ctx.partner ? ctx.partner : null;
+      // 敵がオープンした流れ：パートナーがオーバーコーラーなら8点、アドバンサーなら（ビッドしていれば）6点を最低として数える
+      //   （パートナーが最初に1NTなら15点、ダブルなら12点）
+      const pFirst = auction.findIndex((c, i) => c !== 'P' && mine(i) && seatAt(i) !== me);
+      const myFirst = auction.findIndex((c, i) => c !== 'P' && mine(i) && seatAt(i) === me);
+      const pFc = pFirst >= 0 ? auction[pFirst] : null;
+      const pMin = oppOpened ? (pFirst < 0 ? 0 : (myFirst < 0 || pFirst < myFirst) ? (pFc === '1N' ? 15 : pFc === 'X' ? 12 : 8) : 6) : (pk && pk.hcp ? pk.hcp[0] : 0);
+      const tot = h.adj + pMin;
+      let li = -1; for (let i = n - 1; i >= 0; i--) if (isBid(auction[i])) { li = i; break; }
+      const lb = li >= 0 ? auction[li] : null, lastByOpp = li >= 0 && !mine(li);
+      let ol = -1; for (let i = n - 1; i >= 0; i--) if (isBid(auction[i]) && mine(i)) { ol = i; break; }
+      const ourLast = ol >= 0 ? auction[ol] : null;
+      const pSuits = [...new Set(auction.filter((c, i) => isBid(c) && c[1] !== 'N' && mine(i) && seatAt(i) !== me).map(c => c[1]))].filter(s => !oppSuits.includes(s));
+      const pLen = s => Math.max(pk && Array.isArray(pk[s]) ? pk[s][0] : 0, pSuits.includes(s) ? 4 : 0);
+      const fitLen = s => h.len[s] + pLen(s);
+      const stopAll = oppSuits.every(s => h.stopper(s));
+      const gameNeed = s => (s === 'N' || isMaj(s)) ? 25 : 28;
+      const pts = `（自分${fmt(h.adj)}点＋パートナーの最低${fmt(pMin)}点）`;
+      // パートナーのダブルはペナルティとしてパス
+      if (n >= 2 && auction[n - 2] === 'X' && mine(n - 2)) return out('P', 'パートナーのダブル（ペナルティ）なのでパス');
+      // 自分たちがゲームに達した後に敵がさらにビッド（セーブ）：合わせて22点以上ならダブル
+      if (ourLast && levelOf(ourLast) >= gameLevel(ourLast[1]) && lastByOpp) {
+        if (okA('X') && (tot >= 22 || h.adj >= 16)) return out('X', `自分たちのゲームの上に敵がビッドした（セーブ）。合わせて22点以上${pts}、または自分が16点以上あるのでペナルティ・ダブル`);
+        return out('P', '自分たちのゲームの上に敵がビッドした。ダブルするほどの強さがないのでパス（パートナーに任せる）');
+      }
+      // そのビッドが（敵のスート以外の）ナチュラルなビッドか
+      const natural = c => {
+        if (!isBid(c)) return false;
+        const s = c[1];
+        if (s === 'N') return stopAll;
+        if (oppSuits.includes(s)) return false;
+        return h.len[s] >= 4 || (h.len[s] >= 3 && fitLen(s) >= 8);
+      };
+      // その代まで競ってよいか（トータルトリックの考え方：フィットの枚数−6の代まで。ゲームは点数が必要）
+      const affordable = c => {
+        const s = c[1], lv = levelOf(c);
+        if (lv >= gameLevel(s)) return tot >= gameNeed(s);
+        if (s === 'N') return tot >= 23;
+        return lv <= Math.max(2, fitLen(s) - 6) || (lv <= 3 && tot >= 23);
+      };
+      // 競り合いの判断（フリーランのルールが使えないとき）
+      const compete = (tag) => {
+        // フィットしたスート（メジャー優先、長い方）
+        const fits = SUITS.filter(s => pSuits.includes(s) && fitLen(s) >= 8 && h.len[s] >= 3).sort((a, b) => fitLen(b) - fitLen(a) || (isMaj(b) - isMaj(a)));
+        for (const s of fits) {
+          if (tot >= gameNeed(s) && okA(gameCall(s)) && levelOf(cheapOf(s)) <= gameLevel(s)) return out(gameCall(s), `${tag}${T(s)}に${fitLen(s)}枚以上のフィットがあり、ゲームの強さ${pts}があるので${callText(gameCall(s))}`);
+          const c = cheapOf(s);
+          if (c && h.adj >= 6 && affordable(c) && !(ourLast && ourLast[1] === s && levelOf(ourLast) >= levelOf(c)))
+            return out(c, `${tag}${T(s)}に${fitLen(s)}枚以上のフィットがあるので、トータルトリックの考え方で${callText(c)}まで競る`);
+        }
+        // NT：ゲームの強さで敵のスートのストッパーがあれば3NT
+        if (!fits.length && stopAll && tot >= 25 && okA('3N')) return out('3N', `${tag}敵のスートのストッパーがあり、ゲームの強さ${pts}があるので3NT`);
+        // ペナルティ・ダブル：敵のスートに4枚以上でストッパー、合わせて22点以上、フィットなし
+        if (lastByOpp && lb[1] !== 'N' && okA('X') && !fits.length && h.len[lb[1]] >= 4 && h.stopper(lb[1]) && tot >= 22)
+          return out('X', `${tag}敵の${T(lb[1])}に${h.len[lb[1]]}枚でストッパーがあり、合わせて22点以上${pts}・フィットもないのでペナルティ・ダブル`);
+        // 自分の長いスート（6枚以上）
+        const L = SUITS.filter(s => !oppSuits.includes(s) && h.len[s] >= 6).sort((a, b) => h.len[b] - h.len[a])[0];
+        if (L && h.adj >= 8) {
+          const c = cheapOf(L);
+          if (c && levelOf(c) < gameLevel(L) && levelOf(c) <= h.len[L] - 4 && !(ourLast && ourLast[1] === L && levelOf(ourLast) >= levelOf(c) - 0 && fitLen(L) < 9 && levelOf(c) > 2))
+            return out(c, `${tag}${T(L)}${h.len[L]}枚なので${callText(c)}で競る`);
+        }
+        return out('P', `${tag}競り合いで動けるフィット・強さ・長いスートがないのでパス`);
+      };
+      // 自分たちの流れにパスが入っている（敵の割り込みでパスした後）はフリーランのルールが使えないので競り合いの判断
+      if (oppOpened || seq.slice(1).some(c => c === 'P' || c === 'X' || c === 'XX')) return compete('');
+      let r = null;
+      try { r = pipeline(); } catch (e) { r = null; }
+      if (!r) return compete('');
+      const c = r.call, base = `（割り込みがなければ${callText(c)}：${r.why}）`;
+      if (c === 'P') {
+        const x = compete('');
+        return x.call === 'P' ? out('P', `割り込みがなくてもパスの手なのでパス${base}`) : { ...x, why: x.why + base };
+      }
+      if (natural(c)) {
+        if (okA(c)) return { ...r, why: `敵が割り込んだが、ナチュラルなビッドなのでフリーランと同じく${callText(c)}：${r.why}`, ruleId: r.ruleId || 'late' };
+        const c2 = cheapOf(c[1]);
+        if (c2 && levelOf(c2) - levelOf(c) <= 1 && affordable(c2)) return out(c2, `敵の割り込みで${callText(c)}が言えないので、同じ${c[1] === 'N' ? 'NT' : T(c[1])}の一番安い${callText(c2)}${base}`);
+        const x = compete(`${callText(c)}が言えず、${c2 ? callText(c2) + 'は上げすぎ。' : ''}`);
+        return { ...x, why: x.why + base };
+      }
+      const x = compete(isBid(c) && c[1] !== 'N' && oppSuits.includes(c[1]) ? `${callText(c)}は敵のスートなので使えない。` : isBid(c) && c[1] === 'N' ? '敵のスートのストッパーがないのでNTは言わない。' : `${callText(c)}は人工的なビッドなので、敵が割り込んだ後は使わない。`);
+      return { ...x, why: x.why + base };
+    }
+    return { pick };
+  })();
+
   const ADV = (() => {
     const T = s => JA_SUIT[s];
     function pick(h, info, ok, cheapOf) {
@@ -3167,6 +3266,10 @@
     // 相手のビッドがあるとき：今は「敵のオープンの直後の介入（オーバーコール）」だけに対応
     let compOpp = null; // 敵のオーバーコールの後（3番手・オープナーのリビッド）
     let compX = null;   // 敵のテイクアウトダブルの後
+    let compLate = null; // 自分たちのオープンの後、2回目以降に敵が割り込んだ
+    const mineSideAt = i => SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S';
+    // 敵のスート＝そのスートを最初にビッドしたのが敵のもの
+    const oppSuitsOf = () => { const f = {}; auction.forEach((c, i) => { if (isBid(c) && c[1] !== 'N' && !(c[1] in f)) f[c[1]] = mineSideAt(i) ? 'us' : 'them'; }); return SUITS.filter(s => f[s] === 'them'); };
     let ntOC = 0; // 1NTオーバーコールの後：1NTオープンの仕組みを、点数を1点ずらして使う
     {
       const oppIdx = auction.findIndex((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'E' || SEATS[(d + i) % 4] === 'W'));
@@ -3394,7 +3497,13 @@
             }
           }
         }
-        return { call: 'P', why: '相手が入った競り合いは、まだ直後の介入しか対応していないのでパス', source: 'rule', ruleId: 'competitive' };
+        // 自分たちがオープンした後に敵が割り込んだ（オープン-(P)-応答-(介入) など）：下の compLate でフリーランのルールを使う
+        const fi = auction.findIndex(c => c !== 'P');
+        const ourFirstCall = auction.find((c, i) => c !== 'P' && mineSideAt(i));
+        if (fi >= 0 && mineSideAt(fi)) compLate = { oppSuits: oppSuitsOf() };
+        // 敵がオープンし、自分たちがオーバーコール（スート・1NT・ダブル）した後：フリーランのルールは使わず、競り合いの判断だけ
+        else if (ourFirstCall && ourFirstCall !== 'XX') compLate = { oppSuits: oppSuitsOf(), oppOpened: true };
+        else return { call: 'P', why: '敵がオープンした後の、2回目以降の競り合い（まだ決めていないところ）：パス', source: 'rule', ruleId: 'competitive' };
       }
     }
     // 1NTオーバーコールは16〜18点なので、レスポンダーは1点多く、オーバーコールした人は1点少なく数えて1NTオープンと同じに扱う
@@ -3454,6 +3563,7 @@
       return res;
     };
     let res = null;
+    if (compLate) return LATE.pick(h, seq, ctx, auction, dealer, compLate.oppSuits, pipeline, compLate.oppOpened);
     // 敵のテイクアウトダブルの後
     if (compX) {
       const X = compX.s;
