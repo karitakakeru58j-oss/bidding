@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.22.1';
+  const ENGINE_VERSION = '0.22.2';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1292,6 +1292,9 @@
           if (fj && (r = B(fj, `パートナーの${T(Z)}に4枚以上のサポートがあり8〜10点（ダミーポイント${fmt(dp)}点）なので、3${SYM[Z]}より下のジャンプしたニュースート（${callText(fj)}）`))) return r;
         }
         if (dp >= 6 && single && levelOf(single) <= 3 && (r = B(single, `パートナーの${T(Z)}にサポートがあり、6〜10点（ダミーポイント${fmt(dp)}点）なのでシングルレイズ`))) return r;
+        // 競り上がって4の代以上でしかレイズできないとき：4枚以上のサポート（か強い3枚）なら、ほかのスートより先にレイズ
+        if (single && levelOf(single) >= 4 && levelOf(single) <= 5 && (h.len[Z] >= 4 || dp >= 10) && dp >= 6
+          && (r = B(single, `パートナーの${T(Z)}に${h.len[Z]}枚のサポートがある（ダミーポイント${fmt(dp)}点）ので、ほかのスートより先に${callText(single)}`))) return r;
       }
       if (!majFirst && (r = tryMaj())) return r;
       // 1の代のニュースート：ナチュラル4枚以上・8点以上
