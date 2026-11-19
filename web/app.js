@@ -153,7 +153,8 @@
       const d = E.SEATS.indexOf(dealer), seat = i => E.SEATS[(d + i) % 4];
       if (seat(i0) !== 'E' && seat(i0) !== 'W') continue;
       const oc = auction[i0 + 1], rr = auction[i0 + 2];
-      if (!oc || !E.isBid(oc) || oc[1] === 'N' || !rr || rr === 'P') continue;
+      if (!oc || !E.isBid(oc) || oc[1] === 'N' || !rr) continue;
+      if (rr === 'P' && Math.random() < 0.5) continue; // 敵がパスした場面も半分くらい
       if (auction.length < i0 + 3) continue;
       const qSeat = seat(i0 + 3);
       if (qSeat === 'N') { const h2 = {}; for (const k of E.SEATS) h2[ROT[k]] = hands[k]; hands = h2; dealer = ROT[dealer]; }

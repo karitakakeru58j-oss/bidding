@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.27.1';
+  const ENGINE_VERSION = '0.28.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -769,7 +769,7 @@
     const MAJ = ['H', 'S'];
     const maxBid = (seq, opp) => { const lb = lastBid(seq); return !lb || rankOf(opp.call) > rankOf(lb) ? opp.call : lb; };
     // ダブルできるのは敵のオーバーコールの直後（3番手）と、3番手・4番手がパスした後のオープナー（リオープン）
-    const ok = (call, seq, opp) => call === 'P' || (call === 'X' ? seq.length === 1 || (seq.length === 2 && seq[1] === 'P') : isBid(call) && rankOf(call) > rankOf(maxBid(seq, opp)));
+    const ok = (call, seq, opp) => call === 'P' || (call === 'X' ? !opp.noX && (seq.length === 1 || (seq.length === 2 && seq[1] === 'P')) : isBid(call) && rankOf(call) > rankOf(maxBid(seq, opp)));
     const cheap = (s, seq, opp) => { const mb = maxBid(seq, opp); for (let lv = 1; lv <= 7; lv++) { const c = lv + s; if (rankOf(c) > rankOf(mb)) return c; } return null; };
     const jump = (s, seq, opp, n = 1) => { const c = cheap(s, seq, opp); if (!c) return null; const lv = levelOf(c) + n; return lv <= 7 ? lv + s : null; };
     const ctlOf = h => SUITS.reduce((t, s) => t + (h.hand[s].includes('A') ? 2 : 0) + (h.hand[s].includes('K') ? 1 : 0), 0);
@@ -833,10 +833,10 @@
           if (h.len.S >= 5 && v >= 6 && (r = R(c, 'スペード5枚以上なので1♠（1♥のオーバーコールに対しては、1♠＝5枚以上・ダブル＝ちょうど4枚）'))) return r;
           if (h.len.S === 4 && v >= minX && (r = R('X', 'スペードちょうど4枚なのでダブル（1♥のオーバーコールに対しては、1♠＝5枚以上・ダブル＝ちょうど4枚）'))) return r;
         } else if (h.len[M] >= 4) {
+          // マイナーのオープン：5枚以上のメジャーと4枚以上のサポートでインビ以上ならジャンプしたニュースート（ノンジャンプより先に）
+          if (!maj && h.len[X] >= 4 && h.len[M] >= 5 && v >= 10.5) { const j = jump(M, seq, opp, 1); if (j && levelOf(j) <= 4 && levelOf(j) < gameLevel(M) && rankOf(j) < rankOf('5' + X) && (rankOf(j) < rankOf('3' + X) || v >= 13) && (r = R(j, `${T(M)}5枚以上・${T(X)}4枚以上のサポートで${rankOf(j) > rankOf('3' + X) ? 'ゲームフォーシング' : 'インビテーション以上'}なのでジャンプしたニュースート（${callText(j)}）`))) return r; }
           if (h.len[M] >= 5 && v >= 10.5 && levelOf(c) === 2 && (r = R(c, `${T(M)}5枚以上でインビテーション以上なので、ノンジャンプの${callText(c)}`))) return r;
           if (h.len[M] >= 5 && v >= 13 && levelOf(c) === 3 && (r = R(c, `${T(M)}5枚以上でゲームフォーシングなので、ノンジャンプの${callText(c)}`))) return r;
-          // マイナーのオープン：5枚以上のメジャーと4枚以上のサポートでインビ以上ならジャンプしたニュースート
-          if (!maj && h.len[X] >= 4 && h.len[M] >= 5 && v >= 10.5) { const j = jump(M, seq, opp, 1); if (j && levelOf(j) <= 4 && levelOf(j) < gameLevel(M) && rankOf(j) < rankOf('5' + X) && (r = R(j, `${T(M)}5枚以上・${T(X)}4枚以上のサポートで${rankOf(j) > rankOf('3' + X) ? 'ゲームフォーシング' : 'インビテーション以上'}なのでジャンプしたニュースート（${callText(j)}）`))) return r; }
           if (v >= minX && (r = R('X', `${T(M)}4枚以上なのでダブル（ネガティブ・ダブル）`))) return r;
         }
       } else if (U.length === 2) {
@@ -3177,7 +3177,13 @@
       if (isBalNT && auction.length > oppIdx + 4) ntOC = SEATS[(d + oppIdx + 3) % 4] === mySeat ? -3 : 3;
       // 自分たちの1の代のスートのオープン → 敵のナチュラルなオーバーコール（スート） → その後は敵がずっとパス
       const ourIdx = auction.findIndex((c, i) => c !== 'P' && (SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'));
-      if (ourIdx >= 0 && oppIdx === ourIdx + 1 && /^1[CDHS]$/.test(auction[ourIdx]) && isBid(auction[oppIdx]) && auction[oppIdx][1] !== 'N'
+      // パートナーのオーバーコールに敵がパス：オーバーコールを「オープン」、敵のオープンを「介入」とみなして3番手の仕組みを使う
+      //   （1♠-(2♦)-P-? は 1♦-(1♠)-? と、1♦-(1♠)-P-? は 1♠-(2♦)-? と同じ考え方）
+      if (ourIdx >= 0 && oppIdx >= 0 && ourIdx === oppIdx + 1 && /^1[CDHS]$/.test(auction[oppIdx]) && isBid(auction[ourIdx]) && auction[ourIdx][1] !== 'N'
+        && auction.slice(0, oppIdx).every(c => c === 'P') && auction[ourIdx + 1] === 'P' && auction.length >= ourIdx + 2
+        && auction.every((c, i) => i === oppIdx || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'))
+        compOpp = { s: auction[oppIdx][1], call: auction[oppIdx], noX: true, oc: true };
+      else if (ourIdx >= 0 && oppIdx === ourIdx + 1 && /^1[CDHS]$/.test(auction[ourIdx]) && isBid(auction[oppIdx]) && auction[oppIdx][1] !== 'N'
         && auction.every((c, i) => i === oppIdx || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'))
         compOpp = { s: auction[oppIdx][1], call: auction[oppIdx] };
       // バランシング：敵の1の代のオープン → P → P → 自分（4番手）
@@ -3240,7 +3246,7 @@
         const i0 = auction.findIndex(c => c !== 'P');
         const seatAt = i => SEATS[(d + i) % 4], ew = i => seatAt(i) === 'E' || seatAt(i) === 'W';
         if (i0 >= 0 && ew(i0) && /^1[CDHS]$/.test(auction[i0]) && isBid(auction[i0 + 1] || '') && auction[i0 + 1][1] !== 'N'
-          && auction[i0 + 2] && auction.length === i0 + 3) { // 敵がパスしたときも同じ考え方で（私の判断）
+          && auction[i0 + 2] && auction[i0 + 2] !== 'P' && auction.length === i0 + 3) {
           const info = { O: auction[i0][1], oc: auction[i0 + 1], Z: auction[i0 + 1][1], R: auction[i0 + 2] };
           const okA = c => legalInAuction(c, auction, dealer);
           const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
