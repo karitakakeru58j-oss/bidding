@@ -161,8 +161,29 @@
     }
     return null;
   }
+  // テイクアウトダブルへの応答の問題：敵のオープン → パートナーのX → 敵のパス → 自分（キュービッドの後の流れも）
+  function makeToxQuiz() {
+    for (let t = 0; t < 6000; t++) {
+      let hands = E.deal();
+      let dealer = Math.random() < 0.5 ? 'E' : 'W';
+      const { auction, steps } = E.autoAuction(hands, dealer, null, 14, { oppOpenOnly: true });
+      const i0 = auction.findIndex(c => c !== 'P');
+      if (i0 < 0 || !/^1[CDHS]$/.test(auction[i0]) || auction[i0 + 1] !== 'X') continue;
+      const d = E.SEATS.indexOf(dealer), seat = i => E.SEATS[(d + i) % 4];
+      if (seat(i0) !== 'E' && seat(i0) !== 'W') continue;
+      // 4番手の1回目。キュービッドの流れなら、その後の場面も出題する
+      const cands = [i0 + 3];
+      if (auction[i0 + 3] && E.isBid(auction[i0 + 3]) && auction[i0 + 3][1] === auction[i0][1]) cands.push(i0 + 5, i0 + 7);
+      const idx = cands.filter(i => i < auction.length)[Math.floor(Math.random() * cands.filter(i => i < auction.length).length)];
+      if (idx === undefined) continue;
+      if (seat(idx) === 'N') { const h2 = {}; for (const k of E.SEATS) h2[ROT[k]] = hands[k]; hands = h2; dealer = ROT[dealer]; }
+      return { hands, dealer, auction: auction.slice(0, idx), vul: 'None' };
+    }
+    return null;
+  }
   function makeQuiz(filter) {
     if (filter === 'adv') return makeAdvQuiz();
+    if (filter === 'tox') return makeToxQuiz();
     const examples = examplesFrom(store.answers);
     const xr = filter === 'xresp';
     const comp = filter === 'comp' || xr;

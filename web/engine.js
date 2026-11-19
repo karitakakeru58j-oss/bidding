@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.23.0';
+  const ENGINE_VERSION = '0.24.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1285,6 +1285,79 @@
       return null;
     }
     return { resp, freeAfter, later };
+  })();
+
+  // ===== テイクアウトダブルへの応答（4番手）：敵のオープン-(パートナーのX)-パス-自分 =====
+  //   パスは敵のスートの内容の良い6枚以上・10点以上だけ。NT＝8〜10／11〜12／13〜15。スート：ノンジャンプ＝8点以下、ジャンプ＝インビ。
+  //   メジャーのジャンプは枚数で使い分け（1♣-(X)-P-2♠＝ちょうど4枚の9〜11、3♠＝ちょうど5枚の8〜10、4♠＝6枚以上の6〜10）。
+  //   GFはキュービッド。1m-(X)-Pのキュービッドはメジャー4-4ちょうどのインビも含む（ダブルした側は4枚メジャー、なければ2NT）
+  const TOX = (() => {
+    const T = s => JA_SUIT[s];
+    function advance(h, Y, ok, cheapOf) {
+      const v = h.adj, minorOpen = !isMaj(Y);
+      const B = (call, why) => call && ok(call) ? { call, why } : null;
+      const cue = cheapOf(Y);
+      const jumpOf = (s, n) => { const c = cheapOf(s); return c ? (levelOf(c) + n) + s : null; };
+      let r;
+      const good = [...h.hand[Y]].filter(c => 'AKQJT'.includes(c)).length >= 3;
+      if (h.len[Y] >= 6 && good && v >= 10) return { call: 'P', why: `${T(Y)}を内容の良い${h.len[Y]}枚持ち10点以上なので、ダブルをパスしてペナルティにする` };
+      const Us = ['H', 'S'].filter(M => M !== Y);
+      // 1m-(X)-P：メジャーちょうど4-4のインビはキュービッド
+      if (minorOpen && h.len.H === 4 && h.len.S === 4 && v >= 9 && v < 12 && (r = B(cue, `メジャーちょうど4-4のインビテーション（${fmt(v)}点）なのでキュービッド（${callText(cue)}）。パートナーは4枚メジャーを示す`))) return r;
+      const M = Us.filter(x => h.len[x] >= 4).sort((a, b) => h.len[b] - h.len[a] || (a === 'H' ? -1 : 1))[0];
+      if (v >= 12 && M && (r = B(cue, `ゲームフォーシングの強さ（${fmt(v)}点）でメジャー4枚以上なのでキュービッド（${callText(cue)}）`))) return r;
+      if (M) {
+        const c = cheapOf(M), n = h.len[M];
+        const roomy = c && levelOf(c) === 1; // ジャンプを枚数で使い分けられる
+        if (roomy) {
+          if (n >= 6 && v >= 6 && v < 11 && (r = B('4' + M, `${T(M)}6枚以上・6〜10点なので4${SYM[M]}`))) return r;
+          if (n === 5 && v >= 8 && v < 12 && (r = B(jumpOf(M, 2), `${T(M)}ちょうど5枚・8〜10点なのでダブルジャンプの${callText(jumpOf(M, 2))}（3NTか4${SYM[M]}かを判断できる）`))) return r;
+          if (n === 4 && v >= 9 && v < 12 && (r = B(jumpOf(M, 1), `${T(M)}ちょうど4枚・9〜11点なのでジャンプの${callText(jumpOf(M, 1))}`))) return r;
+          if ((r = B(c, `${T(M)}${n}枚。8点以下（または枚数が足りない）なので1${SYM[M]}`))) return r;
+        } else {
+          if (n >= 6 && v >= 6 && v < 11 && (r = B('4' + M, `${T(M)}6枚以上・6〜10点なので4${SYM[M]}`))) return r;
+          if (v >= 9 && v < 12 && (r = B(jumpOf(M, 1), `${T(M)}${n}枚・9〜11点なのでジャンプの${callText(jumpOf(M, 1))}（インビテーション）`))) return r;
+          if (v < 9 && (r = B(c, `${T(M)}${n}枚・8点以下なのでノンジャンプの${callText(c)}`))) return r;
+        }
+      }
+      // NT（ストッパーが必要・私の判断）
+      if (h.stopper(Y)) {
+        if (v >= 13 && v < 16 && (r = B('3N', `${T(Y)}のストッパーがあり13〜15点なので3NT`))) return r;
+        if (v >= 11 && v < 13 && (r = B('2N', `${T(Y)}のストッパーがあり11〜12点なので2NT`))) return r;
+        if (v >= 8 && v < 11 && (r = B(cheapOf('N'), `${T(Y)}のストッパーがあり8〜10点なので${callText(cheapOf('N'))}`))) return r;
+      }
+      if (v >= 12 && (r = B(cue, `ゲームフォーシングの強さ（${fmt(v)}点）なのでキュービッド（${callText(cue)}）`))) return r;
+      // マイナーなど：ノンジャンプ＝8点以下、ジャンプ＝インビ
+      const L = SUITS.filter(s => s !== Y).sort((a, b) => h.len[b] - h.len[a] || (isMaj(b) ? 1 : 0) - (isMaj(a) ? 1 : 0))[0];
+      if (v >= 9 && (r = B(jumpOf(L, 1), `${T(L)}${h.len[L]}枚・9〜11点なのでジャンプの${callText(jumpOf(L, 1))}（インビテーション）`))) return r;
+      return B(cheapOf(L), `${T(L)}${h.len[L]}枚。8点以下なのでノンジャンプの${callText(cheapOf(L))}（パートナーのダブルにはパスしない）`) || { call: 'P', why: 'パス' };
+    }
+    // ダブルした側：パートナーのキュービッドへの答え（4枚メジャー、なければ2NT）
+    function doublerAfterCue(h, Y, ok, cheapOf) {
+      const v = h.adj;
+      const M = ['H', 'S'].filter(x => x !== Y && h.len[x] >= 4).sort((a, b) => h.len[b] - h.len[a] || (a === 'H' ? -1 : 1))[0];
+      if (M && ok(cheapOf(M))) return { call: cheapOf(M), why: `パートナーのキュービッドに、4枚の${T(M)}を示す（${M === 'S' ? 'ハート4枚なし' : ''}）`.replace('（）', '') };
+      if (ok('2N')) return { call: '2N', why: 'パートナーのキュービッドに、4枚メジャーがないので2NT' };
+      const L = SUITS.filter(s => s !== Y).sort((a, b) => h.len[b] - h.len[a])[0];
+      return { call: cheapOf(L), why: `4枚メジャーがないので${T(L)}を示す` };
+    }
+    // キュービッドした側の2回目
+    function advancerAfterReply(h, Y, reply, ok, cheapOf) {
+      const v = h.adj, inv44 = !isMaj(Y) && h.len.H === 4 && h.len.S === 4 && v < 12;
+      const B = (call, why) => call && ok(call) ? { call, why } : null;
+      if (isBid(reply) && isMaj(reply[1]) && h.len[reply[1]] >= 4) {
+        const M = reply[1];
+        if (inv44) return B('3' + M, `パートナーの${T(M)}4枚にフィット。メジャー4-4のインビテーションなので3${SYM[M]}（これ以外はGF）`) || B('4' + M, 'ゲーム');
+        return B('4' + M, `パートナーの${T(M)}4枚にフィットし、ゲームフォーシングの強さなので4${SYM[M]}`) || { call: 'P', why: 'パス' };
+      }
+      if (inv44) return { call: 'P', why: 'パートナーに4枚メジャーがない。インビテーションの強さなのでパス' };
+      return B('3N', 'ゲームフォーシングの強さなので3NT') || { call: 'P', why: 'パス' };
+    }
+    // ダブルした側：パートナーの3M（メジャー4-4のインビ）への答え
+    function doublerAfterInvite(h, M) {
+      return h.adj >= 14.5 ? { call: '4' + M, why: `パートナーのインビテーション（メジャー4-4・${T(M)}フィット）を受けて4${SYM[M]}` } : { call: 'P', why: 'パートナーのインビテーションを断ってパス' };
+    }
+    return { advance, doublerAfterCue, advancerAfterReply, doublerAfterInvite };
   })();
 
   // ===== 4番手（アドバンサー）：敵のオープン-(パートナーのスートのオーバーコール)-敵の応答（パス以外）の後 =====
@@ -2975,6 +3048,27 @@
       if (ourIdx >= 0 && oppIdx === ourIdx + 1 && /^1[CDHS]$/.test(auction[ourIdx]) && isBid(auction[oppIdx]) && auction[oppIdx][1] !== 'N'
         && auction.every((c, i) => i === oppIdx || c === 'P' || SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S'))
         compOpp = { s: auction[oppIdx][1], call: auction[oppIdx] };
+      // テイクアウトダブルへの応答：敵の1の代のオープン → パートナーのX → 敵のパス → 自分（その後も敵がパスしている間の流れ）
+      {
+        const i0 = auction.findIndex(c => c !== 'P');
+        const seatAt = i => SEATS[(d + i) % 4], ew = i => seatAt(i) === 'E' || seatAt(i) === 'W';
+        if (i0 >= 0 && ew(i0) && /^1[CDHS]$/.test(auction[i0]) && auction[i0 + 1] === 'X' && auction.length >= i0 + 3
+          && auction.every((c, i) => i <= i0 + 1 || !ew(i) || c === 'P')) {
+          const Y = auction[i0][1], k = auction.length - i0; // 3＝4番手の1回目、5＝ダブルした側の2回目…
+          const okA = c => legalInAuction(c, auction, dealer);
+          const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+          const hh = evaluate(hand), cueC = (c) => isBid(c) && c[1] === Y;
+          let x = null;
+          try {
+            if (k === 3) x = TOX.advance(hh, Y, okA, cheapOf);
+            else if (k === 5 && cueC(auction[i0 + 3])) x = TOX.doublerAfterCue(hh, Y, okA, cheapOf);
+            else if (k === 7 && cueC(auction[i0 + 3])) x = TOX.advancerAfterReply(hh, Y, auction[i0 + 5], okA, cheapOf);
+            else if (k === 9 && cueC(auction[i0 + 3]) && /^3[HS]$/.test(auction[i0 + 7])) x = TOX.doublerAfterInvite(hh, auction[i0 + 7][1]);
+          } catch (e) { x = null; }
+          if (x && okA(x.call)) return { call: x.call, why: x.why, source: 'rule', ruleId: 'tox' };
+          if (k >= 4) return { call: 'P', why: 'テイクアウトダブルの後の流れ（まだ決めていないところ）：パス', source: 'rule', ruleId: 'tox' };
+        }
+      }
       // 4番手（アドバンサー）：敵の1の代のオープン → パートナーのスートのオーバーコール → 敵の応答（パス以外） → 自分
       {
         const i0 = auction.findIndex(c => c !== 'P');
@@ -3192,7 +3286,12 @@
       let r;
       const prev = auction.length ? auction[auction.length - 1] : null;
       const ourOpen = prev && /^1[CDHS]$/.test(prev) && auction.slice(0, -1).every(c => c === 'P');
-      if ((seat === 'E' || seat === 'W') && opts.oppOpen) {
+      if ((seat === 'E' || seat === 'W') && opts.oppOpenOnly) {
+        // 敵（東西）はオープンだけ（席を回してこのAIで決める）、それ以降はパス
+        const i0 = auction.findIndex(c => c !== 'P');
+        if (i0 < 0) { const rd = SEATS[(d + 3) % 4]; const x = chooseCall(hands[seat], auction, rd, examples); r = { call: x.call, why: x.why, source: 'opp' }; }
+        else r = { call: 'P', why: '相手はパス', source: 'opp' };
+      } else if ((seat === 'E' || seat === 'W') && opts.oppOpen) {
         // 敵（東西）のオープンと、こちらのオーバーコールの後の応答だけ、席を回してこのAIで決める（それ以外はパス）
         const i0 = auction.findIndex(c => c !== 'P');
         const early = i0 < 0 || auction.length <= i0 + 2;
