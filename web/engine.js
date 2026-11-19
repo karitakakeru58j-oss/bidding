@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.24.2';
+  const ENGINE_VERSION = '0.25.0';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -3366,6 +3366,24 @@
   }
 
   // AI同士で最後までビッドする
+  // どの席でもAIのビッドを決める（東西は席を回して同じAIで）
+  function callFor(hands, seat, auction, dealer, examples) {
+    const d = SEATS.indexOf(dealer);
+    if (seat === 'N' || seat === 'S') return chooseCall(hands[seat], auction, dealer, examples);
+    return chooseCall(hands[seat], auction, SEATS[(d + 3) % 4], null);
+  }
+  // オークションの最終コントラクト：{ level, strain, doubled: 0|1|2, declarer } または null（パスアウト）
+  function contractOf(auction, dealer) {
+    const d = SEATS.indexOf(dealer), seatAt = i => SEATS[(d + i) % 4];
+    let li = -1; for (let i = auction.length - 1; i >= 0; i--) if (isBid(auction[i])) { li = i; break; }
+    if (li < 0) return null;
+    const bid = auction[li], strain = bid[1];
+    let dbl = 0; for (let i = li + 1; i < auction.length; i++) { if (auction[i] === 'X') dbl = 1; if (auction[i] === 'XX') dbl = 2; }
+    const side = SEATS.indexOf(seatAt(li)) % 2;
+    let declarer = seatAt(li);
+    for (let i = 0; i <= li; i++) if (isBid(auction[i]) && auction[i][1] === strain && SEATS.indexOf(seatAt(i)) % 2 === side) { declarer = seatAt(i); break; }
+    return { level: Number(bid[0]), strain, doubled: dbl, declarer };
+  }
   // opts.oppOvercall：自分たちの1の代のスートのオープンの直後に、敵がナチュラルなオーバーコール（スート）をする
   function autoAuction(hands, dealer, examples, maxCalls = 40, opts = {}) {
     const auction = [], steps = [];
@@ -3375,7 +3393,10 @@
       let r;
       const prev = auction.length ? auction[auction.length - 1] : null;
       const ourOpen = prev && /^1[CDHS]$/.test(prev) && auction.slice(0, -1).every(c => c === 'P');
-      if ((seat === 'E' || seat === 'W') && opts.oppOpenResp) {
+      if ((seat === 'E' || seat === 'W') && opts.full4) {
+        // 4人ともAI：東西も席を回して同じAIでビッドする
+        const rd = SEATS[(d + 3) % 4]; const x = chooseCall(hands[seat], auction, rd, null); r = { call: x.call, why: x.why, source: x.source };
+      } else if ((seat === 'E' || seat === 'W') && opts.oppOpenResp) {
         // 敵（東西）のオープンと、ダブルの後の応答（席を回してこのAIで決める）。それ以降はパス
         const i0 = auction.findIndex(c => c !== 'P');
         if (i0 < 0 || auction.length === i0 + 2) { const rd = SEATS[(d + 3) % 4]; const x = chooseCall(hands[seat], auction, rd, examples); r = { call: x.call, why: x.why, source: 'opp' }; }
@@ -3407,7 +3428,7 @@
 
   const api = {
     ENGINE_VERSION, SUITS, SEATS, SYM, JA_SUIT, RULES,
-    evaluate, chooseCall, autoAuction, analyze, isOver, legal, lastBid, isBid, rankOf, legalInAuction,
+    evaluate, chooseCall, autoAuction, analyze, isOver, legal, lastBid, isBid, rankOf, legalInAuction, callFor, contractOf,
     callText, callPbn, parseCall, deal, dealToPbn, pbnToDeal, handToPbn, pbnToHand,
     exampleFeatures, seqKeyOf, buildContext, matchSeq, ntShape: (h, c) => ntShape(h, c),
   };

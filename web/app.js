@@ -612,7 +612,8 @@
   function show(v) {
     view = v;
     for (const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.view === v));
-    for (const name of ['quiz', 'oc', 'records', 'export', 'help']) $('view-' + name).hidden = name !== v;
+    for (const name of ['quiz', 'oc', 'match', 'records', 'export', 'help']) $('view-' + name).hidden = name !== v;
+    if (v === 'match' && !match) matchStart();
     if (v === 'oc') { if (!oq) ocNew(); renderOcAnalysis(); }
     if (v === 'records') renderRecords();
     if (v === 'export') renderExport();
@@ -622,6 +623,98 @@
     if (view === 'records' && !editing) renderRecords();
     if (view === 'export') renderExport();
     if (quiz && $('result-card').hidden) $('board-info').textContent = `第${store.answers.length + 1}問 ・ ディーラー ${SEAT_JA[quiz.dealer]} ・ バル なし`;
+  });
+
+  // ---------------------------------------------------------------
+  // 対戦：AI3体（北＝相方、東・西＝敵）を相手にビッドする
+  // ---------------------------------------------------------------
+  let match = null;
+  function matchStart() {
+    const hands = E.deal(), dealer = E.SEATS[Math.floor(Math.random() * 4)];
+    match = { hands, dealer, auction: [], log: [], done: false, saved: false };
+    $('m-save-msg').textContent = '';
+    matchAdvance();
+  }
+  function matchAdvance() {
+    const d = E.SEATS.indexOf(match.dealer);
+    while (!E.isOver(match.auction) && match.auction.length < 60) {
+      const seat = E.SEATS[(d + match.auction.length) % 4];
+      if (seat === 'S') break;
+      let r;
+      try { r = E.callFor(match.hands, seat, match.auction, match.dealer, seat === 'N' ? examplesFrom(store.answers) : null); }
+      catch (e) { r = { call: 'P', why: 'エラーのためパス' }; }
+      if (!E.legalInAuction(r.call, match.auction, match.dealer)) r = { call: 'P', why: '（合法でないビッドになったのでパス）' };
+      match.log.push({ seat, call: r.call, why: r.why });
+      match.auction.push(r.call);
+    }
+    match.done = E.isOver(match.auction);
+    renderMatch();
+  }
+  function matchBid(call) {
+    let ai = null;
+    try { ai = E.callFor(match.hands, 'S', match.auction, match.dealer, examplesFrom(store.answers)); } catch (e) { ai = { call: '?', why: '' }; }
+    match.log.push({ seat: 'S', call, ai: ai.call, aiWhy: ai.why, aiSource: ai.source, before: match.auction.slice() });
+    match.auction.push(call);
+    matchAdvance();
+  }
+  function contractText(c) {
+    if (!c) return 'パスアウト';
+    return `${c.level}${c.strain === 'N' ? 'NT' : E.SYM[c.strain]}${c.doubled === 2 ? ' リダブル' : c.doubled ? ' ダブル' : ''}（${SEAT_JA[c.declarer]}がディクレアラー）`;
+  }
+  function renderMatch() {
+    $('m-info').textContent = `ディーラー ${SEAT_JA[match.dealer]} ・ バル なし`;
+    $('m-auction').innerHTML = auctionRows(match.auction, match.dealer, !match.done);
+    const ev = E.evaluate(match.hands.S);
+    $('m-hand').innerHTML = handHtml(match.hands.S);
+    $('m-meta').textContent = `${ev.rawHcp}点（HCP）・補正込み${Math.round(ev.adj * 10) / 10}点 ・ ${E.SUITS.map(s => ev.len[s]).join('-')}`;
+    $('m-answer').hidden = match.done;
+    $('m-result').hidden = !match.done;
+    if (!match.done) {
+      let html = '';
+      for (let lv = 1; lv <= 7; lv++) for (const s of ['C', 'D', 'H', 'S', 'N']) {
+        const c = lv + s, ok = E.legalInAuction(c, match.auction, match.dealer);
+        html += `<button class="bid" data-call="${c}" ${ok ? '' : 'disabled'} aria-label="${E.callText(c)}">${callHtml(c)}</button>`;
+      }
+      html += `<button class="bid pass" data-call="P">パス</button>`;
+      if (E.legalInAuction('X', match.auction, match.dealer)) html += `<button class="bid pass" data-call="X">ダブル</button>`;
+      if (E.legalInAuction('XX', match.auction, match.dealer)) html += `<button class="bid pass" data-call="XX">リダブル</button>`;
+      $('m-bbox').innerHTML = html;
+      return;
+    }
+    const c = E.contractOf(match.auction, match.dealer);
+    const box = (seat, cls) => `<div class="${cls}"><div class="seat">${SEAT_JA[seat]}${seat === 'S' ? '（自分）' : seat === 'N' ? '（相方AI）' : '（AI）'} ${E.evaluate(match.hands[seat]).rawHcp}点</div>${handShort(match.hands[seat])}</div>`;
+    let html = `<p style="margin:0 0 8px"><b>最終コントラクト：</b>${contractText(c)}</p>`;
+    html += `<div class="compass">${box('N', 'n')}${box('W', 'w')}${box('E', 'e')}${box('S', 's')}</div>`;
+    html += '<p class="label" style="margin:10px 0 4px">ビッドの流れ</p><div class="mlog">';
+    for (const x of match.log) {
+      if (x.seat === 'S') {
+        const same = x.ai === x.call;
+        html += `<div class="${same ? '' : 'diff'}"><b>南（自分）</b> ${callHtml(x.call)}${same ? '（AIと同じ）' : ` ／ AIなら ${callHtml(x.ai)}：${esc(x.aiWhy || '')}`}</div>`;
+      } else html += `<div><b>${SEAT_JA[x.seat]}</b> ${callHtml(x.call)}：${esc(x.why || '')}</div>`;
+    }
+    html += '</div>';
+    $('m-result-body').innerHTML = html;
+    $('m-save').disabled = match.saved || !match.log.some(x => x.seat === 'S');
+  }
+  $('m-bbox').addEventListener('click', e => { const b = e.target.closest('.bid'); if (!b || b.disabled || !match || match.done) return; matchBid(b.dataset.call); });
+  $('m-new').addEventListener('click', () => matchStart());
+  $('m-next').addEventListener('click', () => matchStart());
+  $('m-save').addEventListener('click', async () => {
+    if (!match || match.saved) return;
+    $('m-save').disabled = true;
+    try {
+      for (const x of match.log.filter(x => x.seat === 'S')) {
+        const doc = {
+          id: newId(), created: new Date().toISOString(), engine: E.ENGINE_VERSION, from: 'match',
+          dealer: match.dealer, vul: 'None', deal: E.dealToPbn(match.hands, 'N'), auction: x.before, seat: 'S',
+          userCall: x.call, reason: '', doubt: false, aiCall: x.ai, aiWhy: x.aiWhy || '', aiSource: x.aiSource || '', aiRule: null,
+          features: E.exampleFeatures(match.hands.S, x.before, match.dealer), status: 'active',
+        };
+        await store.add(doc);
+      }
+      match.saved = true;
+      $('m-save-msg').textContent = '自分のビッドを記録に保存しました（「回答を取り込んで分析して」で使えます）';
+    } catch (e) { $('m-save-msg').textContent = '保存できませんでした：' + (e.message || e); $('m-save').disabled = false; }
   });
 
   // 最初の問題作りは画面を出してから行う（読み込み中に止まって見えないように）

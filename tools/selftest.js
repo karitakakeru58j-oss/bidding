@@ -428,6 +428,18 @@ try {
   }
   if (worse) { ng++; console.log(`NG 過去の回答に合わせてルールの正解を間違えた: ${worse}件`); } else console.log(`過去の回答に合わせた判断: OK（ルールより良くなった${better}件）`);
 } catch (e) { /* 記録がなければ省略 */ }
+// 4人ともAI（東西も席を回して同じAI）でオークションが終わり、合法なこと
+{
+  let bad = 0;
+  for (let i = 0; i < 300; i++) {
+    const hands = E.deal(), dealer = E.SEATS[i % 4];
+    const { auction, steps } = E.autoAuction(hands, dealer, null, 60, { full4: true });
+    if (!E.isOver(auction)) bad++;
+    for (const st of steps) if (!E.legalInAuction(st.call, auction.slice(0, st.index), dealer)) bad++;
+  }
+  const c = E.contractOf(['P', '1H', 'P', '2H', 'X', 'P', 'P', 'P'], 'N');
+  if (bad || !c || c.level !== 2 || c.strain !== 'H' || c.declarer !== 'E' || c.doubled !== 1) { ng++; console.log('NG 4人ともAI', bad, JSON.stringify(c)); } else console.log('4人ともAI: OK');
+}
 // 回答例の取り違えの確認：♥5枚の例があっても4枚で1♥と言わない
 {
   const ex = [{ seqKey: '(open)', hcp: 16, len: { S: 1, H: 5, D: 2, C: 5 }, call: '1H', id: 'x' }];

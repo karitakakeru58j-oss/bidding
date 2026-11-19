@@ -87,6 +87,12 @@ textarea { width: 100%; min-height: 64px; resize: vertical; }
 
 /* 手札 */
 .hand { display: grid; gap: 2px; }
+.compass { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-areas: ". n ." "w . e" ". s ."; gap: 6px; font-size: 13px; }
+.compass > div { padding: 4px 6px; border-radius: 8px; background: var(--chip, rgba(127,127,127,.08)); min-width: 0; }
+.compass .n { grid-area: n; } .compass .w { grid-area: w; } .compass .e { grid-area: e; } .compass .s { grid-area: s; }
+.compass .seat { font-weight: 600; font-size: 12px; }
+.mlog { display: grid; gap: 4px; font-size: 13px; }
+.mlog .diff { color: var(--accent, #b4541a); }
 .suitrow { display: grid; grid-template-columns: 30px 1fr; align-items: baseline; font-family: var(--font-card); font-size: 24px; line-height: 1.35; }
 .suitrow .sym { font-size: 24px; }
 .suitrow .cards { letter-spacing: .08em; word-break: break-all; }
@@ -154,6 +160,7 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
     <nav class="tabs" role="tablist">
       <button role="tab" id="tab-quiz" aria-selected="true" data-view="quiz">問題</button>
       <button role="tab" id="tab-oc" aria-selected="false" data-view="oc">介入</button>
+      <button role="tab" id="tab-match" aria-selected="false" data-view="match">対戦</button>
       <button role="tab" id="tab-records" aria-selected="false" data-view="records">記録</button>
       <button role="tab" id="tab-export" aria-selected="false" data-view="export">書き出し</button>
       <button role="tab" id="tab-help" aria-selected="false" data-view="help">使い方</button>
@@ -212,6 +219,36 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
         <button id="show-partner" class="btn small">パートナーの手を見る</button>
       </div>
       <div id="partner" hidden></div>
+    </div>
+  </section>
+
+  <!-- 対戦：AI3体（北・東・西）を相手にビッドする -->
+  <section id="view-match" class="wrap" hidden style="gap:14px">
+    <div class="card">
+      <div class="row spread">
+        <span id="m-info" class="muted"></span>
+        <button id="m-new" class="btn small">新しい配り</button>
+      </div>
+      <table class="auction" aria-label="オークション">
+        <thead><tr><th>西（AI）</th><th>北（相方AI）</th><th>東（AI）</th><th class="you">南（自分）</th></tr></thead>
+        <tbody id="m-auction"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="row spread"><span class="label">あなたの手札</span><span id="m-meta" class="handmeta"></span></div>
+      <div id="m-hand" class="hand"></div>
+    </div>
+    <div class="card" id="m-answer">
+      <span class="label">あなたの番です</span>
+      <div id="m-bbox" class="bbox" role="group" aria-label="ビッドボックス"></div>
+    </div>
+    <div class="card" id="m-result" hidden>
+      <div id="m-result-body"></div>
+      <div class="row">
+        <button id="m-next" class="btn primary">次の配り</button>
+        <button id="m-save" class="btn small">自分のビッドを記録に保存</button>
+      </div>
+      <p id="m-save-msg" class="muted" style="margin:0"></p>
     </div>
   </section>
 
