@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.22.0';
+  const ENGINE_VERSION = '0.22.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -1285,6 +1285,12 @@
           const j = single && levelOf(single) + 1 <= 4 ? (levelOf(single) + 1) + Z : null;
           if (j && (r = B(j, `パートナーの${T(Z)}に4枚以上のサポートがあり弱いので、ジャンプのプリエンプティブ・レイズ（${callText(j)}）`))) return r;
         }
+        // メジャー：4枚以上のサポートで8〜10点は、3Mより下のジャンプしたニュースート（1♦-(1♠)-2♦-3♥ など）
+        if (isMaj(Z) && h.len[Z] >= 4 && dp >= 8) {
+          const fj = SUITS.filter(x => x !== Z && x !== O && x !== rSuit).map(x => { const c = cheapOf(x); return c ? (levelOf(c) + 1) + x : null; })
+            .filter(c => c && ok(c) && rankOf(c) < rankOf('3' + Z)).sort((a, b) => rankOf(a) - rankOf(b))[0];
+          if (fj && (r = B(fj, `パートナーの${T(Z)}に4枚以上のサポートがあり8〜10点（ダミーポイント${fmt(dp)}点）なので、3${SYM[Z]}より下のジャンプしたニュースート（${callText(fj)}）`))) return r;
+        }
         if (dp >= 6 && single && levelOf(single) <= 3 && (r = B(single, `パートナーの${T(Z)}にサポートがあり、6〜10点（ダミーポイント${fmt(dp)}点）なのでシングルレイズ`))) return r;
       }
       if (!majFirst && (r = tryMaj())) return r;
@@ -1302,10 +1308,16 @@
       // 2の代以上のジャンプしていないニュースート＝to play（6枚以上・インビテーション未満）
       for (const s of SUITS.filter(x => !shown.has(x)).sort((a, b) => h.len[b] - h.len[a])) {
         const c = cheapOf(s);
-        if (c && levelOf(c) >= 2 && levelOf(c) <= 3 && h.len[s] >= 6 && v < 10.5 && (r = B(c, `${T(s)}6枚以上でインビテーション未満なので、to playの${callText(c)}`))) return r;
+        const longOk = h.len[s] >= 8 || (h.len[s] >= 7 && SUITS.some(x => x !== s && h.len[x] >= 4)); // 8枚以上か7-4なら4・5の代でも
+        if (c && levelOf(c) >= 2 && (levelOf(c) <= 3 || (levelOf(c) <= 5 && longOk)) && h.len[s] >= 6 && v < 10.5 && (r = B(c, `${T(s)}${h.len[s]}枚${levelOf(c) >= 4 ? '（十分な長さ）' : '以上'}でインビテーション未満なので、to playの${callText(c)}`))) return r;
       }
       // インビ以上でフィットもストッパーもない：キュービッド（私の判断）
-      if (v >= 12 && cue && (r = B(cue, `インビテーション以上の強さだが、フィットも${T(O)}のストッパーもないのでキュービッド（${callText(cue)}）`))) return r;
+      if (v >= 12 && isMaj(Z)) {
+        // パートナーがメジャー：ストッパーがなくてもNT
+        const nt = v >= 15 ? '3N' : v >= 13 ? '2N' : (ok('1N') ? '1N' : '2N');
+        if ((r = B(nt, `インビテーション以上で、パートナーのメジャーにフィットせずストッパーもないが、${callText(nt)}（${fmt(v)}点）`))) return r;
+      }
+      if (v >= 12 && cue && (r = B(cue, `インビテーション以上の強さだが、パートナーのマイナーにフィットせず${T(O)}のストッパーもないのでキュービッド（${callText(cue)}）`))) return r;
       return P('4番手として、ビッドできる形・強さがないのでパス');
     }
     return { pick };
