@@ -1516,13 +1516,28 @@
       let ol = -1; for (let i = n - 1; i >= 0; i--) if (isBid(auction[i]) && mine(i)) { ol = i; break; }
       const ourLast = ol >= 0 ? auction[ol] : null;
       const pSuits = [...new Set(auction.filter((c, i) => isBid(c) && c[1] !== 'N' && mine(i) && seatAt(i) !== me).map(c => c[1]))].filter(s => !oppSuits.includes(s));
-      const pLen = s => Math.max(pk && Array.isArray(pk[s]) ? pk[s][0] : 0, pSuits.includes(s) ? 4 : 0);
+      // パートナーの枚数：パートナーが先にビッドしたスートは4枚、自分のスートのレイズは3枚を最低として数える
+      const firstOf = s => auction.findIndex((c, i) => isBid(c) && c[1] === s && mine(i));
+      const pLen = s => {
+        if (!pSuits.includes(s)) return 0;
+        const ctxL = !oppOpened && pk && Array.isArray(pk[s]) ? pk[s][0] : 0;
+        return Math.max(ctxL, seatAt(firstOf(s)) === me ? 3 : 4);
+      };
       const fitLen = s => h.len[s] + pLen(s);
       const stopAll = oppSuits.every(s => h.stopper(s));
       const gameNeed = s => (s === 'N' || isMaj(s)) ? 25 : 28;
       const pts = `（自分${fmt(h.adj)}点＋パートナーの最低${fmt(pMin)}点）`;
       // パートナーのダブルはペナルティとしてパス
-      if (n >= 2 && auction[n - 2] === 'X' && mine(n - 2)) return out('P', 'パートナーのダブル（ペナルティ）なのでパス');
+      //   （パートナーの最初の行動のダブル＝ネガティブ・テイクアウトの意味が残る2の代以下は除く。その後に敵がビッドしたときも除く）
+      if (n >= 2 && auction[n - 1] === 'P' && auction[n - 2] === 'X' && mine(n - 2)) {
+        const pFirstAct = auction.findIndex((c, i) => c !== 'P' && mine(i) && seatAt(i) !== me) === n - 2;
+        if (!pFirstAct || (lb && levelOf(lb) >= 3)) return out('P', 'パートナーのダブル（ペナルティ）なのでパス');
+      }
+      // 自分たちのダブルに敵がリダブルし、パートナーがパスした（守りたい）：パス
+      if (n >= 3 && auction[n - 2] === 'P' && auction.slice(li + 1).includes('XX')) {
+        const xi = auction.lastIndexOf('X'), xxi = auction.lastIndexOf('XX');
+        if (xi > li && mine(xi) && xxi > xi && n - 2 > xxi) return out('P', '自分たちのダブルに敵がリダブルし、パートナーがパスした（守りたい）のでパス');
+      }
       // 自分たちがゲームに達した後に敵がさらにビッド（セーブ）：合わせて22点以上ならダブル
       if (ourLast && levelOf(ourLast) >= gameLevel(ourLast[1]) && lastByOpp) {
         if (okA('X') && (tot >= 22 || h.adj >= 16)) return out('X', `自分たちのゲームの上に敵がビッドした（セーブ）。合わせて22点以上${pts}、または自分が16点以上あるのでペナルティ・ダブル`);
@@ -1545,12 +1560,14 @@
       };
       // 競り合いの判断（フリーランのルールが使えないとき）
       const compete = (tag) => {
+        // 最後のビッドが自分たちのもの（敵がパスで止まっている）なら、ゲームに届く強さのときだけ動く
+        const onlyGame = !lastByOpp;
         // フィットしたスート（メジャー優先、長い方）
         const fits = SUITS.filter(s => pSuits.includes(s) && fitLen(s) >= 8 && h.len[s] >= 3).sort((a, b) => fitLen(b) - fitLen(a) || (isMaj(b) - isMaj(a)));
         for (const s of fits) {
           if (tot >= gameNeed(s) && okA(gameCall(s)) && levelOf(cheapOf(s)) <= gameLevel(s)) return out(gameCall(s), `${tag}${T(s)}に${fitLen(s)}枚以上のフィットがあり、ゲームの強さ${pts}があるので${callText(gameCall(s))}`);
           const c = cheapOf(s);
-          if (c && h.adj >= 6 && affordable(c) && !(ourLast && ourLast[1] === s && levelOf(ourLast) >= levelOf(c)))
+          if (c && !onlyGame && h.adj >= 6 && affordable(c) && !(ourLast && ourLast[1] === s && levelOf(ourLast) >= levelOf(c)))
             return out(c, `${tag}${T(s)}に${fitLen(s)}枚以上のフィットがあるので、トータルトリックの考え方で${callText(c)}まで競る`);
         }
         // NT：ゲームの強さで敵のスートのストッパーがあれば3NT
@@ -1560,7 +1577,7 @@
           return out('X', `${tag}敵の${T(lb[1])}に${h.len[lb[1]]}枚でストッパーがあり、合わせて22点以上${pts}・フィットもないのでペナルティ・ダブル`);
         // 自分の長いスート（6枚以上）
         const L = SUITS.filter(s => !oppSuits.includes(s) && h.len[s] >= 6).sort((a, b) => h.len[b] - h.len[a])[0];
-        if (L && h.adj >= 8) {
+        if (L && h.adj >= 8 && !onlyGame) {
           const c = cheapOf(L);
           if (c && levelOf(c) < gameLevel(L) && levelOf(c) <= h.len[L] - 4 && !(ourLast && ourLast[1] === L && levelOf(ourLast) >= levelOf(c) - 0 && fitLen(L) < 9 && levelOf(c) > 2))
             return out(c, `${tag}${T(L)}${h.len[L]}枚なので${callText(c)}で競る`);
