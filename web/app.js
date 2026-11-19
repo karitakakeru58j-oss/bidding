@@ -166,9 +166,12 @@
     for (let t = 0; t < 6000; t++) {
       let hands = E.deal();
       let dealer = Math.random() < 0.5 ? 'E' : 'W';
-      const { auction, steps } = E.autoAuction(hands, dealer, null, 14, { oppOpenOnly: true });
+      // 半分は敵（3番手）がビッドする場面（ビッド-ダブル-ビッド）
+      const withBid = Math.random() < 0.5;
+      const { auction, steps } = E.autoAuction(hands, dealer, null, 14, withBid ? { oppOpenResp: true } : { oppOpenOnly: true });
       const i0 = auction.findIndex(c => c !== 'P');
       if (i0 < 0 || !/^1[CDHS]$/.test(auction[i0]) || auction[i0 + 1] !== 'X') continue;
+      if (withBid && !E.isBid(auction[i0 + 2] || '')) continue;
       const d = E.SEATS.indexOf(dealer), seat = i => E.SEATS[(d + i) % 4];
       if (seat(i0) !== 'E' && seat(i0) !== 'W') continue;
       // 4番手の1回目。キュービッドの流れなら、その後の場面も出題する
