@@ -718,6 +718,37 @@
     html += '</div>';
     $('m-result-body').innerHTML = html;
     $('m-save').disabled = match.saved || !match.log.some(x => x.seat === 'S');
+    matchScore(match);
+  }
+  // 採点：ダブルダミー（敵の手の配り直し・ルールのオープニングリード・ぎりぎりのコントラクトの成功率の割引）
+  let ddsLoading = null;
+  function loadDDS() {
+    if (window.create_dds_module) return Promise.resolve();
+    if (!ddsLoading) ddsLoading = new Promise((ok, ng) => { window.DDS_BASE = 'vendor/'; const sc = document.createElement('script'); sc.src = 'vendor/dds.js'; sc.onload = ok; sc.onerror = () => ng(new Error('ソルバーを読み込めませんでした')); document.head.appendChild(sc); });
+    return ddsLoading;
+  }
+  async function matchScore(m) {
+    if (m.scored || !window.BridgeScore || !window.BridgeDDS) { if (!window.BridgeScore) $('m-score').textContent = ''; return; }
+    m.scored = true;
+    const box = $('m-score');
+    box.textContent = '採点中…（ダブルダミー。敵の手を配り直して平均します）';
+    try {
+      await loadDDS();
+      const S = window.BridgeScore, solve = window.BridgeDDS.solve, opts = { layouts: 8 };
+      const c = E.contractOf(m.auction, m.dealer);
+      const decSide = c ? (c.declarer === 'N' || c.declarer === 'S' ? 'NS' : 'EW') : 'NS';
+      const actual = c ? await S.evalContract(solve, m.hands, c, m.auction, m.dealer, opts) : { exp: 0, pMake: 0, tricks: 0 };
+      const best = await S.bestFor(solve, m.hands, decSide, m.auction, m.dealer, opts);
+      if (match !== m) return;
+      const bestExp = Math.max(best.exp, 0), same = c && best.c && best.c.level === c.level && best.c.strain === c.strain;
+      const loss = same ? 0 : S.imps(bestExp - actual.exp);
+      const nsSign = decSide === 'NS' ? 1 : -1, ours = decSide === 'NS';
+      const ct = x => x ? `${x.level}${x.strain === 'N' ? 'NT' : E.SYM[x.strain]}${x.doubled === 2 ? 'XX' : x.doubled ? 'X' : ''}（${SEAT_JA[x.declarer]}）` : 'パスアウト';
+      box.innerHTML = `<b>採点</b>（${ours ? '南北' : '東西'}から見て）：${c ? `${ct(c)} の期待得点 ${Math.round(actual.exp)}、成功率${Math.round(actual.pMake * 100)}%、平均${actual.tricks.toFixed(1)}トリック` : 'パスアウト'}。`
+        + (best.c ? `一番良いのは ${ct(best.c)}（期待得点 ${Math.round(bestExp)}）。` : '')
+        + (loss > 0 ? `<b>${ours ? '南北' : '東西'}は約${loss}IMP損</b>` : ' ほぼ最善')
+        + `<br><span class="muted">南北の得点で：${Math.round(nsSign * actual.exp)}</span>`;
+    } catch (e) { box.textContent = '採点できませんでした（' + (e.message || e) + '）'; }
   }
   $('m-bbox').addEventListener('click', e => { const b = e.target.closest('.bid'); if (!b || b.disabled || !match || match.done) return; matchBid(b.dataset.call); });
   $('m-new').addEventListener('click', () => matchStart());
