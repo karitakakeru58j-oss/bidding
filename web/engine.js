@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.27.0';
+  const ENGINE_VERSION = '0.27.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -3240,7 +3240,7 @@
         const i0 = auction.findIndex(c => c !== 'P');
         const seatAt = i => SEATS[(d + i) % 4], ew = i => seatAt(i) === 'E' || seatAt(i) === 'W';
         if (i0 >= 0 && ew(i0) && /^1[CDHS]$/.test(auction[i0]) && isBid(auction[i0 + 1] || '') && auction[i0 + 1][1] !== 'N'
-          && auction[i0 + 2] && auction[i0 + 2] !== 'P' && auction.length === i0 + 3) {
+          && auction[i0 + 2] && auction.length === i0 + 3) { // 敵がパスしたときも同じ考え方で（私の判断）
           const info = { O: auction[i0][1], oc: auction[i0 + 1], Z: auction[i0 + 1][1], R: auction[i0 + 2] };
           const okA = c => legalInAuction(c, auction, dealer);
           const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
@@ -3260,6 +3260,63 @@
         if (direct && api.overcall) {
           const r = api.overcall.decide(hand, auction[oppIdx]);
           return { call: r.call, why: r.why, source: 'rule', ruleId: 'overcall', overcall: r };
+        }
+        // パートナーのキュービッド（敵のスートのビッド）はフォーシング：パスしない
+        {
+          const n = auction.length;
+          let pi = -1; for (let i = n - 1; i >= 0; i--) if (auction[i] !== 'P') { pi = i; break; }
+          const pc = pi >= 0 ? auction[pi] : null;
+          const mineSide = i => SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S';
+          // 敵のスート＝そのスートを最初に（自然に）ビッドしたのが敵のもの
+          const firstBy = {};
+          auction.forEach((c, i) => { if (isBid(c) && c[1] !== 'N' && !(c[1] in firstBy)) firstBy[c[1]] = mineSide(i) ? 'us' : 'them'; });
+          const oppSuits = Object.keys(firstBy).filter(s => firstBy[s] === 'them');
+          if (pi >= 0 && pi === n - 2 && mineSide(pi) && SEATS[(d + pi) % 4] !== mySeat && isBid(pc) && pc[1] !== 'N' && oppSuits.includes(pc[1])) {
+            const okA = c => legalInAuction(c, auction, dealer);
+            const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+            const hh = evaluate(hand), Y = pc[1];
+            const myBids = auction.filter((c, i) => isBid(c) && c[1] !== 'N' && SEATS[(d + i) % 4] === mySeat).map(c => c[1]);
+            const pBids = auction.filter((c, i) => i !== pi && isBid(c) && c[1] !== 'N' && mineSide(i) && SEATS[(d + i) % 4] !== mySeat).map(c => c[1]);
+            const Z = myBids.find(s => !oppSuits.includes(s));
+            let x = null;
+            // 自分のスートがあれば、強さに応じてそのスートで（パートナーのキュービッドはサポートのあるインビ以上）
+            if (Z) {
+              const g = gameCall(Z), strong = hh.adj >= 14;
+              if (strong && okA(g)) x = { call: g, why: `パートナーのキュービッド（${callText(pc)}。サポートのあるインビ以上）に、余裕があるので${callText(g)}` };
+              else if (h.stopper(Y) && hh.balanced && okA('3N') && strong) x = { call: '3N', why: `パートナーのキュービッドに、${JA_SUIT[Y]}のストッパーがあるので3NT` };
+              else if (okA(cheapOf(Z))) x = { call: cheapOf(Z), why: `パートナーのキュービッド（フォーシング）に、最低限なので${callText(cheapOf(Z))}` };
+            }
+            if (!x && h.stopper(Y) && okA(cheapOf('N')) && levelOf(cheapOf('N')) <= 3) x = { call: cheapOf('N'), why: `パートナーのキュービッド（フォーシング）に、${JA_SUIT[Y]}のストッパーがあるのでNT` };
+            if (!x) {
+              const M = ['H', 'S'].filter(s => !oppSuits.includes(s) && h.len[s] >= 4).sort((a, b) => h.len[b] - h.len[a])[0];
+              const P = pBids.find(s => !oppSuits.includes(s) && h.len[s] >= 3);
+              const L = M || P || SUITS.filter(s => !oppSuits.includes(s)).sort((a, b) => h.len[b] - h.len[a])[0];
+              if (L && okA(cheapOf(L))) x = { call: cheapOf(L), why: `パートナーのキュービッド（フォーシング）にパスはしない：${JA_SUIT[L]}を示す` };
+            }
+            if (x && okA(x.call)) return { call: x.call, why: x.why, source: 'rule', ruleId: 'cue-reply' };
+          }
+        }
+        // オーバーコールした側の2回目（パートナーがビッドした後）：強い手（15点以上）だけ動く（私の判断）
+        {
+          const n = auction.length, mineSide = i => SEATS[(d + i) % 4] === 'N' || SEATS[(d + i) % 4] === 'S';
+          const i0 = auction.findIndex(c => c !== 'P');
+          const meFirst = auction.findIndex((c, i) => c !== 'P' && SEATS[(d + i) % 4] === mySeat);
+          if (i0 >= 0 && !mineSide(i0) && meFirst === i0 + 1 && isBid(auction[meFirst]) && auction[meFirst][1] !== 'N' && n >= i0 + 5) {
+            const Z = auction[meFirst][1], O = auction[i0][1], hh = evaluate(hand), v = hh.adj;
+            const okA = c => legalInAuction(c, auction, dealer);
+            const cheapOf = s => { for (let lv = 1; lv <= 7; lv++) if (okA(lv + s)) return lv + s; return null; };
+            let pi = -1; for (let i = n - 1; i >= 0; i--) if (auction[i] !== 'P' && mineSide(i) && SEATS[(d + i) % 4] !== mySeat) { pi = i; break; }
+            const pc = pi >= 0 ? auction[pi] : null;
+            const ourLast = (() => { for (let i = n - 1; i >= 0; i--) if (isBid(auction[i])) return mineSide(i) ? i : -1; return -1; })();
+            if (pc && isBid(pc) && pc[1] !== 'N' && pc[1] !== O && ourLast === pi && v >= 15 && levelOf(pc) < gameLevel(pc[1])) {
+              const P2 = pc[1];
+              let x = null;
+              if (h.len[P2] >= 4) { const c = v >= 17 ? gameCall(P2) : cheapOf(P2); if (okA(c)) x = { call: c, why: `オーバーコールした手が強い（${fmt(v)}点）。パートナーの${JA_SUIT[P2]}にフィットしたので${callText(c)}` }; }
+              if (!x && h.len[Z] >= 6) { const c = v >= 16 ? (cheapOf(Z) && (levelOf(cheapOf(Z)) + 1) <= 4 ? (levelOf(cheapOf(Z)) + 1) + Z : cheapOf(Z)) : cheapOf(Z); if (c && okA(c)) x = { call: c, why: `オーバーコールした手が強い（${fmt(v)}点）。${JA_SUIT[Z]}${h.len[Z]}枚なので${callText(c)}` }; }
+              if (!x && h.stopper(O) && okA(cheapOf('N'))) x = { call: v >= 18 && okA('3N') ? '3N' : cheapOf('N'), why: `オーバーコールした手が強く、${JA_SUIT[O]}のストッパーがあるのでNT` };
+              if (x) return { call: x.call, why: x.why, source: 'rule', ruleId: 'oc-rebid' };
+            }
+          }
         }
         // 2の代以下でパス-パスで流れてきた敵のコントラクトには積極的に競り合う（バランシング）
         {
