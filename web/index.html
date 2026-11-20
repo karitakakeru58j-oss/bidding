@@ -52,7 +52,7 @@ header.top {
 .brand { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .brand h1 { font-size: 20px; margin: 0; font-weight: 700; letter-spacing: .02em; }
 .brand .sys { font-size: 12px; color: var(--muted); }
-.tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
 .tabs button {
   border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; padding: 8px 2px; border-radius: 7px; cursor: pointer; white-space: nowrap;
 }
@@ -93,6 +93,12 @@ textarea { width: 100%; min-height: 64px; resize: vertical; }
 .compass .seat { font-weight: 600; font-size: 12px; }
 .mlog { display: grid; gap: 4px; font-size: 13px; }
 .mlog .diff { color: var(--accent, #b4541a); }
+.mlog > div, #view-gf p, #gf-scorebox { min-width: 0; overflow-wrap: anywhere; }
+.gfhands { display: grid; gap: 10px; }
+.gfhands .seat { font-weight: 600; font-size: 13px; display: flex; justify-content: space-between; gap: 8px; }
+.gfnav { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+.gfnav input { width: 4.5em; font: inherit; padding: 4px 6px; }
+.turn { font-weight: 700; }
 .suitrow { display: grid; grid-template-columns: 30px 1fr; align-items: baseline; font-family: var(--font-card); font-size: 24px; line-height: 1.35; }
 .suitrow .sym { font-size: 24px; }
 .suitrow .cards { letter-spacing: .08em; word-break: break-all; }
@@ -161,6 +167,7 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
       <button role="tab" id="tab-quiz" aria-selected="true" data-view="quiz">問題</button>
       <button role="tab" id="tab-oc" aria-selected="false" data-view="oc">介入</button>
       <button role="tab" id="tab-match" aria-selected="false" data-view="match">対戦</button>
+      <button role="tab" id="tab-gf" aria-selected="false" data-view="gf">2/1</button>
       <button role="tab" id="tab-records" aria-selected="false" data-view="records">記録</button>
       <button role="tab" id="tab-export" aria-selected="false" data-view="export">書き出し</button>
       <button role="tab" id="tab-help" aria-selected="false" data-view="help">使い方</button>
@@ -220,6 +227,51 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
         <button id="show-partner" class="btn small">パートナーの手を見る</button>
       </div>
       <div id="partner" hidden></div>
+    </div>
+  </section>
+
+  <!-- 2/1 GF：南北両方のビッドを最後まで入力する -->
+  <section id="view-gf" class="wrap" hidden style="gap:14px">
+    <div class="card">
+      <div class="gfnav">
+        <button id="gf-prev" class="btn small" aria-label="前の局">◀</button>
+        <div class="row" style="justify-content:center">
+          <span>第</span><input id="gf-no" type="number" min="1" inputmode="numeric" aria-label="局の番号"><span id="gf-of">局</span>
+        </div>
+        <button id="gf-nextb" class="btn small" aria-label="次の局">▶</button>
+      </div>
+      <div class="row spread">
+        <span id="gf-progress" class="muted"></span>
+        <button id="gf-todo" class="btn small">次の未入力へ</button>
+      </div>
+      <p class="muted" style="margin:0">北がオープン、南が2/1。東西はずっとパス。北と南の両方のビッドを最後まで入れてください（最初の2つはAIのビッド。違うと思えば戻して直せます）。</p>
+    </div>
+    <div class="card gfhands">
+      <div><div class="seat"><span>北</span><span id="gf-nmeta" class="handmeta"></span></div><div id="gf-n" class="hand"></div></div>
+      <div><div class="seat"><span>南</span><span id="gf-smeta" class="handmeta"></span></div><div id="gf-s" class="hand"></div></div>
+    </div>
+    <div class="card">
+      <table class="auction" aria-label="オークション">
+        <thead><tr><th>西</th><th>北</th><th>東</th><th>南</th></tr></thead>
+        <tbody id="gf-auction"></tbody>
+      </table>
+      <div id="gf-input">
+        <p class="turn" id="gf-turn" style="margin:6px 0"></p>
+        <div id="gf-bbox" class="bbox" role="group" aria-label="ビッドボックス"></div>
+      </div>
+      <div class="row">
+        <button id="gf-undo" class="btn small">1つ戻す</button>
+        <button id="gf-reset" class="btn small">AIの2/1からやり直す</button>
+      </div>
+      <label class="label" for="gf-memo">考え方のメモ（任意。大事なビッドだけでOK）</label>
+      <textarea id="gf-memo" placeholder="例：3♣＝クラブのコントロール。南は4♦でダイヤのコントロール、ハートのコントロールがないので4NTは使わない"></textarea>
+      <button id="gf-save" class="btn primary block" disabled>最後まで入れると保存できます</button>
+      <p id="gf-msg" class="muted" style="margin:0"></p>
+    </div>
+    <div class="card" id="gf-after" hidden>
+      <div id="gf-ai"></div>
+      <div class="row"><button id="gf-score" class="btn small">採点を見る（ダブルダミー）</button><button id="gf-go" class="btn primary">次の未入力へ</button></div>
+      <div id="gf-scorebox" class="muted"></div>
     </div>
   </section>
 
@@ -342,6 +394,16 @@ pre.pbn { max-width: 100%; white-space: pre; overflow-x: auto; background: var(-
         <li>何もしなくても、あなたの答えが記録され、AIは次から「同じ流れで、点数と形がほぼ同じ手」ではあなたの答えに合わせます。</li>
         <li>AIの答えの方が良かったと思ったら、「AIの答えに変える」を押します。</li>
         <li>あとから直したいときは「記録」タブで、その問題の「直す」を押します。</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>2/1 GFのビッドを最後まで入れる（「2/1」タブ）</h2>
+      <ol>
+        <li>北がオープン・南が2/1 GFの配りが200局あります（東西はずっとパス）。北と南の両方のビッドを、終わりまで入れます。</li>
+        <li>最初の2つ（オープンと2/1）はAIのビッドです。違うと思えば「1つ戻す」で直せます。</li>
+        <li>大事なビッドの意味や考え方は「考え方のメモ」に書くと、分析で一番役に立ちます。</li>
+        <li>保存すると、AIのビッドとの違いが出ます。「採点を見る」でダブルダミーの結果も見られます。保存し直すと上書きです。</li>
+        <li>たまったら、Claudeに「2/1の入力を分析して」と頼んでください。</li>
       </ol>
     </div>
     <div class="card">

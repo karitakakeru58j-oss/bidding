@@ -45,6 +45,7 @@
       }
       this.db = db; this.mode = 'db';
       ocStore.attach(db);
+      gfStore.attach(db);
       const timer = setTimeout(() => { note.hidden = false; note.textContent = '記録を読み込めていません。通信状態を確認してください。'; }, 10000);
       db.collection('answers').onSnapshot(snap => {
         if (!snap.metadata.fromCache) { clearTimeout(timer); note.hidden = true; }
@@ -636,8 +637,9 @@
   function show(v) {
     view = v;
     for (const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.view === v));
-    for (const name of ['quiz', 'oc', 'match', 'records', 'export', 'help']) $('view-' + name).hidden = name !== v;
+    for (const name of ['quiz', 'oc', 'match', 'gf', 'records', 'export', 'help']) $('view-' + name).hidden = name !== v;
     if (v === 'match' && !match) matchStart();
+    if (v === 'gf') gfInit().catch(e => showFatal('2/1の配りの読み込み', e));
     if (v === 'oc') { if (!oq) ocNew(); renderOcAnalysis(); }
     if (v === 'records') renderRecords();
     if (v === 'export') renderExport();
@@ -771,6 +773,150 @@
       $('m-save-msg').textContent = '自分のビッドを記録に保存しました（「回答を取り込んで分析して」で使えます）';
     } catch (e) { $('m-save-msg').textContent = '保存できませんでした：' + (e.message || e); $('m-save').disabled = false; }
   });
+
+  // ---------------------------------------------------------------
+  // 2/1 GF：北オープン・南が2/1の配り（gf21.json）で、南北両方のビッドを最後まで入力する。東西はずっとパス
+  //   記録は db の gf21 コレクション（局ごとに1件、id＝b001〜。入れ直すと上書き）
+  // ---------------------------------------------------------------
+  const GF_KEY = 'bidquiz.gf21.v1';
+  const gfStore = {
+    mode: 'local', db: null, items: {}, listeners: [],
+    onChange(fn) { this.listeners.push(fn); },
+    emit() { this.listeners.forEach(f => { try { f(); } catch (e) { showFatal('2/1の表示', e); } }); },
+    loadLocal() { try { this.items = JSON.parse(localStorage.getItem(GF_KEY) || '{}'); } catch (e) { this.items = {}; } this.emit(); },
+    saveLocal() { try { localStorage.setItem(GF_KEY, JSON.stringify(this.items)); } catch (e) { /* 保存できない環境 */ } },
+    attach(db) {
+      this.db = db; this.mode = 'db';
+      db.collection('gf21').onSnapshot(snap => { const m = {}; for (const d of snap.docs) { const x = d.data(); if (x && x.no) m[x.no] = { ...x, id: d.id }; } this.items = m; this.emit(); },
+        err => showFatal('2/1の記録の読み込み', err && (err.code || err.message) || err));
+    },
+    async put(doc) {
+      if (this.mode === 'db') await this.db.collection('gf21').doc(doc.id).set(doc);
+      else { this.items[doc.no] = doc; this.saveLocal(); this.emit(); }
+    },
+  };
+  gfStore.loadLocal();
+  let gfBoards = null, gf = null;
+  const gfId = no => 'b' + String(no).padStart(3, '0');
+  async function gfInit() {
+    if (!gfBoards) {
+      $('gf-progress').textContent = '配りを読み込んでいます…';
+      const r = await fetch('gf21.json');
+      if (!r.ok) throw new Error('gf21.json を読み込めませんでした');
+      gfBoards = await r.json();
+    }
+    if (!gf) gfOpen(gfFirstTodo(1));
+  }
+  function gfFirstTodo(from) {
+    for (let k = 0; k < gfBoards.length; k++) { const no = ((from - 1 + k) % gfBoards.length) + 1; if (!gfStore.items[no]) return no; }
+    return from;
+  }
+  function gfOpen(no) {
+    no = Math.max(1, Math.min(gfBoards.length, no | 0));
+    const b = gfBoards[no - 1], saved = gfStore.items[no];
+    gf = { no, b, hands: E.pbnToDeal(b.deal), auction: saved ? saved.auction.slice() : [b.open, 'P', b.resp, 'P'], dirty: false };
+    $('gf-memo').value = saved ? (saved.memo || '') : '';
+    $('gf-msg').textContent = saved ? `保存済み（${new Date(saved.created).toLocaleString()}）。直して保存し直すと上書きします` : '';
+    $('gf-after').hidden = true; $('gf-scorebox').textContent = '';
+    renderGf();
+  }
+  // 東西の自動のパスを足す（南北の手番になるまで）
+  function gfFill() { while (!E.isOver(gf.auction) && gf.auction.length % 2 === 1) gf.auction.push('P'); }
+  function renderGf() {
+    const n = gfBoards.length, done = Object.keys(gfStore.items).length;
+    $('gf-no').value = gf.no; $('gf-no').max = n; $('gf-of').textContent = `局 ／ ${n}`;
+    $('gf-progress').textContent = `入力済み ${done} ／ ${n}局`;
+    for (const seat of ['N', 'S']) {
+      const ev = E.evaluate(gf.hands[seat]);
+      $('gf-' + seat.toLowerCase()).innerHTML = handHtml(gf.hands[seat]);
+      $('gf-' + seat.toLowerCase() + 'meta').textContent = `${ev.rawHcp}点 ・ ${E.SUITS.map(s => ev.len[s]).join('-')}`;
+    }
+    const over = E.isOver(gf.auction);
+    $('gf-auction').innerHTML = auctionRows(gf.auction, 'N', !over);
+    $('gf-input').hidden = over;
+    if (!over) {
+      const seat = gf.auction.length % 4 === 0 ? 'N' : 'S';
+      $('gf-turn').textContent = `${SEAT_JA[seat]}の番`;
+      let html = '';
+      for (let lv = 1; lv <= 7; lv++) for (const s of ['C', 'D', 'H', 'S', 'N']) {
+        const c = lv + s, ok = E.legalInAuction(c, gf.auction, 'N');
+        html += `<button class="bid" data-call="${c}" ${ok ? '' : 'disabled'} aria-label="${E.callText(c)}">${callHtml(c)}</button>`;
+      }
+      html += `<button class="bid pass" data-call="P">パス</button>`;
+      $('gf-bbox').innerHTML = html;
+    }
+    $('gf-undo').disabled = !gf.auction.length;
+    const btn = $('gf-save');
+    btn.disabled = !over || !gf.auction.some(E.isBid);
+    btn.textContent = over ? (gfStore.items[gf.no] ? '保存し直す' : '保存') : '最後まで入れると保存できます';
+  }
+  function gfAiAuction() {
+    let r = null;
+    try { r = E.autoAuction(gf.hands, 'N', null, 40); } catch (e) { r = null; }
+    return r;
+  }
+  function gfShowAfter() {
+    const ai = gfAiAuction();
+    const mine = gf.auction, cMine = E.contractOf(mine, 'N');
+    let html = `<p style="margin:0 0 6px"><b>あなた：</b>${mine.filter((c, i) => i % 2 === 0).map(callHtml).join(' – ')} → ${contractText(cMine)}</p>`;
+    if (ai) {
+      const cAi = E.contractOf(ai.auction, 'N');
+      const same = ai.auction.join() === mine.join();
+      html += `<p style="margin:0 0 6px"><b>AI：</b>${ai.auction.filter((c, i) => i % 2 === 0).map(callHtml).join(' – ')} → ${contractText(cAi)}${same ? '（同じ）' : ''}</p>`;
+      if (!same) {
+        html += '<div class="mlog">';
+        // 最初に違ったところのAIの理由
+        const s = ai.steps.find(x => (x.seat === 'N' || x.seat === 'S') && mine[x.index] !== x.call);
+        if (s) html += `<div class="diff">最初に違ったところ：<b>${SEAT_JA[s.seat]}</b> AIは ${callHtml(s.call)}${mine[s.index] ? `（あなたは ${callHtml(mine[s.index])}）` : ''}：${esc(s.why || '')}</div>`;
+        html += '</div>';
+      }
+    }
+    $('gf-ai').innerHTML = html;
+    $('gf-after').hidden = false;
+  }
+  async function gfScore() {
+    const box = $('gf-scorebox'), g = gf;
+    if (!window.BridgeScore || !window.BridgeDDS) { box.textContent = '採点の仕組みを読み込めていません'; return; }
+    box.textContent = '採点中…（ダブルダミー。東西の手を配り直して平均します）';
+    try {
+      await loadDDS();
+      const S = window.BridgeScore, solve = window.BridgeDDS.solve, opts = { layouts: 8 };
+      const ct = x => x ? `${x.level}${x.strain === 'N' ? 'NT' : E.SYM[x.strain]}（${SEAT_JA[x.declarer]}）` : 'パスアウト';
+      const one = async auc => { const c = E.contractOf(auc, 'N'); return c ? { c, r: await S.evalContract(solve, g.hands, c, auc, 'N', opts) } : null; };
+      const mine = await one(g.auction);
+      const ai = gfAiAuction(), aiR = ai && ai.auction.join() !== g.auction.join() ? await one(ai.auction) : null;
+      const best = await S.bestFor(solve, g.hands, 'NS', g.auction, 'N', opts);
+      if (gf !== g) return;
+      const line = (who, x) => x ? `${who}：${ct(x.c)} 期待得点 ${Math.round(x.r.exp)}（成功率${Math.round(x.r.pMake * 100)}%、平均${x.r.tricks.toFixed(1)}トリック）` : '';
+      box.innerHTML = [line('あなた', mine), aiR ? line('AI', aiR) : '', best.c ? `一番良いのは ${ct(best.c)}（期待得点 ${Math.round(Math.max(best.exp, 0))}）` : ''].filter(Boolean).join('<br>');
+    } catch (e) { box.textContent = '採点できませんでした（' + (e.message || e) + '）'; }
+  }
+  $('gf-bbox').addEventListener('click', e => {
+    const b = e.target.closest('.bid'); if (!b || b.disabled || !gf || E.isOver(gf.auction)) return;
+    gf.auction.push(b.dataset.call); gfFill(); gf.dirty = true; $('gf-after').hidden = true; renderGf();
+  });
+  $('gf-undo').addEventListener('click', () => {
+    if (!gf || !gf.auction.length) return;
+    // 東西の自動のパスと、南北の最後のコールを取り消す
+    while (gf.auction.length && gf.auction.length % 2 === 0) gf.auction.pop();
+    gf.auction.pop(); gf.dirty = true; $('gf-after').hidden = true; renderGf();
+  });
+  $('gf-reset').addEventListener('click', () => { if (!gf) return; gf.auction = [gf.b.open, 'P', gf.b.resp, 'P']; gf.dirty = true; $('gf-after').hidden = true; renderGf(); });
+  $('gf-prev').addEventListener('click', () => gf && gfOpen(gf.no - 1));
+  $('gf-nextb').addEventListener('click', () => gf && gfOpen(gf.no + 1));
+  $('gf-no').addEventListener('change', () => { const v = Number($('gf-no').value); if (gf && v) gfOpen(v); });
+  $('gf-todo').addEventListener('click', () => gf && gfOpen(gfFirstTodo(gf.no + 1)));
+  $('gf-go').addEventListener('click', () => gf && gfOpen(gfFirstTodo(gf.no + 1)));
+  $('gf-score').addEventListener('click', () => gfScore());
+  $('gf-save').addEventListener('click', async () => {
+    if (!gf || !E.isOver(gf.auction)) return;
+    const doc = { id: gfId(gf.no), no: gf.no, deal: gf.b.deal, dealer: 'N', auction: gf.auction.slice(), memo: $('gf-memo').value.trim(),
+      created: new Date().toISOString(), engine: E.ENGINE_VERSION };
+    $('gf-save').disabled = true;
+    try { await gfStore.put(doc); gf.dirty = false; $('gf-msg').textContent = '保存しました'; gfShowAfter(); }
+    catch (e) { $('gf-msg').textContent = '保存できませんでした：' + (e && (e.code || e.message) || e); $('gf-save').disabled = false; }
+  });
+  gfStore.onChange(() => { if (view === 'gf' && gf) { $('gf-progress').textContent = `入力済み ${Object.keys(gfStore.items).length} ／ ${gfBoards.length}局`; } });
 
   // 最初の問題作りは画面を出してから行う（読み込み中に止まって見えないように）
   $('board-info').textContent = '問題を作っています…';
