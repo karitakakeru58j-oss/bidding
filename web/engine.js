@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const ENGINE_VERSION = '0.30.0';
+  const ENGINE_VERSION = '0.30.1';
   const SUITS = ['S', 'H', 'D', 'C'];           // 表示順（♠♥♦♣）
   const STRAINS = ['C', 'D', 'H', 'S', 'N'];     // ビッドの順位
   const RANKS = 'AKQJT98765432';
@@ -249,6 +249,16 @@
     const pos = c ? c.pos : 0;
     // オープンの強さは、6枚目以降の加点を入れずに判断する（ウィーク2・プリエンプトの範囲と合わせるため）
     const a = h.adjNoLen;
+    // 5332：10点以下は絶対にオープンしない。11点は内容の良いスート（AKQの2枚、またはAKQの1枚とJ・10）か、
+    //   有効な10（3枚以上のスートの10）が3枚あるときだけオープン
+    if (h.pattern === '5332' && h.rawHcp < 12) {
+      if (h.rawHcp <= 10) return false;
+      const s5 = SUITS.find(s => h.len[s] === 5);
+      const good = h.top3(s5) >= 2 || (h.top3(s5) >= 1 && h.hand[s5].includes('J') && h.hand[s5].includes('T'));
+      const tens = SUITS.filter(s => h.len[s] >= 3 && h.hand[s].includes('T')).length;
+      if (!good && tens < 3) return false;
+      if (pos !== 3) return true;
+    }
     if (pos === 3) return a >= 12 || (h.len.S >= 5 && a + h.len.S >= 15);
     if (a >= 11.5) return true;
     if (h.pattern === '4441' && h.adj >= 11) return true; // 4441の11点はオープン
